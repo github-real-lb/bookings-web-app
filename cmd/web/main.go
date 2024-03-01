@@ -16,17 +16,29 @@ func main() {
 	var app config.AppConfig
 	var err error
 
-	// load
+	// set AppConfig to ignore templates cache and loads templates from disk - developement mode
+	app.UseCache = false
+
+	// load templates cache to AppConfig
 	app.TemplateCache, err = render.GetTemplatesCache()
 	if err != nil {
 		log.Fatal("error creating gohtml templates cache:", err)
 	}
 
-	render.LoadTemplatesCache(&app)
+	// Initiating the handlers package repo
+	handlers.NewHandlersRepository(&app)
 
-	http.HandleFunc("/", handlers.Home)
-	http.HandleFunc("/about", handlers.About)
+	// Initiating the render package templates cahce
+	render.NewTemplatesCache(&app)
 
+	// create new http server with routes
+	srv := http.Server{
+		Addr:    addr,
+		Handler: routes(&app),
+	}
+
+	// start the server
 	fmt.Println("Starting web server on,", addr)
-	http.ListenAndServe(addr, nil)
+	err = srv.ListenAndServe()
+	log.Fatal(err)
 }

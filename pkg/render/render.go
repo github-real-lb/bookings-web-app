@@ -7,26 +7,51 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/github-real-lb/go-web-app/models"
 	"github.com/github-real-lb/go-web-app/pkg/config"
 )
 
 var app *config.AppConfig
 
-func LoadTemplatesCache(ac *config.AppConfig) {
+// NewTemplatesCache initiates the gohtml templates cache for the render package
+func NewTemplatesCache(ac *config.AppConfig) {
 	app = ac
 }
 
+// AddDefaultData is used to add default data relevant to all gohtml templates
+func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+	// TODO: add default templates data
+	return td
+}
+
 // RenderTemplate execute a gohtml template from the template cache.
-// It requires that the templates cache will be loaded initally using the LoadTemplatesCache function.
-func RenderTemplate(w http.ResponseWriter, gohtml string) {
-	t, ok := app.TemplateCache[gohtml]
-	if !ok {
-		log.Printf("couldn't find %s in template cache\n", gohtml)
+// It requires to initally assign a template cache using the NewTemplatesCache function.
+func RenderTemplate(w http.ResponseWriter, gohtml string, td *models.TemplateData) {
+	var tc map[string]*template.Template
+	var err error
+
+	// UseCache is false in developement mode in order to allow changes of gohtml templates on runtime.
+	if app.UseCache {
+		tc = app.TemplateCache
+	} else {
+		tc, err = GetTemplatesCache()
+		if err != nil {
+			log.Println(err)
+		}
 	}
+
+	// checks if gohtml template exist in cache
+	t, ok := tc[gohtml]
+	if !ok {
+		log.Printf("couldn't find %s in template cache.\n", gohtml)
+	}
+
+	// adds default templates data relevant to all templates
+	td = AddDefaultData(td)
 
 	// check for error in template execution before passing it to w (http.ResponseWriter)
 	buf := new(bytes.Buffer)
-	err := t.Execute(buf, nil)
+	err = t.Execute(buf, td)
 	if err != nil {
 		log.Println(err)
 	}
