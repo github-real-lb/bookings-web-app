@@ -31,7 +31,7 @@ func RenderTemplate(w http.ResponseWriter, gohtml string, td *models.TemplateDat
 	var err error
 
 	// UseCache is false in developement mode in order to allow changes of gohtml templates on runtime.
-	if app.UseCache {
+	if app.UseTemplateCache {
 		tc = app.TemplateCache
 	} else {
 		tc, err = GetTemplatesCache()

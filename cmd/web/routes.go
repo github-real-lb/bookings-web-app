@@ -12,7 +12,13 @@ import (
 func routes(app *config.AppConfig) http.Handler {
 	mux := chi.NewRouter()
 
+	// add middleware that recover from panics
 	mux.Use(middleware.Recoverer)
+
+	// add middleware that loads and saves and session on every request
+	mux.Use(app.Session.LoadAndSave)
+
+	// add middleware that provides CSRF protection to all POST requests
 	mux.Use(NoSurf)
 
 	mux.Get("/", handlers.Repo.Home)
