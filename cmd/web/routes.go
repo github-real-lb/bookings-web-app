@@ -21,8 +21,13 @@ func routes(app *config.AppConfig) http.Handler {
 	// add middleware that provides CSRF protection to all POST requests
 	mux.Use(NoSurf)
 
+	// setting routes
 	mux.Get("/", handlers.Repo.Home)
 	mux.Get("/about", handlers.Repo.About)
+
+	// setting file server
+	fileServer := http.FileServer(http.Dir("./static/"))
+	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
 	return mux
 }
