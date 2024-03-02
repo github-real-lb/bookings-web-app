@@ -1,5 +1,7 @@
 github.com/alexedwards/scs/v2 v2.7.0 h1:DY4rqLCM7UIR9iwxFS0++z1NhTzQlKV30aMHkJCDWKw=
 github.com/alexedwards/scs/v2 v2.7.0/go.mod h1:ToaROZxyKukJKT/xLcVQAChi5k6+Pn1Gvmdl7h3RRj8=
+github.com/github-real-lb/go-web-app v0.0.0-20240302032625-4624daf153f2 h1:MB+N1eRrCDzbc6OjL9FhHoR9zW5tHWEXpUWIT/1RGb8=
+github.com/github-real-lb/go-web-app v0.0.0-20240302032625-4624daf153f2/go.mod h1:FSiZS+ZOzYQ9cJ8/RRLA+1HJot1xkk2Gmt1B40knQfQ=
 github.com/go-chi/chi/v5 v5.0.12 h1:9euLV5sTrTNTRUU9POmDUvfxyj6LAABLUcEWO+JJb4s=
 github.com/go-chi/chi/v5 v5.0.12/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
 github.com/justinas/nosurf v1.1.1 h1:92Aw44hjSK4MxJeMSyDa7jwuI9GR2J/JCQiaKvXXSlk=
