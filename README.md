@@ -1,2 +1,2 @@
-# Go Web App
-A demo of a web app built in go.
+# Bookings Web App
+A demo of an hotel booking web app built in go.

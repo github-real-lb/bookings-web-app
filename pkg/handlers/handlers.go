@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/github-real-lb/go-web-app/models"
-	"github.com/github-real-lb/go-web-app/pkg/config"
-	"github.com/github-real-lb/go-web-app/pkg/render"
+	"github.com/github-real-lb/bookings-web-app/models"
+	"github.com/github-real-lb/bookings-web-app/pkg/config"
+	"github.com/github-real-lb/bookings-web-app/pkg/render"
 )
 
 // Repository is the repository type

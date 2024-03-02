@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/github-real-lb/go-web-app/models"
-	"github.com/github-real-lb/go-web-app/pkg/config"
+	"github.com/github-real-lb/bookings-web-app/models"
+	"github.com/github-real-lb/bookings-web-app/pkg/config"
 )
 
 var app *config.AppConfig
