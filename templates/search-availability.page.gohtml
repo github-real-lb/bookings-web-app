@@ -1,0 +1,58 @@
+{{template "base" .}}
+
+{{define "content"}}
+    <div class="container">      
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-10 col-sm-12 col-xs-12">
+                <h1 class="mt-5 mb-3">Search for availabilty</h1>
+
+                <form class="needs-validation" novalidate action="" method="get">
+                    <div class="input-group mb-3" id="reservation-dates">
+                        <span class="input-group-text">Arrival Date</span>
+                        <input type="text" class="form-control" name="start_date" required autocomplete="off" aria-label="Arrival Date" aria-describedby="start-date" placeholder="YYYY/MM/DD">
+                        <span class="input-group-text">Departure Date</span>
+                        <input type="text" class="form-control" name="end_date" required autocomplete="off" aria-label="Departure Date" aria-describedby="end-date" placeholder="YYYY/MM/DD">  
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-success">Check Availability</button>
+                    </div>   
+                </form>
+
+            </div>
+        </div>
+    </div>
+{{end}}
+
+{{define "js"}}
+    <script>
+        // Disabling form submissions if there are invalid fields
+        (() => {
+            'use strict'
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll(".needs-validation");
+
+            // Loop over them and prevent submission
+            Array.from(forms).forEach(form => {
+            form.addEventListener("submit", event => {
+                if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                }
+
+                form.classList.add("was-validated")
+            }, false)
+            });
+        })()    
+
+        // add vanilla date range picker to form
+        const elem = document.getElementById("reservation-dates");
+        const rangepicker = new DateRangePicker(elem, {
+            buttonClass: "btn",
+            format: "yyyy/mm/dd",
+            clearButton: true,
+            todayButton: true,
+            todayHighlight: true
+        });
+    </script>
+{{end}}
