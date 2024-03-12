@@ -6,29 +6,54 @@
             <div class="col-lg-8 col-md-10 col-sm-12 col-xs-12">
                 <h1 class="mt-5 mb-3">Make Reservation</h1>
                 <form class="needs-validation" method="post" action="" novalidate>
-                <hr>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="first-name">First Name</span>
-                    <input type="text" class="form-control" name="first_name" autocomplete="off" aria-label="First name input" aria-describedby="first-name">              
-                </div>       
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="last-name">Last Name</span>
-                    <input type="text" class="form-control" name="last_name" autocomplete="off" aria-label="Last name input" aria-describedby="last-name">
-                </div> 
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="email">Email Address</span>
-                    <input type="email" class="form-control" name="email" autocomplete="off" placeholder="name@example.com" aria-label="Email input" aria-describedby="email">
-                </div>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="phone">Phone Number</span>
-                    <input type="text" class="form-control" name="phone" autocomplete="off" aria-label="Phone input" aria-describedby="phone">              
-                </div>             
-                <hr>
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="submit" class="btn btn-success">Submit</button>
-                </div>
+                    <hr>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="first-name">First Name</span>
+                        <input type="text" class="form-control" name="first_name" autocomplete="off" aria-label="First name input" aria-describedby="first-name" required>              
+                    </div>       
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="last-name">Last Name</span>
+                        <input type="text" class="form-control" name="last_name" autocomplete="off" aria-label="Last name input" aria-describedby="last-name" required>
+                    </div> 
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="email">Email Address</span>
+                        <input type="email" class="form-control" name="email" autocomplete="off" placeholder="name@example.com" aria-label="Email input" aria-describedby="email" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="phone">Phone Number</span>
+                        <input type="text" class="form-control" name="phone" autocomplete="off" aria-label="Phone input" aria-describedby="phone" required>              
+                    </div>             
+                    <hr>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </div>
                 </form>                
             </div>        
         </div>                      
     </div>
+{{end}}
+
+
+{{define "js"}}
+    <script>
+        // Disabling form submissions if there are invalid fields
+        (() => {
+            'use strict'
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll(".needs-validation");
+
+            // Loop over them and prevent submission
+            Array.from(forms).forEach(form => {
+            form.addEventListener("submit", event => {
+                if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                }
+
+                form.classList.add("was-validated")
+            }, false)
+            });
+        })()  
+    </script>
 {{end}}
