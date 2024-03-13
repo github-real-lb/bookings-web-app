@@ -27,7 +27,7 @@
             </div>
         </div>
 
-        <!-- Button trigger modal -->
+        <!-- Button trigger check-availability-modal -->
         <div class="row">
             <div class="col text-center">          
                 <!-- <button type="button" class="btn btn-success" id="chk-availability">Check Availabilty</button>   -->
@@ -37,13 +37,14 @@
             </div>            
         </div>        
         
-        <!-- Modal -->
-        <div class="modal fade" id="check-availability-modal" tabindex="-1" aria-labelledby="modal-label" aria-hidden="true">
+        <!-- check-availability-modal -->
+        <div class="modal fade" id="check-availability-modal" aria-labelledby="availability-modal-label" aria-hidden="true"  tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <form class="needs-validation" novalidate action="" method="get">
+                <form class="needs-validation" method="get" action="" id="check-availability-form" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-3" id="modal-label">Check Availability</h1>
+                            <h1 class="modal-title fs-3" id="availability-modal-label">Check Availability</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">                         
@@ -55,12 +56,31 @@
                             </div>
                         </div>
                         <div class="modal-footer"> 
-                            <button type="submit" class="btn btn-success">Check Availability</button>
+                            <button type="button" class="btn btn-success" id="check-availability-button" data-bs-target="#show-result-modal" data-bs-toggle="modal">Check Availability</button>
                         </div>
                     </div>
                 </form>
             </div>
-        </div>        
+        </div> 
+        
+        <!-- show-result-modal -->
+        <div class="modal fade" id="show-result-modal" aria-hidden="true" aria-labelledby="result-modal-label" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-3" id="result-modal-label">Availability Result</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="result-modal-body">
+                  ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
     </div>
 {{end}}
 
@@ -94,6 +114,19 @@
             clearButton: true,
             todayButton: true,
             todayHighlight: true
-        });      
+        });
+        
+        document.getElementById("check-availability-button").addEventListener("click", function() {
+            fetch("/search-availability-json")
+                .then(response => response.json())
+                .then(data => {
+                    const resultModalBody = document.getElementById("result-modal-body");
+                    resultModalBody.textContent = data.message;                                        
+                })
+
+            
+        });
+
+        
     </script>
 {{end}}

@@ -6,7 +6,8 @@
             <div class="col-lg-7 col-md-10 col-sm-12 col-xs-12">
                 <h1 class="mt-5 mb-3">Search for availabilty</h1>
 
-                <form class="needs-validation" novalidate action="" method="get">
+                <form class="needs-validation" method="post" action="/search-availability" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="input-group mb-3" id="reservation-dates">
                         <span class="input-group-text">Arrival Date</span>
                         <input type="text" class="form-control" name="start_date" required autocomplete="off" aria-label="Arrival Date" aria-describedby="start-date" placeholder="YYYY/MM/DD">

@@ -9,6 +9,7 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/models"
 	"github.com/github-real-lb/bookings-web-app/pkg/config"
+	"github.com/justinas/nosurf"
 )
 
 var app *config.AppConfig
@@ -19,14 +20,15 @@ func NewTemplatesCache(ac *config.AppConfig) {
 }
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
-func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
 	// TODO: add default templates data
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
 // RenderTemplate execute a gohtml template from the template cache.
 // It requires to initally assign a template cache using the NewTemplatesCache function.
-func RenderTemplate(w http.ResponseWriter, gohtml string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 	var err error
 
@@ -47,7 +49,7 @@ func RenderTemplate(w http.ResponseWriter, gohtml string, td *models.TemplateDat
 	}
 
 	// adds default templates data relevant to all templates
-	td = AddDefaultData(td)
+	td = AddDefaultData(td, r)
 
 	// check for error in template execution before passing it to w (http.ResponseWriter)
 	buf := new(bytes.Buffer)

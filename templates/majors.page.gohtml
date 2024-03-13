@@ -40,7 +40,8 @@
         <!-- Modal -->
         <div class="modal fade" id="check-availability-modal" tabindex="-1" aria-labelledby="modal-label" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <form class="needs-validation" novalidate action="" method="get">
+                <form class="needs-validation" method="post" action="/majors-suite" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h1 class="modal-title fs-3" id="modal-label">Check Availability</h1>
