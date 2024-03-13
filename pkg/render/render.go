@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/github-real-lb/bookings-web-app/models"
 	"github.com/github-real-lb/bookings-web-app/pkg/config"
@@ -75,13 +76,13 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 		return tc, err
 	}
 
-	// get the names of all the files matching *.layout.gohtml from ./templates
-	layouts, err := filepath.Glob("./templates/*.layout.gohtml")
-	if err != nil {
-		return tc, err
-	}
+	// // get the names of all the files matching *.layout.gohtml from ./templates
+	// layouts, err := filepath.Glob("./templates/*.layout.gohtml")
+	// if err != nil {
+	// 	return tc, err
+	// }
 
-	layoutsExist := len(layouts) > 0
+	// layoutsExist := len(layouts) > 0
 
 	// range thruogh all the *.page.html files
 	for _, page := range pages {
@@ -94,8 +95,13 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 			return tc, err
 		}
 
-		if layoutsExist {
-			ts, err = ts.ParseGlob("./templates/*.layout.gohtml")
+		ts, err = ts.ParseFiles("./templates/base.layout.gohtml")
+		if err != nil {
+			return tc, err
+		}
+
+		if strings.HasSuffix(name, ".room.page.gohtml") {
+			ts, err = ts.ParseFiles("./templates/room.layout.gohtml")
 			if err != nil {
 				return tc, err
 			}

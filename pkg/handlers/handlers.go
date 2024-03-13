@@ -50,12 +50,12 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
 // Reservation is the generals-quarters room page handler
 func (m *Repository) Generals(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "generals.page.gohtml", &models.TemplateData{})
+	render.RenderTemplate(w, r, "generals.room.page.gohtml", &models.TemplateData{})
 }
 
 // Majors is the majors-suite room page handler
 func (m *Repository) Majors(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "majors.page.gohtml", &models.TemplateData{})
+	render.RenderTemplate(w, r, "majors.room.page.gohtml", &models.TemplateData{})
 }
 
 // Contact is the contact page handler
