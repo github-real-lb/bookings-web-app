@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
-	"github.com/github-real-lb/bookings-web-app/models"
-	"github.com/github-real-lb/bookings-web-app/pkg/config"
-	"github.com/github-real-lb/bookings-web-app/pkg/render"
+	"github.com/github-real-lb/bookings-web-app/internal/config"
+	"github.com/github-real-lb/bookings-web-app/internal/models"
+	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
 
 // Repository is the repository type
@@ -77,15 +78,25 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 }
 
 type jsonResponse struct {
-	OK      bool   `json:"ok"`
-	Message string `json:"message"`
+	StartDate time.Time `json:"start_date"`
+	EndDate   time.Time `json:"end_date"`
 }
 
 // AvailabilityJSON handles requests for availability and sends JSON response
 func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+
+	startDate, err := time.Parse("2006-01-02", r.Form.Get("start_date"))
+	if err != nil {
+		log.Println(err)
+	}
+	endDate, err := time.Parse("2006-01-02", r.Form.Get("end_date"))
+	if err != nil {
+		log.Println(err)
+	}
+
 	resp := jsonResponse{
-		OK:      true,
-		Message: "Available!",
+		StartDate: startDate,
+		EndDate:   endDate,
 	}
 
 	out, err := json.Marshal(resp)

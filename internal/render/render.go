@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/github-real-lb/bookings-web-app/models"
-	"github.com/github-real-lb/bookings-web-app/pkg/config"
+	"github.com/github-real-lb/bookings-web-app/internal/config"
+	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/justinas/nosurf"
 )
 

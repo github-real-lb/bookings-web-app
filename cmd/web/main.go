@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/github-real-lb/bookings-web-app/pkg/config"
-	"github.com/github-real-lb/bookings-web-app/pkg/handlers"
-	"github.com/github-real-lb/bookings-web-app/pkg/render"
+	"github.com/github-real-lb/bookings-web-app/internal/config"
+	"github.com/github-real-lb/bookings-web-app/internal/handlers"
+	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
 
 const addr = "localhost:8080"

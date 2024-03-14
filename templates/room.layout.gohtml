@@ -51,7 +51,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="result-modal-body">
-                    ...
+                    <div class="mb-3" id="result-modal-body1">
+                        ...
+                    </div>
+                    <div class="mb-3" id="result-modal-body2">
+                        ...
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -88,18 +93,25 @@
             const elem = document.getElementById("reservation-dates");
             const rangepicker = new DateRangePicker(elem, {
                 buttonClass: "btn",
-                format: "yyyy/mm/dd",
+                format: "yyyy-mm-dd",
                 clearButton: true,
                 todayButton: true,
                 todayHighlight: true
             });
             
             document.getElementById("check-availability-button").addEventListener("click", function() {
-                fetch("/search-availability-json")
+                const form = document.getElementById("check-availability-form");
+                let formDate = new FormData(form);
+                formDate.append("csrf_token","{{.CSRFToken}}");
+                
+                fetch("/search-availability-json",{
+                    method: "post",
+                    body: formDate,
+                })
                     .then(response => response.json())
                     .then(data => {
-                        const resultModalBody = document.getElementById("result-modal-body");
-                        resultModalBody.textContent = data.message;                                        
+                        document.getElementById("result-modal-body1").textContent = "Start date: " + data.start_date;
+                        document.getElementById("result-modal-body2").textContent = "End date: " + data.end_date;
                     })
 
                 
