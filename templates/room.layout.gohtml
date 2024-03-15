@@ -19,7 +19,7 @@
         <!-- check-availability-modal -->
         <div class="modal fade" id="check-availability-modal" aria-labelledby="availability-modal-label" aria-hidden="true"  tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <form class="needs-validation" method="get" action="" id="check-availability-form" novalidate>
+                <form id="check-availability-form" novalidate>
                     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -35,7 +35,8 @@
                             </div>
                         </div>
                         <div class="modal-footer"> 
-                            <button type="button" class="btn btn-success" id="check-availability-button" data-bs-target="#show-result-modal" data-bs-toggle="modal">Check Availability</button>
+                            <!-- id="check-availability-button" data-bs-target="#show-result-modal" data-bs-toggle="modal" -->
+                            <button type="submit" class="btn btn-success">Check Availability</button>
                         </div>
                     </div>
                 </form>
@@ -68,26 +69,35 @@
     {{end}} 
         
     {{block "js" .}} 
-        <script>
-            // Disabling form submissions if there are invalid fields
-            (() => {
-                'use strict'
+        <script>  
+            const searchModal = new bootstrap.Modal(document.getElementById("check-availability-modal"));
+            const resultModal = new bootstrap.Modal(document.getElementById("show-result-modal"));
 
-                // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                const forms = document.querySelectorAll(".needs-validation");
+            // Validates Search-Availability form and execute POST method
+            document.getElementById("check-availability-form").addEventListener("submit", event => {
+                event.preventDefault();
+                
+                let form = event.target;
+                form.classList.add("was-validated");  
 
-                // Loop over them and prevent submission
-                Array.from(forms).forEach(form => {
-                form.addEventListener("submit", event => {
-                    if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    }
-
-                    form.classList.add("was-validated")
-                }, false)
-                });
-            })()    
+                if (form.checkValidity()) {                    
+                    let formDate = new FormData(form);
+                    formDate.append("csrf_token","{{.CSRFToken}}");
+                    
+                    fetch("/search-availability-json",{
+                        method: "post",
+                        body: formDate,})
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("result-modal-body1").textContent = "Start date: " + data.start_date;
+                        document.getElementById("result-modal-body2").textContent = "End date: " + data.end_date; 
+                                              
+                        resultModal.show();
+                        searchModal.hide(); 
+                    })
+                    .catch(error => console.error('Error:', error));                                   
+                }
+             });          
 
             // add vanilla date range picker to form
             const elem = document.getElementById("reservation-dates");
@@ -97,25 +107,7 @@
                 clearButton: true,
                 todayButton: true,
                 todayHighlight: true
-            });
-            
-            document.getElementById("check-availability-button").addEventListener("click", function() {
-                const form = document.getElementById("check-availability-form");
-                let formDate = new FormData(form);
-                formDate.append("csrf_token","{{.CSRFToken}}");
-                
-                fetch("/search-availability-json",{
-                    method: "post",
-                    body: formDate,
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById("result-modal-body1").textContent = "Start date: " + data.start_date;
-                        document.getElementById("result-modal-body2").textContent = "End date: " + data.end_date;
-                    })
-
-                
-            });    
+            });   
         </script>   
     {{end}}    
 {{end}}
