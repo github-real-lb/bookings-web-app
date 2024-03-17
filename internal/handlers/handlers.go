@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/internal/config"
+	"github.com/github-real-lb/bookings-web-app/internal/forms"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
@@ -42,11 +43,6 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 // About is the about page handler
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "about.page.gohtml", &models.TemplateData{})
-}
-
-// Reservation is the make-reservation page handler
-func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{})
 }
 
 // Reservation is the generals-quarters room page handler
@@ -106,4 +102,46 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
+}
+
+// Reservation is the make-reservation page handler
+func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+		Form: forms.New(nil),
+		Data: map[string]any{
+			"reservation": models.Reservation{},
+		},
+	})
+}
+
+// PostReservation is the make-reservation post page handler
+func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+
+	reservation := models.Reservation{
+		FirstName: r.Form.Get("first_name"),
+		LastName:  r.Form.Get("last_name"),
+		Email:     r.Form.Get("email"),
+		Phone:     r.Form.Get("phone"),
+	}
+
+	form := forms.New(r.PostForm)
+	form.Required("first_name", "last_name", "email")
+	form.MinLenght("first_name", 3)
+	form.MinLenght("last_name", 3)
+
+	if !form.Valid() {
+		data := make(map[string]any)
+		data["reservation"] = reservation
+
+		render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+			Form: form,
+			Data: data,
+		})
+
+		return
+	}
 }

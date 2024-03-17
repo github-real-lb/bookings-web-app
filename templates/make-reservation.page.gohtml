@@ -4,25 +4,47 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10 col-sm-12 col-xs-12">
-                <h1 class="mt-5 mb-3">Make Reservation</h1>
-                <form class="needs-validation" method="post" action="" novalidate>
+                <h1 class="mt-5">Make Reservation</h1>
+                {{$res := index .Data "reservation"}}
+                <form class="" method="post" action="" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <hr>
-                    <div class="input-group mb-3">
+                    <div class="input-group flex-nowrap mt-3">
                         <span class="input-group-text" id="first-name">First Name</span>
-                        <input type="text" class="form-control" name="first_name" autocomplete="off" aria-label="First name input" aria-describedby="first-name" required>              
-                    </div>       
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="last-name">Last Name</span>
-                        <input type="text" class="form-control" name="last_name" autocomplete="off" aria-label="Last name input" aria-describedby="last-name" required>
+                        <input  type="text" class='form-control {{with .Form.Errors.Get "first_name"}} is-invalid {{end}}' 
+                                value="{{$res.FirstName}}" name="first_name" autocomplete="off" required>                                               
                     </div> 
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="email">Email Address</span>
-                        <input type="email" class="form-control" name="email" autocomplete="off" placeholder="name@example.com" aria-label="Email input" aria-describedby="email" required>
+                    {{with .Form.Errors.Get "first_name"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}}                     
+
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="last-name">Last Name</span>
+                        <input  type="text" class='form-control {{with .Form.Errors.Get "last_name"}} is-invalid {{end}}' 
+                                value="{{$res.LastName}}" name="last_name" autocomplete="off" required>
                     </div>
-                    <div class="input-group mb-3">
+                    {{with .Form.Errors.Get "last_name"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}}  
+
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="email">Email Address</span>
+                        <input  type="email" class='form-control {{with .Form.Errors.Get "email"}} is-invalid {{end}}' 
+                                value="{{$res.Email}}" name="email" autocomplete="off" placeholder="name@example.com" required>
+                    </div>
+                    {{with .Form.Errors.Get "email"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}} 
+
+                    <div class="input-group mt-3">
                         <span class="input-group-text" id="phone">Phone Number</span>
-                        <input type="text" class="form-control" name="phone" autocomplete="off" aria-label="Phone input" aria-describedby="phone" required>              
-                    </div>             
+                        <input  type="text" class='form-control {{with .Form.Errors.Get "phone"}} is-invalid {{end}}' 
+                                value="{{$res.Phone}}" name="phone" autocomplete="off" required>
+                    </div>
+                    {{with .Form.Errors.Get "phone"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}}   
+         
                     <hr>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-success">Submit</button>
