@@ -51,7 +51,7 @@
 
         {{block "content" .}}
 
-        {{end}}
+        {{end}}        
 
         <div class="row my-footer">
             <div class="col text-center">  
@@ -74,103 +74,12 @@
         <script src="https://unpkg.com/notie"></script>
         <!-- Sweetalert2 modal popups js CDN reference -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <!-- Local js reference -->
+        <script src="/static/js/alerts.js"></script>
 
         {{block "js" .}}
 
         {{end}}
-    
-        <script>
-            let attention = Prompt();            
-        
-            // notify pops up a Notie message
-            function notify(msg, msgType) {
-                notie.alert({
-                type: msgType, // ['success', 'warning', 'error', 'info', 'neutral']
-                text: msg,
-                //stay: Boolean, // optional, default = false
-                //time: Number, // optional, default = 3, minimum = 1,
-                position: "bottom" // optional, default = 'top', enum: ['top', 'bottom']
-                })       
-            }
-
-            // notifyModal pops up a Swal modal
-            function notifyModal(title, html, icon, button) {
-                Swal.fire({
-                title: title,
-                html: html,
-                icon: icon,
-                confirmButtonText: button
-            })
-            }                 
-            
-            // Prompt is used to call different type of Swal modal popups
-            function Prompt() {
-                // toast pops up a notification modal with title that disappears after 3 seconds
-                let toast = function(c) {
-                    const {
-                        title = "",
-                        icon = "success",
-                        position = "top-end",
-                    } = c;
-
-                    const Toast = Swal.mixin({
-                        toast: true,
-                        title: title,
-                        position: position,
-                        icon: icon,
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                        toast.onmouseenter = Swal.stopTimer;
-                        toast.onmouseleave = Swal.resumeTimer;
-                        }
-                    });
-
-                    Toast.fire();
-                }
-
-                // success pops up a success modal with check-mark, title, text, footer and OK button
-                let success = function(c) {
-                    const {
-                        title = "",
-                        text = "",
-                        footer = "",         
-                    } = c;
-
-                    Swal.fire({
-                        title: title,
-                        text: text,
-                        icon: "success",
-                        footer: footer,
-                        confirmButtonColor: "#1a714a" 
-                    });
-                }
-
-                // success pops up an error modal with x-mark, title, text, footer and OK button
-                let error = function(c) {
-                    const {
-                        title = "",
-                        text = "",
-                        footer = "",         
-                    } = c;
-
-                    Swal.fire({
-                        title: title,
-                        text: text,
-                        icon: "error",
-                        footer: footer,
-                        confirmButtonColor: "#1a714a" 
-                    });
-                }
-
-                return {
-                    toast: toast,
-                    success: success,
-                    error: error,
-                }
-            }
-        </script>
     </body>
 </html>
 {{end}}

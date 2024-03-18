@@ -1,5 +1,6 @@
 // script.js
 
+
 const Themes = Object.freeze({
     Blue: "primary",
     Gray: "secondary",

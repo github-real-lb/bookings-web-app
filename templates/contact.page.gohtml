@@ -5,7 +5,22 @@
         <div class="row">
             <div class="col">
                 <h1>This is the contacct page.</h1>
+                <button type="button" id="testButton" class="btn btn-success">Success</button>
             </div>
         </div>
     </div>
+{{end}}
+
+{{define "js"}}
+    <script>
+        document.getElementById("testButton").addEventListener("click", event => {
+            notify.toast({
+                //title: "Notification",
+                message: "This is a test of Toast Notification.",
+                theme: Themes.Blue,
+                //position: ToastPositions.BottomEnd,
+                duration: 4000,
+            });
+        })
+    </script>
 {{end}}
