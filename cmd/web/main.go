@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/github-real-lb/bookings-web-app/internal/handlers"
+	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
 
@@ -21,6 +23,9 @@ func main() {
 
 	// set app to developement mode
 	app.InProduction = false
+
+	// defining session stored types
+	gob.Register(models.Reservation{})
 
 	// setting up session manager
 	session := scs.New()

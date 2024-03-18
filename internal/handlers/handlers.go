@@ -21,13 +21,6 @@ type Repository struct {
 // Repo is the repository used by the handlers
 var Repo *Repository
 
-// // NewRepo creates a new Repository of Handlers
-// func NewRepo(ac *config.AppConfig) *Repository {
-// 	return &Repository{
-// 		App: ac,
-// 	}
-// }
-
 // NewHandlers initiates the repository for the handlers package
 func NewHandlersRepository(ac *config.AppConfig) {
 	Repo = &Repository{
@@ -132,16 +125,38 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	form.Required("first_name", "last_name", "email")
 	form.MinLenght("first_name", 3)
 	form.MinLenght("last_name", 3)
+	form.IsEmail("email")
 
 	if !form.Valid() {
-		data := make(map[string]any)
-		data["reservation"] = reservation
-
 		render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
 			Form: form,
-			Data: data,
+			Data: map[string]any{
+				"reservation": reservation,
+			},
 		})
 
 		return
 	}
+
+	m.App.Session.Put(r.Context(), "reservation", reservation)
+
+	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
+}
+
+func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
+	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		log.Println("cannot get reservation from the session.")
+		m.App.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	m.App.Session.Remove(r.Context(), "reservation")
+
+	render.RenderTemplate(w, r, "reservation-summary.page.gohtml", &models.TemplateData{
+		Data: map[string]any{
+			"reservation": reservation,
+		},
+	})
 }

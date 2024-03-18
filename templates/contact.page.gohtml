@@ -16,13 +16,13 @@
         document.getElementById("testButton").addEventListener("click", event => {
             notify.toast({
                 //title: "Notification",
-                message: "This is a test of Toast Notification.",
-                //theme: Themes.Red,
+                message: "This is a test of Toast Notification. More information displayed.",
+                theme: Themes.Red,
                 //position: ToastPositions.TopStart,
                 duration: 4000,
             });
 
-            notify.modal({title: "Notification Modal", message: "This is a test of Modal Notification."});
+            //notify.modal({title: "Notification Modal", message: "This is a test of Modal Notification."});
         })
     </script>
 {{end}}

@@ -61,7 +61,7 @@ function Prompt() {
             theme = Themes.White,
             position = ToastPositions.TopEnd,
             bsIcon = "bi-info-square",
-            duration = 3000,
+            duration = 4000,
         } = c;
         
         if (message == "") {
@@ -78,7 +78,7 @@ function Prompt() {
         if (title !== "") {
             toast.innerHTML = `            
                 <div class="toast-header">  
-                    <i class="bi ${bsIcon}">&nbsp;</i>          
+                    <i class="bi ${bsIcon}" style="font-size: 5mm">&nbsp;</i>          
                     <strong class="me-auto">${title}</strong>                
                     <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
@@ -89,8 +89,14 @@ function Prompt() {
             toast.innerHTML = `            
                 <div class="d-flex">
                     <div class="toast-body">
-                        <i class="bi ${bsIcon}">&nbsp;</i>
-                        ${message}
+                        <div class="row align-items-center">
+                            <div class="col-2 text-center">
+                                <i class="bi ${bsIcon}" style="font-size: 7mm"></i>
+                            </div>
+                            <div class="col-10">
+                                ${message}
+                            </div>
+                        </div>
                     </div>
                     <button type="button" class="btn-close ${theme.ButtonClose} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>`;
@@ -167,15 +173,4 @@ function Prompt() {
         toast: toast,
         modal: modal,
     }
-}
-
-// notify pops up a Notie message
-function notieMsg(msg, msgType) {
-    notie.alert({
-        type: msgType, // ['success', 'warning', 'error', 'info', 'neutral']
-        text: msg,
-        //stay: Boolean, // optional, default = false
-        //time: Number, // optional, default = 3, minimum = 1,
-        position: "bottom" // optional, default = 'top', enum: ['top', 'bottom']
-    })       
 }

@@ -21,10 +21,11 @@ func NewTemplatesCache(ac *config.AppConfig) {
 }
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
-func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
-	// TODO: add default templates data
+func AddDefaultData(td *models.TemplateData, r *http.Request) {
+	td.Flash = app.Session.PopString(r.Context(), "flash")
+	td.Warning = app.Session.PopString(r.Context(), "warning")
+	td.Error = app.Session.PopString(r.Context(), "error")
 	td.CSRFToken = nosurf.Token(r)
-	return td
 }
 
 // RenderTemplate execute a gohtml template from the template cache.
@@ -50,7 +51,7 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *m
 	}
 
 	// adds default templates data relevant to all templates
-	td = AddDefaultData(td, r)
+	AddDefaultData(td, r)
 
 	// check for error in template execution before passing it to w (http.ResponseWriter)
 	buf := new(bytes.Buffer)

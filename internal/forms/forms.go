@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/asaskevich/govalidator"
 )
 
 // Form is used to hold the data and error of the fields of an html form
@@ -49,6 +51,17 @@ func (f *Form) Required(fields ...string) bool {
 func (f *Form) MinLenght(field string, lenght int) bool {
 	if len(f.Get(field)) < lenght {
 		f.Errors.Add(field, fmt.Sprintf("Field requires at least %d characters!", lenght))
+		return false
+	}
+
+	return true
+}
+
+// IsEmail checks if the field passed has a valid email, and returns the result.
+// Error message is added to f.Errors.
+func (f *Form) IsEmail(field string) bool {
+	if !govalidator.IsEmail(f.Get(field)) {
+		f.Errors.Add(field, "Invalid email address!")
 		return false
 	}
 
