@@ -4,7 +4,7 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>This is the contacct page.</h1>
+                <h1>This is the contact page.</h1>
                 <button type="button" id="testButton" class="btn btn-success">Success</button>
             </div>
         </div>
@@ -17,10 +17,12 @@
             notify.toast({
                 //title: "Notification",
                 message: "This is a test of Toast Notification.",
-                theme: Themes.Blue,
-                //position: ToastPositions.BottomEnd,
+                //theme: Themes.Red,
+                //position: ToastPositions.TopStart,
                 duration: 4000,
             });
+
+            notify.modal({title: "Notification Modal", message: "This is a test of Modal Notification."});
         })
     </script>
 {{end}}
