@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -67,23 +68,21 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *m
 	}
 }
 
-// GetTemplatesCache returns a map of all *.gohtml templates from the directory ./templates
+// GetTemplatesCache returns a map of all *.gohtml templates from the directory
+// set in AppConfig.TemplatePath
 func GetTemplatesCache() (map[string]*template.Template, error) {
 	tc := map[string]*template.Template{}
 
+	app.TemplatePath = strings.TrimSuffix(app.TemplatePath, "/")
+	pattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
+	baseFilename := fmt.Sprintf("%s/base.layout.gohtml", app.TemplatePath)
+	roomFilename := fmt.Sprintf("%s/room.layout.gohtml", app.TemplatePath)
+
 	// get the names of all the files matching *.page.gohtml from ./templates
-	pages, err := filepath.Glob("./templates/*.page.gohtml")
+	pages, err := filepath.Glob(pattern)
 	if err != nil {
 		return tc, err
 	}
-
-	// // get the names of all the files matching *.layout.gohtml from ./templates
-	// layouts, err := filepath.Glob("./templates/*.layout.gohtml")
-	// if err != nil {
-	// 	return tc, err
-	// }
-
-	// layoutsExist := len(layouts) > 0
 
 	// range thruogh all the *.page.html files
 	for _, page := range pages {
@@ -96,13 +95,13 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 			return tc, err
 		}
 
-		ts, err = ts.ParseFiles("./templates/base.layout.gohtml")
+		ts, err = ts.ParseFiles(baseFilename)
 		if err != nil {
 			return tc, err
 		}
 
 		if strings.HasSuffix(name, ".room.page.gohtml") {
-			ts, err = ts.ParseFiles("./templates/room.layout.gohtml")
+			ts, err = ts.ParseFiles(roomFilename)
 			if err != nil {
 				return tc, err
 			}

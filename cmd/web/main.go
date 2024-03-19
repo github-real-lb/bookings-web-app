@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,23 +10,44 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/github-real-lb/bookings-web-app/internal/config"
-	"github.com/github-real-lb/bookings-web-app/internal/handlers"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
 
-const addr = "localhost:8080"
+const ADDRESS = "localhost:8080"
 
+var templatePath = "./templates"
 var app config.AppConfig
 
 func main() {
+	err := InitApp()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server := NewServer(ADDRESS)
+
+	// start the server
+	fmt.Println("Starting web server on,", ADDRESS)
+	err = server.ListenAndServe()
+	log.Fatal(err)
+}
+
+func InitApp() error {
 	var err error
 
 	// set app to developement mode
-	app.InProduction = false
+	app.InDevelopementMode()
 
-	// defining session stored types
-	gob.Register(models.Reservation{})
+	// Initiating the render package templates cahce
+	render.NewTemplatesCache(&app)
+
+	// load templates cache to AppConfig
+	app.TemplatePath = templatePath
+	app.TemplateCache, err = render.GetTemplatesCache()
+	if err != nil {
+		return errors.New(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
+	}
 
 	// setting up session manager
 	session := scs.New()
@@ -35,29 +57,8 @@ func main() {
 	session.Cookie.Secure = app.InProduction // determines use of SSL encryption
 	app.Session = session
 
-	// set app to ignore templates cache and loads templates from disk - developement mode
-	app.UseTemplateCache = false
+	// defining session stored types
+	gob.Register(models.Reservation{})
 
-	// load templates cache to AppConfig
-	app.TemplateCache, err = render.GetTemplatesCache()
-	if err != nil {
-		log.Fatal("error creating gohtml templates cache:", err)
-	}
-
-	// Initiating the handlers package repo
-	handlers.NewHandlersRepository(&app)
-
-	// Initiating the render package templates cahce
-	render.NewTemplatesCache(&app)
-
-	// create new http server with routes
-	srv := http.Server{
-		Addr:    addr,
-		Handler: routes(&app),
-	}
-
-	// start the server
-	fmt.Println("Starting web server on,", addr)
-	err = srv.ListenAndServe()
-	log.Fatal(err)
+	return nil
 }
