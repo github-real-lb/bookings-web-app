@@ -11,40 +11,41 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
-	"github.com/github-real-lb/bookings-web-app/internal/render"
 )
 
-const ADDRESS = "localhost:8080"
-
-var templatePath = "./templates"
+// app holds the configurations and templates of the app
 var app config.AppConfig
 
 func main() {
-	err := InitApp()
+	err := InitializeApp(config.DevelopmentMode)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	server := NewServer(ADDRESS)
+	server := NewServer(app.ServerAddress)
 
 	// start the server
-	fmt.Println("Starting web server on,", ADDRESS)
+	fmt.Println("Starting web server on,", app.ServerAddress)
 	err = server.ListenAndServe()
 	log.Fatal(err)
 }
 
-func InitApp() error {
+// InitializeApp loads the app configurations and setup based on the application mode
+func InitializeApp(appMode config.AppMode) error {
 	var err error
 
-	// set app to developement mode
-	app.InDevelopementMode()
+	// load application configurations and set app to developement mode
+	app = config.LoadConfig()
 
-	// Initiating the render package templates cahce
-	render.NewTemplatesCache(&app)
+	switch appMode {
+	case config.DevelopmentMode:
+		app.SetDevelopementMode()
+	case config.TestingMode:
+		app.SetTestingMode()
+	default:
+	}
 
 	// load templates cache to AppConfig
-	app.TemplatePath = templatePath
-	app.TemplateCache, err = render.GetTemplatesCache()
+	app.TemplateCache, err = GetTemplatesCache()
 	if err != nil {
 		return errors.New(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
 	}
@@ -54,7 +55,7 @@ func InitApp() error {
 	session.Lifetime = 24 * time.Hour // keeps session data for 24 hours
 	session.Cookie.Persist = true     // keeps session data after browser is closed
 	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = app.InProduction // determines use of SSL encryption
+	session.Cookie.Secure = app.AppMode == config.ProductionMode // determines use of SSL encryption
 	app.Session = session
 
 	// defining session stored types

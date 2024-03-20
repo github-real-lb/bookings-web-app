@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/github-real-lb/bookings-web-app/internal/forms"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
-	"github.com/github-real-lb/bookings-web-app/internal/render"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -44,7 +44,9 @@ func NewHandler(store Store) http.Handler {
 	mux.Use(app.Session.LoadAndSave)
 
 	// add middleware that provides CSRF protection to all POST requests
-	mux.Use(NoSurf)
+	if app.AppMode != config.TestingMode {
+		mux.Use(NoSurf)
+	}
 
 	// setting routes
 	mux.Get("/", store.Home)
@@ -60,7 +62,7 @@ func NewHandler(store Store) http.Handler {
 
 	mux.Get("/search-availability", store.Availability)
 	mux.Post("/search-availability", store.PostAvailability)
-	mux.Post("/search-availability-json", store.AvailabilityJSON)
+	mux.Post("/search-availability-json", store.PostAvailabilityJSON)
 
 	mux.Get("/make-reservation", store.Reservation)
 	mux.Post("/make-reservation", store.PostReservation)
@@ -75,32 +77,50 @@ func NewHandler(store Store) http.Handler {
 
 // Home is the home page handler
 func (s *Store) Home(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "home.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "home.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // About is the about page handler
 func (s *Store) About(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "about.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "about.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // Reservation is the generals-quarters room page handler
 func (s *Store) Generals(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "generals.room.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "generals.room.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // Majors is the majors-suite room page handler
 func (s *Store) Majors(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "majors.room.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "majors.room.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // Contact is the contact page handler
 func (s *Store) Contact(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "contact.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "contact.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // Availability is the search-availability page handler
 func (s *Store) Availability(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "search-availability.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "search-availability.page.gohtml", &models.TemplateData{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // PostAvailability is the search-availability page post handler
@@ -117,7 +137,7 @@ type jsonResponse struct {
 }
 
 // AvailabilityJSON handles requests for availability and sends JSON response
-func (s *Store) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+func (s *Store) PostAvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 	startDate, err := time.Parse("2006-01-02", r.Form.Get("start_date"))
 	if err != nil {
@@ -144,12 +164,15 @@ func (s *Store) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 // Reservation is the make-reservation page handler
 func (s *Store) Reservation(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
 		Form: forms.New(nil),
 		Data: map[string]any{
 			"reservation": models.Reservation{},
 		},
 	})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // PostReservation is the make-reservation post page handler
@@ -173,12 +196,16 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 	form.IsEmail("email")
 
 	if !form.Valid() {
-		render.RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
 			Form: form,
 			Data: map[string]any{
 				"reservation": reservation,
 			},
 		})
+
+		if err != nil {
+			log.Println(err)
+		}
 
 		return
 	}
@@ -199,9 +226,13 @@ func (s *Store) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 
 	app.Session.Remove(r.Context(), "reservation")
 
-	render.RenderTemplate(w, r, "reservation-summary.page.gohtml", &models.TemplateData{
+	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &models.TemplateData{
 		Data: map[string]any{
 			"reservation": reservation,
 		},
 	})
+
+	if err != nil {
+		log.Println(err)
+	}
 }

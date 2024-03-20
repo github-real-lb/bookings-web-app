@@ -1,25 +1,16 @@
-package render
+package main
 
 import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
 
-	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/justinas/nosurf"
 )
-
-var app *config.AppConfig
-
-// NewTemplatesCache initiates the gohtml templates cache for the render package
-func NewTemplatesCache(ac *config.AppConfig) {
-	app = ac
-}
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
 func AddDefaultData(td *models.TemplateData, r *http.Request) {
@@ -31,7 +22,7 @@ func AddDefaultData(td *models.TemplateData, r *http.Request) {
 
 // RenderTemplate execute a gohtml template from the template cache.
 // It requires to initally assign a template cache using the NewTemplatesCache function.
-func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *models.TemplateData) error {
 	var tc map[string]*template.Template
 	var err error
 
@@ -41,14 +32,14 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *m
 	} else {
 		tc, err = GetTemplatesCache()
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 	}
 
 	// checks if gohtml template exist in cache
 	t, ok := tc[gohtml]
 	if !ok {
-		log.Printf("couldn't find %s in template cache.\n", gohtml)
+		return fmt.Errorf("couldn't find %s in template cache", gohtml)
 	}
 
 	// adds default templates data relevant to all templates
@@ -58,14 +49,16 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *m
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, td)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	// render the template to w (http.ResponseWriter)
 	_, err = buf.WriteTo(w)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+
+	return nil
 }
 
 // GetTemplatesCache returns a map of all *.gohtml templates from the directory
