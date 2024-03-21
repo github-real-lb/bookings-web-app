@@ -204,7 +204,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 	form.Required("first_name", "last_name", "email")
 	form.MinLenght("first_name", 3)
 	form.MinLenght("last_name", 3)
-	form.IsEmail("email")
+	form.IsEmailValid("email")
 
 	if !form.Valid() {
 		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
