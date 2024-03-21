@@ -55,7 +55,7 @@ func InitializeApp(appMode config.AppMode) error {
 	session.Lifetime = 24 * time.Hour // keeps session data for 24 hours
 	session.Cookie.Persist = true     // keeps session data after browser is closed
 	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = app.AppMode == config.ProductionMode // determines use of SSL encryption
+	session.Cookie.Secure = app.InProductionMode() // determines use of SSL encryption
 	app.Session = session
 
 	// defining session stored types

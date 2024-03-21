@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 
-	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/justinas/nosurf"
 )
 
@@ -13,7 +12,7 @@ func NoSurf(next http.Handler) http.Handler {
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,
 		Path:     "/",
-		Secure:   app.AppMode == config.ProductionMode,
+		Secure:   app.InDevelopmentMode(),
 		SameSite: http.SameSiteLaxMode,
 	})
 

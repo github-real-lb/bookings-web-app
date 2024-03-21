@@ -75,11 +75,12 @@ func TestPageHandlers(t *testing.T) {
 				data := url.Values{}
 
 				for key, value := range test.params {
-					data.Add(key, value)
+					data.Set(key, value)
 				}
 
 				response, err := testServer.Client().PostForm(testServer.URL+test.url, data)
 				require.NoError(t, err)
+				defer response.Body.Close()
 
 				assert.Equal(t, test.excpectedStatusCode, response.StatusCode)
 			}

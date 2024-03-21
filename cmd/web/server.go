@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/github-real-lb/bookings-web-app/internal/config"
 	"github.com/github-real-lb/bookings-web-app/internal/forms"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/go-chi/chi/v5"
@@ -44,7 +43,7 @@ func NewHandler(store Store) http.Handler {
 	mux.Use(app.Session.LoadAndSave)
 
 	// add middleware that provides CSRF protection to all POST requests
-	if app.AppMode != config.TestingMode {
+	if !app.InTestingMode() {
 		mux.Use(NoSurf)
 	}
 
@@ -125,6 +124,12 @@ func (s *Store) Availability(w http.ResponseWriter, r *http.Request) {
 
 // PostAvailability is the search-availability page post handler
 func (s *Store) PostAvailability(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	startDate := r.Form.Get("start_date")
 	endDate := r.Form.Get("end_date")
 
@@ -138,6 +143,11 @@ type jsonResponse struct {
 
 // AvailabilityJSON handles requests for availability and sends JSON response
 func (s *Store) PostAvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	startDate, err := time.Parse("2006-01-02", r.Form.Get("start_date"))
 	if err != nil {
@@ -180,6 +190,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	reservation := models.Reservation{

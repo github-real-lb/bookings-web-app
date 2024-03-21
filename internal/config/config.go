@@ -54,15 +54,32 @@ func LoadConfig() AppConfig {
 	return app
 }
 
+// SetDevelopementMode sets the Application Configuration for development.
 func (app *AppConfig) SetDevelopementMode() {
 	app.AppMode = DevelopmentMode
 	app.UseTemplateCache = false
 }
 
+// SetTestingMode sets the Application Configuration for testing.
 func (app *AppConfig) SetTestingMode() {
 	app.AppMode = TestingMode
 	app.UseTemplateCache = false
 
 	// TODO: this should be loaded from app.env file.
 	app.TemplatePath = "./../../templates"
+}
+
+// InProductionMode returns true if the Application Configuration is set for production.
+func (app *AppConfig) InProductionMode() bool {
+	return app.AppMode == ProductionMode
+}
+
+// InDevelopmentMode returns true if the Application Configuration is set for development.
+func (app *AppConfig) InDevelopmentMode() bool {
+	return app.AppMode == DevelopmentMode
+}
+
+// InTestingMode returns true if the Application Configuration is set for testing.
+func (app *AppConfig) InTestingMode() bool {
+	return app.AppMode == TestingMode
 }
