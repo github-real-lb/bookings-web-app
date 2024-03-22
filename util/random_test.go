@@ -223,7 +223,6 @@ func TestRandomDiscount(t *testing.T) {
 	discounts := make([]float64, N)
 	for i := 0; i < N; i++ {
 		discounts[i] = RandomDiscount()
-		assert.NotEmpty(t, discounts[i])
 		assert.GreaterOrEqual(t, discounts[i], float64(0.00))
 		assert.LessOrEqual(t, discounts[i], float64(0.30))
 	}
