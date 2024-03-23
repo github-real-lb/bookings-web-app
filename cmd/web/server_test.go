@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,7 +58,7 @@ func TestPageHandlers(t *testing.T) {
 	}
 
 	// initialize the Application Config and Templates
-	InitializeApp(util.TestingMode)
+	InitializeApp(web.TestingMode)
 
 	// start test server and send request
 	testServer := httptest.NewTLSServer(NewHandler(Store{}))

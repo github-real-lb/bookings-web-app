@@ -35,7 +35,7 @@ func TestNew(t *testing.T) {
 	createRandomForm(t)
 }
 
-func TestGetValue(t *testing.T) {
+func TestForm_GetValue(t *testing.T) {
 	tests := []struct {
 		key    string
 		value  string
@@ -54,7 +54,7 @@ func TestGetValue(t *testing.T) {
 	}
 }
 
-func TestValid(t *testing.T) {
+func TestForm_Valid(t *testing.T) {
 	form := createRandomForm(t)
 	assert.True(t, form.Valid())
 
@@ -62,7 +62,7 @@ func TestValid(t *testing.T) {
 	assert.False(t, form.Valid())
 }
 
-func TestHas(t *testing.T) {
+func TestForm_Has(t *testing.T) {
 	form := createRandomForm(t)
 
 	// check ok
@@ -78,7 +78,7 @@ func TestHas(t *testing.T) {
 	assert.False(t, form.Has("WhiteSpaces"))
 }
 
-func TestRequired(t *testing.T) {
+func TestForm_Required(t *testing.T) {
 	form := createRandomForm(t)
 
 	// check ok
@@ -92,11 +92,14 @@ func TestRequired(t *testing.T) {
 	assert.False(t, form.Required("WhiteSpaces"))
 }
 
-func TestMinLenght(t *testing.T) {
+func TestForm_MinLenght(t *testing.T) {
 	form := createRandomForm(t)
 
 	// check ok
 	assert.True(t, form.MinLenght("key1", 3))
+
+	// check not ok
+	assert.False(t, form.MinLenght("key1", 100))
 
 	// check missing key
 	assert.False(t, form.MinLenght(util.RandomName(), 3))
@@ -106,7 +109,7 @@ func TestMinLenght(t *testing.T) {
 	assert.False(t, form.Required("WhiteSpaces"))
 }
 
-func TestIsEmailValid(t *testing.T) {
+func TestForm_IsEmailValid(t *testing.T) {
 	tests := []struct {
 		key    string
 		value  string

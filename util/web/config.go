@@ -1,8 +1,7 @@
-package util
+package web
 
 import (
 	"html/template"
-	"log"
 
 	"github.com/alexedwards/scs/v2"
 )
@@ -20,7 +19,7 @@ const (
 type AppConfig struct {
 	AppMode
 
-	InfoLog *log.Logger
+	AppLogger
 
 	// ServerAddress is http.Server listening address
 	ServerAddress string
@@ -44,8 +43,12 @@ type AppConfig struct {
 func LoadConfig() AppConfig {
 	var app AppConfig
 
+	// setting app configuration to production mode
 	app.AppMode = ProductionMode
 	app.UseTemplateCache = true
+
+	// initializing loggers
+	app.AppLogger = NewAppLogger()
 
 	// TODO: these should be loaded from app.env file.
 	app.ServerAddress = "localhost:8080"

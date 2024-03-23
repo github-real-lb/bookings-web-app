@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -78,7 +78,7 @@ func NewHandler(store Store) http.Handler {
 func (s *Store) Home(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -86,7 +86,7 @@ func (s *Store) Home(w http.ResponseWriter, r *http.Request) {
 func (s *Store) About(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "about.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -94,7 +94,7 @@ func (s *Store) About(w http.ResponseWriter, r *http.Request) {
 func (s *Store) Generals(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "generals.room.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -102,7 +102,7 @@ func (s *Store) Generals(w http.ResponseWriter, r *http.Request) {
 func (s *Store) Majors(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "majors.room.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -110,7 +110,7 @@ func (s *Store) Majors(w http.ResponseWriter, r *http.Request) {
 func (s *Store) Contact(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "contact.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -118,7 +118,7 @@ func (s *Store) Contact(w http.ResponseWriter, r *http.Request) {
 func (s *Store) Availability(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "search-availability.page.gohtml", &models.TemplateData{})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -126,7 +126,7 @@ func (s *Store) Availability(w http.ResponseWriter, r *http.Request) {
 func (s *Store) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 		return
 	}
 
@@ -145,17 +145,17 @@ type jsonResponse struct {
 func (s *Store) PostAvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 		return
 	}
 
 	startDate, err := time.Parse("2006-01-02", r.Form.Get("start_date"))
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 	endDate, err := time.Parse("2006-01-02", r.Form.Get("end_date"))
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 
 	resp := jsonResponse{
@@ -165,7 +165,7 @@ func (s *Store) PostAvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 	out, err := json.Marshal(resp)
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -181,7 +181,7 @@ func (s *Store) Reservation(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }
 
@@ -189,7 +189,7 @@ func (s *Store) Reservation(w http.ResponseWriter, r *http.Request) {
 func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
-			log.Println(err)
+			app.LogServerError(w, err)
 		}
 
 		return
@@ -229,7 +229,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 func (s *Store) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		log.Println("cannot get reservation from the session.")
+		app.LogError(errors.New("cannot get reservation from the session"))
 		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
@@ -244,6 +244,6 @@ func (s *Store) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		log.Println(err)
+		app.LogServerError(w, err)
 	}
 }

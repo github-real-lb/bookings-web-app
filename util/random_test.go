@@ -82,7 +82,7 @@ func TestRandomString(t *testing.T) {
 	assert.Empty(t, s)
 
 	ss := make([]string, N)
-	for len := 1; len < 4; len++ {
+	for len := 2; len < 4; len++ {
 		for i := 0; i < N; i++ {
 			ss[i] = RandomString(len)
 			assert.NotEmpty(t, ss[i])

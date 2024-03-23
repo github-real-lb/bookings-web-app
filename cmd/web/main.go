@@ -10,14 +10,14 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/github-real-lb/bookings-web-app/internal/models"
-	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/web"
 )
 
 // app holds the configurations and templates of the app
-var app util.AppConfig
+var app web.AppConfig
 
 func main() {
-	err := InitializeApp(util.DevelopmentMode)
+	err := InitializeApp(web.DevelopmentMode)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,16 +30,17 @@ func main() {
 }
 
 // InitializeApp loads the app configurations and setup based on the application mode
-func InitializeApp(appMode util.AppMode) error {
+func InitializeApp(appMode web.AppMode) error {
 	var err error
 
-	// load application configurations and set app to developement mode
-	app = util.LoadConfig()
+	// load application default configurations
+	app = web.LoadConfig()
 
+	// setting up application to required mode
 	switch appMode {
-	case util.DevelopmentMode:
+	case web.DevelopmentMode:
 		app.SetDevelopementMode()
-	case util.TestingMode:
+	case web.TestingMode:
 		app.SetTestingMode()
 	default:
 	}

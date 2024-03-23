@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/github-real-lb/bookings-web-app/internal/models"
-	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAddDefaultData(t *testing.T) {
-	InitializeApp(util.TestingMode)
+	InitializeApp(web.TestingMode)
 	request := NewTestRequestWithSession(t)
 
 	// add data into session
@@ -28,7 +28,7 @@ func TestAddDefaultData(t *testing.T) {
 }
 
 func TestRenderTemplate(t *testing.T) {
-	InitializeApp(util.TestingMode)
+	InitializeApp(web.TestingMode)
 	recorder := httptest.NewRecorder()
 	request := NewTestRequestWithSession(t)
 
