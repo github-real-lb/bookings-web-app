@@ -8,12 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/justinas/nosurf"
 )
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
-func AddDefaultData(td *models.TemplateData, r *http.Request) {
+func AddDefaultData(td *TemplateData, r *http.Request) {
 	td.Flash = app.Session.PopString(r.Context(), "flash")
 	td.Warning = app.Session.PopString(r.Context(), "warning")
 	td.Error = app.Session.PopString(r.Context(), "error")
@@ -22,7 +21,7 @@ func AddDefaultData(td *models.TemplateData, r *http.Request) {
 
 // RenderTemplate execute a gohtml template from the template cache.
 // It requires to initally assign a template cache using the NewTemplatesCache function.
-func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *models.TemplateData) error {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
 	var tc map[string]*template.Template
 	var err error
 

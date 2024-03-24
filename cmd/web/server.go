@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/internal/forms"
-	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -76,7 +75,7 @@ func NewHandler(store Store) http.Handler {
 
 // Home is the home page handler
 func (s *Store) Home(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "home.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -84,7 +83,7 @@ func (s *Store) Home(w http.ResponseWriter, r *http.Request) {
 
 // About is the about page handler
 func (s *Store) About(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "about.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -92,7 +91,7 @@ func (s *Store) About(w http.ResponseWriter, r *http.Request) {
 
 // Reservation is the generals-quarters room page handler
 func (s *Store) Generals(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "generals.room.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "generals.room.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -100,7 +99,7 @@ func (s *Store) Generals(w http.ResponseWriter, r *http.Request) {
 
 // Majors is the majors-suite room page handler
 func (s *Store) Majors(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "majors.room.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "majors.room.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -108,7 +107,7 @@ func (s *Store) Majors(w http.ResponseWriter, r *http.Request) {
 
 // Contact is the contact page handler
 func (s *Store) Contact(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "contact.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -116,7 +115,7 @@ func (s *Store) Contact(w http.ResponseWriter, r *http.Request) {
 
 // Availability is the search-availability page handler
 func (s *Store) Availability(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "search-availability.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
@@ -174,10 +173,10 @@ func (s *Store) PostAvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
 // Reservation is the make-reservation page handler
 func (s *Store) Reservation(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 		Form: forms.New(nil),
 		Data: map[string]any{
-			"reservation": models.Reservation{},
+			"reservation": Reservation{},
 		},
 	})
 	if err != nil {
@@ -193,7 +192,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reservation := models.Reservation{
+	reservation := Reservation{
 		FirstName: r.Form.Get("first_name"),
 		LastName:  r.Form.Get("last_name"),
 		Email:     r.Form.Get("email"),
@@ -207,7 +206,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 	form.IsEmailValid("email")
 
 	if !form.Valid() {
-		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &models.TemplateData{
+		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 			Form: form,
 			Data: map[string]any{
 				"reservation": reservation,
@@ -227,7 +226,7 @@ func (s *Store) PostReservation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Store) ReservationSummary(w http.ResponseWriter, r *http.Request) {
-	reservation, ok := app.Session.Get(r.Context(), "reservation").(models.Reservation)
+	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
 		app.LogError(errors.New("cannot get reservation from the session"))
 		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
@@ -237,7 +236,7 @@ func (s *Store) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 
 	app.Session.Remove(r.Context(), "reservation")
 
-	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &models.TemplateData{
+	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &TemplateData{
 		Data: map[string]any{
 			"reservation": reservation,
 		},

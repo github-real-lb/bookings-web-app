@@ -4,7 +4,7 @@ CREATE TABLE "users" (
   "last_name" varchar(255) NOT NULL,
   "email" varchar(255) NOT NULL,
   "password" varchar(255) NOT NULL,
-  "access_level" int NOT NULL,
+  "access_level" bigint NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );

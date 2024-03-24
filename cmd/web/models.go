@@ -1,4 +1,4 @@
-package models
+package main
 
 import "github.com/github-real-lb/bookings-web-app/internal/forms"
 
@@ -13,4 +13,12 @@ type TemplateData struct {
 	Warning   string // Warning message
 	Error     string // Error message
 	Form      *forms.Form
+}
+
+// Reservation is used to hold reservation data
+type Reservation struct {
+	FirstName string
+	LastName  string
+	Email     string
+	Phone     string
 }

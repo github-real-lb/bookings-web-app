@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/github-real-lb/bookings-web-app/util/web"
 )
 
@@ -60,7 +59,7 @@ func InitializeApp(appMode web.AppMode) error {
 	app.Session = session
 
 	// defining session stored types
-	gob.Register(models.Reservation{})
+	gob.Register(Reservation{})
 
 	return nil
 }

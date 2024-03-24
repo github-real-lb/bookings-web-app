@@ -4,7 +4,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/github-real-lb/bookings-web-app/internal/models"
 	"github.com/github-real-lb/bookings-web-app/util/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestAddDefaultData(t *testing.T) {
 	app.Session.Put(request.Context(), "warning", "warning")
 	app.Session.Put(request.Context(), "error", "error")
 
-	td := models.TemplateData{}
+	td := TemplateData{}
 	AddDefaultData(&td, request)
 	require.NotEmpty(t, td)
 	assert.Equal(t, "flash", td.Flash)
@@ -33,17 +32,17 @@ func TestRenderTemplate(t *testing.T) {
 	request := NewTestRequestWithSession(t)
 
 	// test ok on reloading templates cache (developement and testing modes)
-	err := RenderTemplate(recorder, request, "home.page.gohtml", &models.TemplateData{})
+	err := RenderTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 
 	// test ok on using template cache (production modes)
 	app.UseTemplateCache = true
-	err = RenderTemplate(recorder, request, "home.page.gohtml", &models.TemplateData{})
+	err = RenderTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 
 	// test not ok on missing template
 	app.UseTemplateCache = true
-	err = RenderTemplate(recorder, request, "non-existing.page.gohtml", &models.TemplateData{})
+	err = RenderTemplate(recorder, request, "non-existing.page.gohtml", &TemplateData{})
 	assert.Error(t, err)
 }
 
