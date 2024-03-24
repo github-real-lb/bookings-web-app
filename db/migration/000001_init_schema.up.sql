@@ -11,6 +11,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "reservations" (
   "id" bigserial PRIMARY KEY,
+  "code" varchar(6) NOT NULL,
   "first_name" varchar(255) NOT NULL,
   "last_name" varchar(255) NOT NULL,
   "email" varchar(255) NOT NULL,
@@ -48,17 +49,13 @@ CREATE TABLE "restrictions" (
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE INDEX ON "users" ("first_name");
+CREATE UNIQUE INDEX ON "users" ("email");
 
-CREATE INDEX ON "users" ("last_name");
-
-CREATE INDEX ON "users" ("first_name", "last_name");
-
-CREATE INDEX ON "reservations" ("first_name");
+CREATE UNIQUE INDEX ON "reservations" ("code");
 
 CREATE INDEX ON "reservations" ("last_name");
 
-CREATE INDEX ON "reservations" ("first_name", "last_name");
+CREATE INDEX ON "reservations" ("code", "last_name");
 
 CREATE INDEX ON "reservations" ("start_date");
 
@@ -66,22 +63,16 @@ CREATE INDEX ON "reservations" ("end_date");
 
 CREATE INDEX ON "reservations" ("room_id");
 
-CREATE INDEX ON "rooms" ("room");
-
-CREATE INDEX ON "room_restrictions" ("start_date");
-
-CREATE INDEX ON "room_restrictions" ("end_date");
+CREATE INDEX ON "room_restrictions" ("start_date", "end_date");
 
 CREATE INDEX ON "room_restrictions" ("room_id");
 
 CREATE INDEX ON "room_restrictions" ("reservation_id");
 
-CREATE INDEX ON "restrictions" ("name");
+ALTER TABLE "reservations" ADD CONSTRAINT "fk_reservations_room_id" FOREIGN KEY ("room_id") REFERENCES "rooms" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "reservations" ADD FOREIGN KEY ("room_id") REFERENCES "rooms" ("id");
+ALTER TABLE "room_restrictions" ADD CONSTRAINT "fk_room_restrictions_room_id" FOREIGN KEY ("room_id") REFERENCES "rooms" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "room_restrictions" ADD FOREIGN KEY ("room_id") REFERENCES "rooms" ("id");
+ALTER TABLE "room_restrictions" ADD CONSTRAINT "fk_room_restrictions_reservation_id" FOREIGN KEY ("reservation_id") REFERENCES "reservations" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "room_restrictions" ADD FOREIGN KEY ("reservation_id") REFERENCES "reservations" ("id");
-
-ALTER TABLE "room_restrictions" ADD FOREIGN KEY ("restrictions_id") REFERENCES "restrictions" ("id");
+ALTER TABLE "room_restrictions" ADD CONSTRAINT "fk_room_restrictions_restrictions_id" FOREIGN KEY ("restrictions_id") REFERENCES "restrictions" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
