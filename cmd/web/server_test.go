@@ -1,6 +1,15 @@
 package main
 
-// func TestNewServer(t *testing.T) {
-// 	server := NewServer(app.ServerAddress)
-// 	assert.IsType(t, (*Server)(nil), server)
-// }
+import (
+	"testing"
+
+	"github.com/github-real-lb/bookings-web-app/db/mocks"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewServer(t *testing.T) {
+	store := mocks.NewMockStore(t)
+
+	server := NewServer(store)
+	assert.IsType(t, (*Server)(nil), server)
+}
