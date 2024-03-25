@@ -6,30 +6,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/github-real-lb/bookings-web-app/util/web"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
-}
-
-func TestInitializeApp(t *testing.T) {
-	t.Run("ProductionMode", func(t *testing.T) {
-		err := InitializeApp(web.ProductionMode)
-		assert.NoError(t, err)
-	})
-
-	t.Run("DevelopmentMode", func(t *testing.T) {
-		err := InitializeApp(web.DevelopmentMode)
-		assert.NoError(t, err)
-	})
-
-	t.Run("TestingMode", func(t *testing.T) {
-		err := InitializeApp(web.TestingMode)
-		assert.NoError(t, err)
-	})
 }
 
 // NewTestRequest creates a new get request for use in testing

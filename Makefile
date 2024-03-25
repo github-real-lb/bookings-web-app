@@ -11,10 +11,10 @@ dropdb:
 	docker exec -it postgres16 dropdb bookings
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bookings?sslmode=disable" -verbose up
+	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bookings?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bookings?sslmode=disable" -verbose down
+	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bookings?sslmode=disable" -verbose down
 
 sqlc:
 	sqlc generate

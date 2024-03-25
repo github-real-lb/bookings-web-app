@@ -1,4 +1,4 @@
-package web
+package webapp
 
 import (
 	"html/template"
@@ -20,6 +20,9 @@ type AppConfig struct {
 	AppMode
 
 	AppLogger
+
+	// ConnectionString is the connection string for the postgreSql server
+	ConnectionString string
 
 	// ServerAddress is http.Server listening address
 	ServerAddress string
@@ -51,6 +54,7 @@ func LoadConfig() AppConfig {
 	app.AppLogger = NewAppLogger()
 
 	// TODO: these should be loaded from app.env file.
+	app.ConnectionString = "postgresql://root:secret@localhost:5432/bookings?sslmode=disable"
 	app.ServerAddress = "localhost:8080"
 	app.TemplatePath = "./templates"
 
