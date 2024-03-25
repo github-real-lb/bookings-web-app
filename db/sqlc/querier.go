@@ -9,10 +9,18 @@ import (
 )
 
 type Querier interface {
+	CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteReservation(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
+	GetReservation(ctx context.Context, id int64) (Reservation, error)
+	GetReservationByCode(ctx context.Context, code string) (Reservation, error)
+	GetReservationByLastName(ctx context.Context, arg GetReservationByLastNameParams) (Reservation, error)
 	GetUser(ctx context.Context, id int64) (User, error)
+	ListReservations(ctx context.Context, arg ListReservationsParams) ([]Reservation, error)
+	ListReservationsByRoom(ctx context.Context, arg ListReservationsByRoomParams) ([]Reservation, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	UpdateReservation(ctx context.Context, arg UpdateReservationParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 }
 

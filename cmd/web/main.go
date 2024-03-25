@@ -63,3 +63,7 @@ func InitializeApp(appMode web.AppMode) error {
 
 	return nil
 }
+
+func dbtest() {
+
+}
