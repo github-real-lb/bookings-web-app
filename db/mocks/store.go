@@ -72,6 +72,62 @@ func (_m *MockStore) CreateRestriction(ctx context.Context, name pgtype.Text) (d
 	return r0, r1
 }
 
+// CreateRoom provides a mock function with given fields: ctx, name
+func (_m *MockStore) CreateRoom(ctx context.Context, name pgtype.Text) (db.Room, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRoom")
+	}
+
+	var r0 db.Room
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgtype.Text) (db.Room, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, pgtype.Text) db.Room); ok {
+		r0 = rf(ctx, name)
+	} else {
+		r0 = ret.Get(0).(db.Room)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, pgtype.Text) error); ok {
+		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// CreateRoomRestriction provides a mock function with given fields: ctx, arg
+func (_m *MockStore) CreateRoomRestriction(ctx context.Context, arg db.CreateRoomRestrictionParams) (db.RoomRestriction, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRoomRestriction")
+	}
+
+	var r0 db.RoomRestriction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateRoomRestrictionParams) (db.RoomRestriction, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateRoomRestrictionParams) db.RoomRestriction); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(db.RoomRestriction)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.CreateRoomRestrictionParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateUser provides a mock function with given fields: ctx, arg
 func (_m *MockStore) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
 	ret := _m.Called(ctx, arg)
@@ -124,6 +180,42 @@ func (_m *MockStore) DeleteRestriction(ctx context.Context, id int64) error {
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteRestriction")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteRoom provides a mock function with given fields: ctx, id
+func (_m *MockStore) DeleteRoom(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRoom")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteRoomRestriction provides a mock function with given fields: ctx, id
+func (_m *MockStore) DeleteRoomRestriction(ctx context.Context, id int64) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRoomRestriction")
 	}
 
 	var r0 error
@@ -266,6 +358,62 @@ func (_m *MockStore) GetRestriction(ctx context.Context, id int64) (db.Restricti
 	return r0, r1
 }
 
+// GetRoom provides a mock function with given fields: ctx, id
+func (_m *MockStore) GetRoom(ctx context.Context, id int64) (db.Room, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRoom")
+	}
+
+	var r0 db.Room
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (db.Room, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) db.Room); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(db.Room)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRoomRestriction provides a mock function with given fields: ctx, id
+func (_m *MockStore) GetRoomRestriction(ctx context.Context, id int64) (db.RoomRestriction, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRoomRestriction")
+	}
+
+	var r0 db.RoomRestriction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (db.RoomRestriction, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) db.RoomRestriction); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(db.RoomRestriction)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetUser provides a mock function with given fields: ctx, id
 func (_m *MockStore) GetUser(ctx context.Context, id int64) (db.User, error) {
 	ret := _m.Called(ctx, id)
@@ -384,6 +532,66 @@ func (_m *MockStore) ListRestrictions(ctx context.Context, arg db.ListRestrictio
 	return r0, r1
 }
 
+// ListRoomRestrictions provides a mock function with given fields: ctx, arg
+func (_m *MockStore) ListRoomRestrictions(ctx context.Context, arg db.ListRoomRestrictionsParams) ([]db.RoomRestriction, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRoomRestrictions")
+	}
+
+	var r0 []db.RoomRestriction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListRoomRestrictionsParams) ([]db.RoomRestriction, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListRoomRestrictionsParams) []db.RoomRestriction); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.RoomRestriction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.ListRoomRestrictionsParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListRooms provides a mock function with given fields: ctx, arg
+func (_m *MockStore) ListRooms(ctx context.Context, arg db.ListRoomsParams) ([]db.Room, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRooms")
+	}
+
+	var r0 []db.Room
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListRoomsParams) ([]db.Room, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListRoomsParams) []db.Room); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Room)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.ListRoomsParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListUsers provides a mock function with given fields: ctx, arg
 func (_m *MockStore) ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error) {
 	ret := _m.Called(ctx, arg)
@@ -442,6 +650,42 @@ func (_m *MockStore) UpdateRestriction(ctx context.Context, arg db.UpdateRestric
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, db.UpdateRestrictionParams) error); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateRoom provides a mock function with given fields: ctx, arg
+func (_m *MockStore) UpdateRoom(ctx context.Context, arg db.UpdateRoomParams) error {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRoom")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.UpdateRoomParams) error); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateRoomRestriction provides a mock function with given fields: ctx, arg
+func (_m *MockStore) UpdateRoomRestriction(ctx context.Context, arg db.UpdateRoomRestrictionParams) error {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRoomRestriction")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.UpdateRoomRestrictionParams) error); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Error(0)

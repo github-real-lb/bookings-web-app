@@ -32,7 +32,7 @@ type Restriction struct {
 
 type Room struct {
 	ID        int64              `json:"id"`
-	Room      pgtype.Text        `json:"room"`
+	Name      pgtype.Text        `json:"name"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
