@@ -45,7 +45,11 @@ func InitializeApp(appMode webapp.AppMode) error {
 	app.Session = session
 
 	// defining session stored types
+	gob.Register(User{})
+	gob.Register(Room{})
+	gob.Register(Restriction{})
 	gob.Register(Reservation{})
+	gob.Register(RoomRestriction{})
 
 	return nil
 }

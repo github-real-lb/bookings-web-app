@@ -1,6 +1,9 @@
 package util
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -119,4 +122,29 @@ func RandomInvoiceAmount() float64 {
 // RandomPaymentAmount returns random float64 between 85.00 and 1200.00
 func RandomPaymentAmount() float64 {
 	return RandomFloat64(85.00, 1200.00)
+}
+
+// NewReservationCode receives reservation name and returns an n characters reservation code.
+// For randomness purposes, if value of n is lower 6, error is returned
+func GenerateReservationCode(reservationName string, n int) (string, error) {
+	if n < 6 {
+		return "", errors.New("for randomness purposes reservation code value must be greater than 6")
+	}
+
+	// concatenating the current time with the reservation name and a 7 digits random number
+	code := fmt.Sprint(time.Now().UnixMicro(), reservationName, 1000000+r.Int63n(9000000))
+
+	// Generate SHA-256 hash of the concatenated string
+	hash := sha256.New()
+	_, err := hash.Write([]byte(code))
+	if err != nil {
+		return "", err
+	}
+	hashedBytes := hash.Sum(nil)
+
+	// Convert the hashed bytes to hexadecimal string
+	code = hex.EncodeToString(hashedBytes)[:n]
+	code = strings.ToUpper(code)
+
+	return code, nil
 }

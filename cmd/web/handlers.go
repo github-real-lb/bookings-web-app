@@ -10,6 +10,7 @@ import (
 	"github.com/github-real-lb/bookings-web-app/internal/forms"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // HandlerStore provides all handler functions
@@ -176,11 +177,13 @@ func (s *HandlerStore) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reservation := Reservation{
-		FirstName: r.Form.Get("first_name"),
-		LastName:  r.Form.Get("last_name"),
-		Email:     r.Form.Get("email"),
-		Phone:     r.Form.Get("phone"),
+	reservation := Reservation{}
+	reservation.FirstName = r.Form.Get("first_name")
+	reservation.LastName = r.Form.Get("last_name")
+	reservation.Email = r.Form.Get("email")
+	reservation.Phone = pgtype.Text{
+		String: r.Form.Get("phone"),
+		Valid:  r.Form.Get("phone") != "",
 	}
 
 	form := forms.New(r.PostForm)

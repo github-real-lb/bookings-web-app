@@ -11,7 +11,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "reservations" (
   "id" bigserial PRIMARY KEY,
-  "code" varchar(6) NOT NULL,
+  "code" varchar(255) NOT NULL,
   "first_name" varchar(255) NOT NULL,
   "last_name" varchar(255) NOT NULL,
   "email" varchar(255) NOT NULL,
@@ -51,11 +51,7 @@ CREATE TABLE "restrictions" (
 
 CREATE UNIQUE INDEX ON "users" ("email");
 
-CREATE UNIQUE INDEX ON "reservations" ("code");
-
-CREATE INDEX ON "reservations" ("last_name");
-
-CREATE INDEX ON "reservations" ("code", "last_name");
+CREATE UNIQUE INDEX ON "reservations" ("code", "last_name");
 
 CREATE INDEX ON "reservations" ("start_date");
 
