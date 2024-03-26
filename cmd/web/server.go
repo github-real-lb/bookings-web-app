@@ -13,7 +13,6 @@ import (
 	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Server handles all routing and provides all database functions
@@ -191,18 +190,31 @@ func (s *Server) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reservation := Reservation{
-		FirstName: r.Form.Get("first_name"),
-		LastName:  r.Form.Get("last_name"),
-		Email:     r.Form.Get("email"),
-		Phone:     r.Form.Get("phone"),
-	}
+	var form *forms.Form
+	var reservation Reservation
 
-	form := forms.New(r.PostForm)
+	// create a new form with data and validate the form
+	form = forms.New(r.PostForm)
+
+	//TODO replace this code part with code loading the data from the session
+	form.Add("start_date", time.Now().Format("2006-01-02"))
+	form.Add("end_date", time.Now().Add(time.Hour*24*7).Format("2006-01-02"))
+	form.Add("room_id", "1")
+	//TODO end
+
+	form.TrimSpaces()
 	form.Required("first_name", "last_name", "email")
 	form.MinLenght("first_name", 3)
 	form.MinLenght("last_name", 3)
 	form.IsEmailValid("email")
+
+	// Parse form's data to reservation
+	reservationData := form.Marshal()
+	err = reservation.Unmarshal(reservationData)
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
 
 	if !form.Valid() {
 		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
@@ -211,46 +223,49 @@ func (s *Server) PostReservation(w http.ResponseWriter, r *http.Request) {
 				"reservation": reservation,
 			},
 		})
-
 		if err != nil {
 			app.LogServerError(w, err)
 		}
-
 		return
 	}
 
-	code, _ := util.GenerateReservationCode(reservation.LastName, ReservationCodeLenght)
-	arg := db.CreateReservationParams{
-		Code:      code,
-		FirstName: reservation.FirstName,
-		LastName:  reservation.LastName,
-		Email:     reservation.Email,
-		Phone:     db.StringToPgText(reservation.Phone),
-		StartDate: pgtype.Date{
-			Time:  time.Now(),
-			Valid: true,
-		},
-		EndDate: pgtype.Date{
-			Time:  time.Now().Add(time.Hour * 24 * 7),
-			Valid: true,
-		},
-		RoomID: 1,
+	// define create reservation parameters
+	arg := db.CreateReservationParams{}
+	err = arg.Unmarshal(reservationData)
+	if err != nil {
+		app.LogServerError(w, err)
+		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// generate reservation code to add to parameters
+	arg.Code, err = util.GenerateReservationCode(reservation.LastName, ReservationCodeLenght)
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	dbr, err := s.DatabaseStore.CreateReservation(ctx, arg)
+	// insert new reservation into database
+	result, err := s.DatabaseStore.CreateReservation(ctx, arg)
 	if err != nil {
-		app.AppLogger.LogServerError(w, err)
+		app.LogServerError(w, err)
 		return
 	}
 
-	reservationJSON, _ := json.Marshal(dbr)
-	json.Unmarshal(reservationJSON, &reservation)
+	// update reservation with database result
+	err = reservation.Unmarshal(result.Marshal())
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
 
+	// load reservation into session data
 	app.Session.Put(r.Context(), "reservation", reservation)
 
+	// redirecting to summery page
 	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
 }
 

@@ -1,7 +1,6 @@
 package forms
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -47,34 +46,17 @@ func (f *Form) IsEmailValid(field string) bool {
 	return true
 }
 
-// MarshalJson returns the JSON encoding of the first values in each field of f.
+// Marshal returns the data of the first values in each field of f.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
-func (f *Form) MarshalJsonFirst() ([]byte, error) {
+func (f *Form) Marshal() (data map[string]string) {
 	// Convert the form data into a map
-	formData := make(map[string]string)
+	data = make(map[string]string)
 	for key, values := range f.Values {
 		if len(values) != 0 {
-			formData[key] = values[0]
+			data[key] = values[0]
 		}
 	}
-
-	// Marshal the map into JSON
-	return json.Marshal(formData)
-}
-
-// MarshalJson returns the JSON encoding of all the values in each field of f.
-// Run TrimSpaces before to remove leading and trailing white spaces if needed.
-func (f *Form) MarshalJsonAll() ([]byte, error) {
-	// Convert the form data into a map
-	formData := make(map[string][]string)
-	for key, values := range f.Values {
-		if len(values) != 0 {
-			formData[key] = values
-		}
-	}
-
-	// Marshal the map into JSON
-	return json.Marshal(formData)
+	return
 }
 
 // MinLenght checks if the first value of the field passed has minimum characters, and returns the result.

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/internal/forms"
@@ -33,6 +35,66 @@ type Reservation struct {
 	Notes     string    `json:"notes"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Marshal returns the data of r
+func (r *Reservation) Marshal() (data map[string]string) {
+	data = make(map[string]string)
+	data["id"] = fmt.Sprint(r.ID)
+	data["code"] = r.Code
+	data["first_name"] = r.FirstName
+	data["last_name"] = r.LastName
+	data["email"] = r.Email
+	data["phone"] = r.Phone
+	data["start_date"] = r.StartDate.Format("2006-01-02")
+	data["end_date"] = r.EndDate.Format("2006-01-02")
+	data["room_id"] = fmt.Sprint(r.RoomID)
+	data["notes"] = r.Notes
+	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
+	data["updated_at"] = r.StartDate.Format(time.RFC3339)
+	return
+}
+
+// Unmarshal parse data into r
+func (r *Reservation) Unmarshal(data map[string]string) error {
+	var err error = nil
+
+	if value, exist := data["id"]; exist {
+		r.ID, err = strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.FirstName = data["first_name"]
+	r.LastName = data["last_name"]
+	r.Email = data["email"]
+	r.Phone = data["phone"]
+
+	if value, exist := data["start_date"]; exist {
+		r.StartDate, err = time.Parse("2006-01-02", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	if value, exist := data["end_date"]; exist {
+		r.EndDate, err = time.Parse("2006-01-02", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	if value, exist := data["room_id"]; exist {
+		r.RoomID, err = strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Notes = data["notes"]
+
+	return err
 }
 
 // Restriction is used to hold different type of restrictions for rooms availabilty

@@ -1,7 +1,6 @@
 package forms
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"testing"
@@ -93,31 +92,16 @@ func TestForm_IsEmailValid(t *testing.T) {
 	}
 }
 
-func TestForm_MarshalJsonFirst(t *testing.T) {
+func TestForm_Marshal(t *testing.T) {
 	form := createRandomForm(t)
-	jsonData, err := form.MarshalJsonFirst()
-	require.NoError(t, err)
-	require.NotEmpty(t, jsonData)
 
-	formData := make(map[string]string)
-	err = json.Unmarshal(jsonData, &formData)
-	require.NoError(t, err)
+	data := form.Marshal()
+	require.NotEmpty(t, data)
+	assert.Len(t, data, len(form.Values))
 
-	for key, value := range formData {
+	for key, value := range data {
 		assert.Equal(t, form.Get(key), value)
 	}
-}
-
-func TestForm_MarshalJsonAll(t *testing.T) {
-	form := createRandomForm(t)
-	newJsonData, err := form.MarshalJsonAll()
-	require.NoError(t, err)
-	require.NotEmpty(t, newJsonData)
-
-	originalJsonData, err := json.Marshal(form.Values)
-	require.NoError(t, err)
-
-	assert.Equal(t, originalJsonData, newJsonData)
 }
 
 func TestForm_MinLenght(t *testing.T) {
