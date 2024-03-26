@@ -25,14 +25,14 @@ type Reservation struct {
 
 type Restriction struct {
 	ID        int64              `json:"id"`
-	Name      pgtype.Text        `json:"name"`
+	Name      string             `json:"name"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Room struct {
 	ID        int64              `json:"id"`
-	Name      pgtype.Text        `json:"name"`
+	Name      string             `json:"name"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

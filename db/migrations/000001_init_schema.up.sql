@@ -26,7 +26,7 @@ CREATE TABLE "reservations" (
 
 CREATE TABLE "rooms" (
   "id" bigserial PRIMARY KEY,
-  "name" varchar(255),
+  "name" varchar(255) NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
@@ -44,7 +44,7 @@ CREATE TABLE "room_restrictions" (
 
 CREATE TABLE "restrictions" (
   "id" bigserial PRIMARY KEY,
-  "name" varchar(255),
+  "name" varchar(255) NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );

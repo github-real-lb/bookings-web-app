@@ -1,11 +1,9 @@
 package webapp
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"runtime/debug"
 )
 
 type AppLogger struct {
@@ -31,13 +29,13 @@ func (al *AppLogger) LogClientError(w http.ResponseWriter, code int) {
 // LogServerError handles server side error of the web app, loggin the error and
 // writing StatusInternalServerError to the http.ResponseWriter
 func (al *AppLogger) LogServerError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	al.ErrorLog.Println(trace)
+	//trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	al.ErrorLog.Println(err.Error())
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 // LogError logs server side errors
 func (al *AppLogger) LogError(err error) {
-	s := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	al.ErrorLog.Println(s)
+	//trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	al.ErrorLog.Println(err.Error())
 }

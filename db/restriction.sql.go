@@ -20,7 +20,7 @@ INSERT INTO restrictions (
 RETURNING id, name, created_at, updated_at
 `
 
-func (q *Queries) CreateRestriction(ctx context.Context, name pgtype.Text) (Restriction, error) {
+func (q *Queries) CreateRestriction(ctx context.Context, name string) (Restriction, error) {
 	row := q.db.QueryRow(ctx, createRestriction, name)
 	var i Restriction
 	err := row.Scan(
@@ -105,7 +105,7 @@ WHERE id = $1
 
 type UpdateRestrictionParams struct {
 	ID        int64              `json:"id"`
-	Name      pgtype.Text        `json:"name"`
+	Name      string             `json:"name"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 

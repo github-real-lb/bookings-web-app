@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -8,9 +9,11 @@ import (
 	"github.com/github-real-lb/bookings-web-app/util/webapp"
 )
 
+const ReservationCodeLenght = 6
+
 func main() {
 	// initializing application
-	err := InitializeApp(webapp.DevelopmentMode)
+	err := InitializeApp(webapp.TestingMode)
 	if err != nil {
 		log.Fatal("Error initializing application:", err)
 	}
@@ -24,7 +27,15 @@ func main() {
 
 	// start the server
 	server := NewServer(store)
+
+	AddDataToDB(server)
+
 	fmt.Println("Starting web server on,", app.ServerAddress)
 	err = server.Router.ListenAndServe()
 	log.Fatal(err)
+}
+
+func AddDataToDB(s *Server) {
+	s.DatabaseStore.CreateRoom(context.Background(), "General's Quarters")
+	s.DatabaseStore.CreateRoom(context.Background(), "Major's Suite")
 }

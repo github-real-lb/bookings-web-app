@@ -14,3 +14,4 @@ sql:
         emit_exact_table_names: false
         emit_empty_slices: true
         emit_result_struct_pointers: false
+        emit_pointers_for_null_types: false

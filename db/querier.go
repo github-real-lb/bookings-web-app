@@ -6,14 +6,12 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error)
-	CreateRestriction(ctx context.Context, name pgtype.Text) (Restriction, error)
-	CreateRoom(ctx context.Context, name pgtype.Text) (Room, error)
+	CreateRestriction(ctx context.Context, name string) (Restriction, error)
+	CreateRoom(ctx context.Context, name string) (Room, error)
 	CreateRoomRestriction(ctx context.Context, arg CreateRoomRestrictionParams) (RoomRestriction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteReservation(ctx context.Context, id int64) error

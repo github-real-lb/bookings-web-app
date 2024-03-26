@@ -20,7 +20,7 @@ INSERT INTO rooms (
 RETURNING id, name, created_at, updated_at
 `
 
-func (q *Queries) CreateRoom(ctx context.Context, name pgtype.Text) (Room, error) {
+func (q *Queries) CreateRoom(ctx context.Context, name string) (Room, error) {
 	row := q.db.QueryRow(ctx, createRoom, name)
 	var i Room
 	err := row.Scan(
@@ -105,7 +105,7 @@ WHERE id = $1
 
 type UpdateRoomParams struct {
 	ID        int64              `json:"id"`
-	Name      pgtype.Text        `json:"name"`
+	Name      string             `json:"name"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
