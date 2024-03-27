@@ -8,26 +8,35 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/github-real-lb/bookings-web-app/util/webapp"
+	"github.com/github-real-lb/bookings-web-app/util/config"
 )
 
+const (
+	AppConfigFilename = "./../../app.config.json"
+	DBConfigFilename  = "./../../db.config.json"
+)
+
+type AppConfig struct {
+	config.AppConfig
+	config.DBConfig
+}
+
 // app holds the configurations and templates of the app
-var app webapp.AppConfig
+var app AppConfig
 
 // InitializeApp loads the app configurations and setup based on the application mode
-func InitializeApp(appMode webapp.AppMode) error {
+func InitializeApp(appMode config.AppMode) error {
 	var err error
 
 	// load application default configurations
-	app = webapp.LoadConfig()
+	app.AppConfig, err = config.LoadAppConfig(AppConfigFilename, appMode)
+	if err != nil {
+		return err
+	}
 
-	// setting up application to required mode
-	switch appMode {
-	case webapp.DevelopmentMode:
-		app.SetDevelopementMode()
-	case webapp.TestingMode:
-		app.SetTestingMode()
-	default:
+	app.DBConfig, err = config.LoadDBConfig(DBConfigFilename)
+	if err != nil {
+		return err
 	}
 
 	// load templates cache to AppConfig

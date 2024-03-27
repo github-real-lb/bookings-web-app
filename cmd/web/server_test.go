@@ -8,7 +8,6 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/db/mocks"
-	"github.com/github-real-lb/bookings-web-app/util/webapp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,9 +54,6 @@ func TestPageHandlers(t *testing.T) {
 				"phone":      "5555-5555",
 			}, http.StatusOK},
 	}
-
-	// initialize the Application Config and Templates
-	InitializeApp(webapp.TestingMode)
 
 	// start test server and send request
 	store, err := db.NewPostgresDBStore(app.ConnectionString)

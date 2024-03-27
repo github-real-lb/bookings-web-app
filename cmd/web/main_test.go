@@ -6,10 +6,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
+	InitializeApp(config.TestingMode)
+
 	os.Exit(m.Run())
 }
 
