@@ -1,0 +1,5 @@
+{
+    "connection_string": "postgresql://root:secret@localhost:5432/bookings?sslmode=disable",
+    "server_address": "localhost:8080"
+}
+

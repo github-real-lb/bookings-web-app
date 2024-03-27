@@ -1,0 +1,5 @@
+{
+    "template_path_production": "./templates",
+    "template_path_testing": "./../../templates"
+}
+
