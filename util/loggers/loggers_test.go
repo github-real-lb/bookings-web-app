@@ -1,4 +1,4 @@
-package webapp
+package loggers
 
 import (
 	"errors"
