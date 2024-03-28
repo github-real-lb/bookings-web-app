@@ -42,6 +42,34 @@ func (_m *MockStore) CreateReservation(ctx context.Context, arg db.CreateReserva
 	return r0, r1
 }
 
+// CreateReservationTx provides a mock function with given fields: ctx, arg, restrictionsID
+func (_m *MockStore) CreateReservationTx(ctx context.Context, arg db.CreateReservationParams, restrictionsID int64) (db.Reservation, error) {
+	ret := _m.Called(ctx, arg, restrictionsID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateReservationTx")
+	}
+
+	var r0 db.Reservation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateReservationParams, int64) (db.Reservation, error)); ok {
+		return rf(ctx, arg, restrictionsID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateReservationParams, int64) db.Reservation); ok {
+		r0 = rf(ctx, arg, restrictionsID)
+	} else {
+		r0 = ret.Get(0).(db.Reservation)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.CreateReservationParams, int64) error); ok {
+		r1 = rf(ctx, arg, restrictionsID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateRestriction provides a mock function with given fields: ctx, name
 func (_m *MockStore) CreateRestriction(ctx context.Context, name string) (db.Restriction, error) {
 	ret := _m.Called(ctx, name)

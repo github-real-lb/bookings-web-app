@@ -9,36 +9,24 @@ import (
 )
 
 // Marshal returns data of r
-func (r *Reservation) Marshal() (data map[string]string) {
+func (r *RoomRestriction) Marshal() (data map[string]string) {
 	data = make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)
-	data["code"] = r.Code
-	data["first_name"] = r.FirstName
-	data["last_name"] = r.LastName
-	data["email"] = r.Email
-	data["phone"] = r.Phone.String
 	data["start_date"] = r.StartDate.Time.Format("2006-01-02")
 	data["end_date"] = r.EndDate.Time.Format("2006-01-02")
 	data["room_id"] = fmt.Sprint(r.RoomID)
-	data["notes"] = r.Notes.String
+	data["reservation_id"] = fmt.Sprint(r.ReservationID.Int64)
+	data["restrictions_id"] = fmt.Sprint(r.RestrictionsID)
 	data["created_at"] = r.CreatedAt.Time.Format(time.RFC3339)
 	data["updated_at"] = r.UpdatedAt.Time.Format(time.RFC3339)
 	return
 }
 
 // Unmarshal parse data into r
-func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
+func (p *CreateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
 	var t time.Time
-
-	p.Code = data["code"]
-	p.FirstName = data["first_name"]
-	p.LastName = data["last_name"]
-	p.Email = data["email"]
-	p.Phone = pgtype.Text{
-		String: data["phone"],
-		Valid:  data["phone"] != "",
-	}
+	var i int64
 
 	if v, ok := data["start_date"]; ok {
 		t, err = time.Parse("2006-01-02", v)
@@ -71,18 +59,33 @@ func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	p.Notes = pgtype.Text{
-		String: data["notes"],
-		Valid:  data["notes"] != "",
+	if v, ok := data["reservation_id"]; ok {
+		i, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		p.ReservationID = pgtype.Int8{
+			Int64: i,
+			Valid: true,
+		}
+	}
+
+	if v, ok := data["restrictions_id"]; ok {
+		p.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
 }
 
 // Unmarshal parse data into r
-func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
+func (p *UpdateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
 	var t time.Time
+	var i int64
 
 	if v, ok := data["id"]; ok {
 		p.ID, err = strconv.ParseInt(v, 10, 64)
@@ -91,15 +94,6 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	p.Code = data["code"]
-	p.FirstName = data["first_name"]
-	p.LastName = data["last_name"]
-	p.Email = data["email"]
-	p.Phone = pgtype.Text{
-		String: data["phone"],
-		Valid:  data["phone"] != "",
-	}
-
 	if v, ok := data["start_date"]; ok {
 		t, err = time.Parse("2006-01-02", v)
 		if err != nil {
@@ -131,9 +125,23 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	p.Notes = pgtype.Text{
-		String: data["notes"],
-		Valid:  data["notes"] != "",
+	if v, ok := data["reservation_id"]; ok {
+		i, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		p.ReservationID = pgtype.Int8{
+			Int64: i,
+			Valid: true,
+		}
+	}
+
+	if v, ok := data["restrictions_id"]; ok {
+		p.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
 	}
 
 	if v, ok := data["updated_at"]; ok {

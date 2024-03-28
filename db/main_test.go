@@ -9,6 +9,8 @@ import (
 
 const DBConfigFilename = "./../db.config.json"
 
+type StringMap map[string]string
+
 var testStore DatabaseStore
 
 func TestMain(m *testing.M) {

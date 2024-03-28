@@ -12,6 +12,7 @@ import (
 // DatabaseStore defines all functions to execute sql queries and transactions.
 type DatabaseStore interface {
 	Querier
+	CreateReservationTx(ctx context.Context, arg CreateReservationParams, restrictionsID int64) (Reservation, error)
 }
 
 // PostgresDBStore holds the database connections pool, and provides all functions
