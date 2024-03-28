@@ -12,7 +12,7 @@
                     <div class="input-group flex-nowrap mt-3">
                         <span class="input-group-text" id="first-name">First Name</span>
                         <input  type="text" class='form-control {{with .Form.Errors.Get "first_name"}} is-invalid {{end}}' 
-                                value="{{$res.FirstName}}" name="first_name" autocomplete="off" required>                                               
+                                value="{{$res.FirstName}}" name="first_name" autocomplete="on" required>                                               
                     </div> 
                     {{with .Form.Errors.Get "first_name"}}      
                     <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
@@ -21,7 +21,7 @@
                     <div class="input-group mt-3">
                         <span class="input-group-text" id="last-name">Last Name</span>
                         <input  type="text" class='form-control {{with .Form.Errors.Get "last_name"}} is-invalid {{end}}' 
-                                value="{{$res.LastName}}" name="last_name" autocomplete="off" required>
+                                value="{{$res.LastName}}" name="last_name" autocomplete="on" required>
                     </div>
                     {{with .Form.Errors.Get "last_name"}}      
                     <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
@@ -30,7 +30,7 @@
                     <div class="input-group mt-3">
                         <span class="input-group-text" id="email">Email Address</span>
                         <input  type="email" class='form-control {{with .Form.Errors.Get "email"}} is-invalid {{end}}' 
-                                value="{{$res.Email}}" name="email" autocomplete="off" placeholder="name@example.com" required>
+                                value="{{$res.Email}}" name="email" autocomplete="on" placeholder="name@example.com" required>
                     </div>
                     {{with .Form.Errors.Get "email"}}      
                     <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
@@ -39,12 +39,22 @@
                     <div class="input-group mt-3">
                         <span class="input-group-text" id="phone">Phone Number</span>
                         <input  type="text" class='form-control {{with .Form.Errors.Get "phone"}} is-invalid {{end}}' 
-                                value="{{$res.Phone}}" name="phone" autocomplete="off" required>
+                                value="{{$res.Phone}}" name="phone" autocomplete="on" required>
                     </div>
                     {{with .Form.Errors.Get "phone"}}      
                     <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
                     {{end}}   
          
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="start-date">Start Date</span>
+                        <input  type="text" class='form-control' name="start_date" autocomplete="on" placeholder="YYYY-MM-DD" required>
+                    </div>
+
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="end-date">End Date</span>
+                        <input  type="text" class='form-control' name="end_date" autocomplete="on" placeholder="YYYY-MM-DD" required>
+                    </div>
+                    
                     <hr>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-success">Submit</button>

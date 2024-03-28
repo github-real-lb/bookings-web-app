@@ -5,12 +5,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/github-real-lb/bookings-web-app/internal/forms"
+	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
+
+type StringMap map[string]string
 
 // TemplateData holds data sent from handlers to templates
 type TemplateData struct {
-	StringMap map[string]string
+	StringMap StringMap
 	IntMap    map[string]int
 	FloatMap  map[string]float32
 	Data      map[string]any
@@ -38,8 +40,8 @@ type Reservation struct {
 }
 
 // Marshal returns the data of r
-func (r *Reservation) Marshal() (data map[string]string) {
-	data = make(map[string]string)
+func (r *Reservation) Marshal() (data StringMap) {
+	data = make(StringMap)
 	data["id"] = fmt.Sprint(r.ID)
 	data["code"] = r.Code
 	data["first_name"] = r.FirstName
@@ -56,11 +58,11 @@ func (r *Reservation) Marshal() (data map[string]string) {
 }
 
 // Unmarshal parse data into r
-func (r *Reservation) Unmarshal(data map[string]string) error {
+func (r *Reservation) Unmarshal(data StringMap) error {
 	var err error = nil
 
-	if value, exist := data["id"]; exist {
-		r.ID, err = strconv.ParseInt(value, 10, 64)
+	if v, ok := data["id"]; ok {
+		r.ID, err = strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
 		}
@@ -71,28 +73,42 @@ func (r *Reservation) Unmarshal(data map[string]string) error {
 	r.Email = data["email"]
 	r.Phone = data["phone"]
 
-	if value, exist := data["start_date"]; exist {
-		r.StartDate, err = time.Parse("2006-01-02", value)
+	if v, ok := data["start_date"]; ok {
+		r.StartDate, err = time.Parse("2006-01-02", v)
 		if err != nil {
 			return err
 		}
 	}
 
-	if value, exist := data["end_date"]; exist {
-		r.EndDate, err = time.Parse("2006-01-02", value)
+	if v, ok := data["end_date"]; ok {
+		r.EndDate, err = time.Parse("2006-01-02", v)
 		if err != nil {
 			return err
 		}
 	}
 
-	if value, exist := data["room_id"]; exist {
-		r.RoomID, err = strconv.ParseInt(value, 10, 64)
+	if v, ok := data["room_id"]; ok {
+		r.RoomID, err = strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
 		}
 	}
 
 	r.Notes = data["notes"]
+
+	if v, ok := data["created_at"]; ok {
+		r.CreatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["updated_at"]; ok {
+		r.UpdatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
 
 	return err
 }
@@ -103,6 +119,46 @@ type Restriction struct {
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Marshal returns data of r
+func (r *Restriction) Marshal() (data StringMap) {
+	data = make(StringMap)
+	data["id"] = fmt.Sprint(r.ID)
+	data["name"] = r.Name
+	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
+	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
+	return
+}
+
+// Unmarshal parse data into r
+func (r *Restriction) Unmarshal(data StringMap) error {
+	var err error = nil
+
+	if v, ok := data["id"]; ok {
+		r.ID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Name = data["name"]
+
+	if v, ok := data["created_at"]; ok {
+		r.CreatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["updated_at"]; ok {
+		r.UpdatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 type Room struct {
@@ -122,6 +178,83 @@ type RoomRestriction struct {
 	RestrictionsID int64     `json:"restrictions_id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// Marshal returns data of r
+func (r *RoomRestriction) Marshal() (data StringMap) {
+	data = make(StringMap)
+	data["id"] = fmt.Sprint(r.ID)
+	data["start_date"] = r.StartDate.Format("2006-01-02")
+	data["end_date"] = r.EndDate.Format("2006-01-02")
+	data["room_id"] = fmt.Sprint(r.RoomID)
+	data["reservation_id"] = fmt.Sprint(r.ReservationID)
+	data["restrictions_id"] = fmt.Sprint(r.RestrictionsID)
+	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
+	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
+	return
+}
+
+// Unmarshal parse data into r
+func (r *RoomRestriction) Unmarshal(data StringMap) error {
+	var err error = nil
+
+	if v, ok := data["id"]; ok {
+		r.ID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["start_date"]; ok {
+		r.StartDate, err = time.Parse("2006-01-02", v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["end_date"]; ok {
+		r.EndDate, err = time.Parse("2006-01-02", v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["room_id"]; ok {
+		r.RoomID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["reservation_id"]; ok {
+		r.ReservationID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["restrictions_id"]; ok {
+		r.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["created_at"]; ok {
+		r.CreatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["updated_at"]; ok {
+		r.UpdatedAt, err = time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 type User struct {
