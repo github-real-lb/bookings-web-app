@@ -7,7 +7,7 @@ import (
 
 const testAppConfigFilename = "./../../app.config.json"
 
-var app AppConfig
+var app *AppConfig
 
 func TestMain(m *testing.M) {
 	var err error

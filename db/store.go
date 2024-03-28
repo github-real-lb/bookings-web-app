@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -15,7 +17,7 @@ type DatabaseStore interface {
 // PostgresDBStore holds the database connections pool, and provides all functions
 // to execute postgrSQL queries and transactions.
 type PostgresDBStore struct {
-	Pool *pgxpool.Pool
+	DBConnPool *pgxpool.Pool
 	*Queries
 }
 
@@ -36,17 +38,36 @@ func NewPostgresDBStore(connString string) (DatabaseStore, error) {
 	poolConfig.MaxConnIdleTime = MaxDbConnIdleTime
 	poolConfig.MaxConnLifetime = MaxDbConnLifetime
 
-	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	conn, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = db.Ping(context.Background()); err != nil {
+	if err = conn.Ping(context.Background()); err != nil {
 		return nil, err
 	}
 
 	return &PostgresDBStore{
-		Pool:    db,
-		Queries: New(db),
+		DBConnPool: conn,
+		Queries:    New(conn),
 	}, nil
+}
+
+// execTx executes a function within a database transaction
+func (store *PostgresDBStore) execTx(ctx context.Context, fn func(*Queries) error) error {
+	tx, err := store.DBConnPool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	q := New(tx)
+	err = fn(q)
+	if err != nil {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
+			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
+		}
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

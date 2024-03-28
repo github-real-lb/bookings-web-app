@@ -9,11 +9,15 @@ import (
 
 const DBConfigFilename = "./../db.config.json"
 
-var dbConfig config.DBConfig
+var testStore DatabaseStore
 
 func TestMain(m *testing.M) {
-	var err error
-	dbConfig, err = config.LoadDBConfig(DBConfigFilename)
+	dbConfig, err := config.LoadDBConfig(DBConfigFilename)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	testStore, err = NewPostgresDBStore(dbConfig.ConnectionString)
 	if err != nil {
 		os.Exit(1)
 	}

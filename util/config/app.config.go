@@ -46,19 +46,19 @@ type AppConfig struct {
 }
 
 // LoadConfig returns the Application Configuration.
-func LoadAppConfig(filename string, appMode AppMode) (AppConfig, error) {
+func LoadAppConfig(filename string, appMode AppMode) (*AppConfig, error) {
 	app := AppConfig{}
 
 	file, err := os.Open(filename)
 	if err != nil {
-		return app, err
+		return &app, err
 	}
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&app)
 	if err != nil {
-		return app, err
+		return &app, err
 	}
 
 	// initializing loggers
@@ -72,10 +72,10 @@ func LoadAppConfig(filename string, appMode AppMode) (AppConfig, error) {
 	case TestingMode:
 		app.SetTestingMode()
 	default:
-		return app, errors.New("invalid application mode setting in config file")
+		return &app, errors.New("invalid application mode setting in config file")
 	}
 
-	return app, nil
+	return &app, nil
 }
 
 // SetDevelopementMode sets the Application Configuration for development.

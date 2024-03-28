@@ -13,16 +13,16 @@ type DBConfig struct {
 	ServerAddress string `json:"server_address"`
 }
 
-func LoadDBConfig(filename string) (DBConfig, error) {
+func LoadDBConfig(filename string) (*DBConfig, error) {
 	dbConfig := DBConfig{}
 
 	file, err := os.Open(filename)
 	if err != nil {
-		return dbConfig, err
+		return &dbConfig, err
 	}
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&dbConfig)
-	return dbConfig, err
+	return &dbConfig, err
 }

@@ -12,29 +12,44 @@ import (
 )
 
 const (
-	AppConfigFilename = "./../../app.config.json"
-	DBConfigFilename  = "./../../db.config.json"
+	AppConfigFilename = "./app.config.json"
+	DBConfigFilename  = "./db.config.json"
+
+	TestingAppConfigFilename = "./../../app.config.json"
+	TestingDBConfigFilename  = "./../../db.config.json"
 )
 
 type AppConfig struct {
-	config.AppConfig
-	config.DBConfig
+	*config.AppConfig
+	*config.DBConfig
 }
 
 // app holds the configurations and templates of the app
-var app AppConfig
+// It is shared throughout all the package
+var app *AppConfig
 
 // InitializeApp loads the app configurations and setup based on the application mode
 func InitializeApp(appMode config.AppMode) error {
 	var err error
+	app = &AppConfig{}
+
+	var appCfgFilename, dbCfgFilename string
+
+	if appMode != config.TestingMode {
+		appCfgFilename = AppConfigFilename
+		dbCfgFilename = DBConfigFilename
+	} else {
+		appCfgFilename = TestingAppConfigFilename
+		dbCfgFilename = TestingDBConfigFilename
+	}
 
 	// load application default configurations
-	app.AppConfig, err = config.LoadAppConfig(AppConfigFilename, appMode)
+	app.AppConfig, err = config.LoadAppConfig(appCfgFilename, appMode)
 	if err != nil {
 		return err
 	}
 
-	app.DBConfig, err = config.LoadDBConfig(DBConfigFilename)
+	app.DBConfig, err = config.LoadDBConfig(dbCfgFilename)
 	if err != nil {
 		return err
 	}

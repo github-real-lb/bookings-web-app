@@ -12,7 +12,7 @@ const ReservationCodeLenght = 6
 
 func main() {
 	// initializing application
-	err := InitializeApp(config.TestingMode)
+	err := InitializeApp(config.DevelopmentMode)
 	if err != nil {
 		log.Fatal("Error initializing application:", err)
 	}
@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
-	defer store.(*db.PostgresDBStore).Pool.Close()
+	defer store.(*db.PostgresDBStore).DBConnPool.Close()
 
 	// start the server
 	server := NewServer(store)
