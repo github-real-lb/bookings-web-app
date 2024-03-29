@@ -1,24 +1,13 @@
 package db
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// Marshal returns data of r
-func (r *Restriction) Marshal() (data map[string]string) {
-	data = make(map[string]string)
-	data["id"] = fmt.Sprint(r.ID)
-	data["name"] = r.Name
-	data["created_at"] = r.CreatedAt.Time.Format(time.RFC3339)
-	data["updated_at"] = r.UpdatedAt.Time.Format(time.RFC3339)
-	return
-}
-
-// Unmarshal parse data into r
+// Unmarshal parse data into p
 func (p *UpdateRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
 	var t time.Time

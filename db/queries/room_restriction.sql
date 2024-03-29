@@ -1,3 +1,8 @@
+-- name: CheckRoomAvailabilty :one
+SELECT count(*) = 0 as availabe
+FROM room_restrictions
+WHERE room_id = $1 AND (start_date < @end_date::date AND end_date > @start_date::date);
+
 -- name: CreateRoomRestriction :one
 INSERT INTO room_restrictions (
   start_date, end_date, room_id, reservation_id, restrictions_id
@@ -5,6 +10,10 @@ INSERT INTO room_restrictions (
   $1, $2, $3, $4, $5
 )
 RETURNING *;
+
+-- name: DeleteRoomRestriction :exec
+DELETE FROM room_restrictions
+WHERE id = $1;
 
 -- name: GetRoomRestriction :one
 SELECT * FROM room_restrictions
@@ -24,8 +33,4 @@ UPDATE room_restrictions
         reservation_id = $5, 
         restrictions_id =  $6,
         updated_at = $7
-WHERE id = $1;
-
--- name: DeleteRoomRestriction :exec
-DELETE FROM room_restrictions
 WHERE id = $1;

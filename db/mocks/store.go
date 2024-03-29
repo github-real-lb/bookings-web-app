@@ -14,6 +14,34 @@ type MockStore struct {
 	mock.Mock
 }
 
+// CheckRoomAvailabilty provides a mock function with given fields: ctx, arg
+func (_m *MockStore) CheckRoomAvailabilty(ctx context.Context, arg db.CheckRoomAvailabiltyParams) (bool, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckRoomAvailabilty")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabiltyParams) (bool, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabiltyParams) bool); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.CheckRoomAvailabiltyParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateReservation provides a mock function with given fields: ctx, arg
 func (_m *MockStore) CreateReservation(ctx context.Context, arg db.CreateReservationParams) (db.Reservation, error) {
 	ret := _m.Called(ctx, arg)
@@ -461,6 +489,36 @@ func (_m *MockStore) GetUser(ctx context.Context, id int64) (db.User, error) {
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListAvailableRooms provides a mock function with given fields: ctx
+func (_m *MockStore) ListAvailableRooms(ctx context.Context) ([]db.Room, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAvailableRooms")
+	}
+
+	var r0 []db.Room
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]db.Room, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []db.Room); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Room)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

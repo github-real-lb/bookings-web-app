@@ -13,7 +13,7 @@ import (
 
 const ReservationCodeLenght = 6
 
-func randomReservationData(t *testing.T) StringMap {
+func randomReservationData(t *testing.T) map[string]string {
 	name := util.RandomName()
 
 	code, err := util.GenerateReservationCode(name, ReservationCodeLenght)
@@ -23,7 +23,7 @@ func randomReservationData(t *testing.T) StringMap {
 
 	room := createRandomRoom(t)
 
-	data := make(StringMap)
+	data := make(map[string]string)
 	data["code"] = code
 	data["first_name"] = util.RandomName()
 	data["last_name"] = name

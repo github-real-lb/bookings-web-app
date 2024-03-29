@@ -8,11 +8,9 @@ import (
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
 
-type StringMap map[string]string
-
 // TemplateData holds data sent from handlers to templates
 type TemplateData struct {
-	StringMap StringMap
+	StringMap map[string]string
 	IntMap    map[string]int
 	FloatMap  map[string]float32
 	Data      map[string]any
@@ -40,8 +38,8 @@ type Reservation struct {
 }
 
 // Marshal returns the data of r
-func (r *Reservation) Marshal() (data StringMap) {
-	data = make(StringMap)
+func (r *Reservation) Marshal() (data map[string]string) {
+	data = make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)
 	data["code"] = r.Code
 	data["first_name"] = r.FirstName
@@ -58,7 +56,7 @@ func (r *Reservation) Marshal() (data StringMap) {
 }
 
 // Unmarshal parse data into r
-func (r *Reservation) Unmarshal(data StringMap) error {
+func (r *Reservation) Unmarshal(data map[string]string) error {
 	var err error = nil
 
 	if v, ok := data["id"]; ok {
@@ -122,8 +120,8 @@ type Restriction struct {
 }
 
 // Marshal returns data of r
-func (r *Restriction) Marshal() (data StringMap) {
-	data = make(StringMap)
+func (r *Restriction) Marshal() (data map[string]string) {
+	data = make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)
 	data["name"] = r.Name
 	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
@@ -132,7 +130,7 @@ func (r *Restriction) Marshal() (data StringMap) {
 }
 
 // Unmarshal parse data into r
-func (r *Restriction) Unmarshal(data StringMap) error {
+func (r *Restriction) Unmarshal(data map[string]string) error {
 	var err error = nil
 
 	if v, ok := data["id"]; ok {
@@ -181,8 +179,8 @@ type RoomRestriction struct {
 }
 
 // Marshal returns data of r
-func (r *RoomRestriction) Marshal() (data StringMap) {
-	data = make(StringMap)
+func (r *RoomRestriction) Marshal() (data map[string]string) {
+	data = make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)
 	data["start_date"] = r.StartDate.Format("2006-01-02")
 	data["end_date"] = r.EndDate.Format("2006-01-02")
@@ -195,7 +193,7 @@ func (r *RoomRestriction) Marshal() (data StringMap) {
 }
 
 // Unmarshal parse data into r
-func (r *RoomRestriction) Unmarshal(data StringMap) error {
+func (r *RoomRestriction) Unmarshal(data map[string]string) error {
 	var err error = nil
 
 	if v, ok := data["id"]; ok {
