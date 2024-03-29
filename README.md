@@ -9,4 +9,4 @@ A demo of an hotel bookings and reservations web app.
 - Uses nosurf [https://github.com/justinas/nosurf] for CSRF protection
 - Uses testify [https://github.com/stretchr/testify] for testing
 - Uses  vanillajs-datepicker [https://github.com/mymth/vanillajs-datepicker] for datepicker
-- Uses govalidator [github.com/asaskevich/govalidator] for email validation
+- Uses govalidator [https://github.com/asaskevich/govalidator] for email validation
