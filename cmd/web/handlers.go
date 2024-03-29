@@ -1,12 +1,11 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
 
@@ -51,70 +50,84 @@ func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // AvailabilityHandler is the search-availability page handler
-func (s *Server) AvailabilityHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{})
+func (s *Server) SearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+	err := RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+		Form: forms.New(nil),
+	})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
 }
 
 // PostAvailability is the search-availability page post handler
-func (s *Server) PostAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.LogServerError(w, err)
 		return
 	}
 
-	startDate := r.Form.Get("start_date")
-	endDate := r.Form.Get("end_date")
+	// create a new form with data and validate the form
+	form := forms.New(r.PostForm)
 
-	w.Write([]byte(fmt.Sprintf("Start date is %s and end date is %s", startDate, endDate)))
-}
+	// validate form
+	form.TrimSpaces()
+	form.Required("start_date", "end_date")
+	form.CheckDateRange("start_date", "end_date")
 
-type jsonResponse struct {
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-}
+	if !form.Valid() {
+		err = RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+			Form: form,
+		})
+		if err != nil {
+			app.LogServerError(w, err)
+		}
+		return
+	}
 
-// PostAvailabilityJsonHandler handles requests for availability and sends JSON response
-func (s *Server) PostAvailabilityJsonHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	// parse form's data to query arguments
+	var arg db.ListAvailableRoomsParams
+	arg.Unmarshal(form.Marshal())
+	rooms, err := s.DatabaseStore.ListAvailableRooms(context.Background(), arg)
 	if err != nil {
 		app.LogServerError(w, err)
 		return
 	}
 
-	startDate, err := time.Parse("2006-01-02", r.Form.Get("start_date"))
-	if err != nil {
-		app.LogServerError(w, err)
+	if len(rooms) == 0 {
+		app.Session.Put(r.Context(), "warning", "No rooms are availabe. Please try different dates.")
+		err = RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+			Form: form,
+		})
+		if err != nil {
+			app.LogServerError(w, err)
+		}
+		return
 	}
-	endDate, err := time.Parse("2006-01-02", r.Form.Get("end_date"))
+
+	// parse form's data to reservation
+	var reservation Reservation
+	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
 		app.LogServerError(w, err)
 	}
 
-	resp := jsonResponse{
-		StartDate: startDate,
-		EndDate:   endDate,
-	}
-
-	out, err := json.Marshal(resp)
+	app.Session.Put(r.Context(), "reservation", reservation)
+	err = RenderTemplate(w, r, "choose-room.page.gohtml", &TemplateData{
+		Data: map[string]any{
+			"rooms": rooms,
+		},
+	})
 	if err != nil {
 		app.LogServerError(w, err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(out)
 }
 
 // ReservationHandler is the make-reservation page handler
-func (s *Server) ReservationHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 		Form: forms.New(nil),
-		Data: map[string]any{
-			"reservation": Reservation{},
-		},
 	})
 	if err != nil {
 		app.LogServerError(w, err)
@@ -122,18 +135,15 @@ func (s *Server) ReservationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // PostReservationHandler is the make-reservation post page handler
-func (s *Server) PostReservationHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.LogServerError(w, err)
 		return
 	}
 
-	var form *forms.Form
-	var reservation Reservation
-
 	// create a new form with data and validate the form
-	form = forms.New(r.PostForm)
+	form := forms.New(r.PostForm)
 
 	//TODO: replace this code part with code loading the data from the session
 	form.Add("room_id", "1")
@@ -141,27 +151,25 @@ func (s *Server) PostReservationHandler(w http.ResponseWriter, r *http.Request) 
 	//TODO: update validation to include all fields
 	form.TrimSpaces()
 	form.Required("first_name", "last_name", "email")
-	form.MinLenght("first_name", 3)
-	form.MinLenght("last_name", 3)
-	form.IsEmailValid("email")
-
-	// parse form's data to reservation
-	err = reservation.Unmarshal(form.Marshal())
-	if err != nil {
-		app.LogServerError(w, err)
-		return
-	}
+	form.CheckMinLenght("first_name", 3)
+	form.CheckMinLenght("last_name", 3)
+	form.CheckEmail("email")
 
 	if !form.Valid() {
-		err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
+		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 			Form: form,
-			Data: map[string]any{
-				"reservation": reservation,
-			},
 		})
 		if err != nil {
 			app.LogServerError(w, err)
 		}
+		return
+	}
+
+	// parse form's data to reservation
+	var reservation Reservation
+	err = reservation.Unmarshal(form.Marshal())
+	if err != nil {
+		app.LogServerError(w, err)
 		return
 	}
 

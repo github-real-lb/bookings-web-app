@@ -13,19 +13,27 @@ import (
 
 const createRoom = `-- name: CreateRoom :one
 INSERT INTO rooms (
-  name
+  name, description, image_filename
 ) VALUES (
-  $1
+  $1, $2, $3
 )
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, description, image_filename, created_at, updated_at
 `
 
-func (q *Queries) CreateRoom(ctx context.Context, name string) (Room, error) {
-	row := q.db.QueryRow(ctx, createRoom, name)
+type CreateRoomParams struct {
+	Name          string      `json:"name"`
+	Description   string      `json:"description"`
+	ImageFilename pgtype.Text `json:"image_filename"`
+}
+
+func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
+	row := q.db.QueryRow(ctx, createRoom, arg.Name, arg.Description, arg.ImageFilename)
 	var i Room
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Description,
+		&i.ImageFilename,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -43,7 +51,7 @@ func (q *Queries) DeleteRoom(ctx context.Context, id int64) error {
 }
 
 const getRoom = `-- name: GetRoom :one
-SELECT id, name, created_at, updated_at FROM rooms
+SELECT id, name, description, image_filename, created_at, updated_at FROM rooms
 WHERE id = $1 LIMIT 1
 `
 
@@ -53,6 +61,8 @@ func (q *Queries) GetRoom(ctx context.Context, id int64) (Room, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Description,
+		&i.ImageFilename,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -60,17 +70,22 @@ func (q *Queries) GetRoom(ctx context.Context, id int64) (Room, error) {
 }
 
 const listAvailableRooms = `-- name: ListAvailableRooms :many
-SELECT id, name, created_at, updated_at
+SELECT id, name, description, image_filename, created_at, updated_at
 FROM rooms
 WHERE id NOT IN (
 SELECT room_id
 FROM room_restrictions
-WHERE (start_date < '2024-02-05' AND end_date > '2024-02-01')
+WHERE (start_date < $1::date AND end_date > $2::date)
 )
 `
 
-func (q *Queries) ListAvailableRooms(ctx context.Context) ([]Room, error) {
-	rows, err := q.db.Query(ctx, listAvailableRooms)
+type ListAvailableRoomsParams struct {
+	EndDate   pgtype.Date `json:"end_date"`
+	StartDate pgtype.Date `json:"start_date"`
+}
+
+func (q *Queries) ListAvailableRooms(ctx context.Context, arg ListAvailableRoomsParams) ([]Room, error) {
+	rows, err := q.db.Query(ctx, listAvailableRooms, arg.EndDate, arg.StartDate)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +96,8 @@ func (q *Queries) ListAvailableRooms(ctx context.Context) ([]Room, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Description,
+			&i.ImageFilename,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -95,7 +112,7 @@ func (q *Queries) ListAvailableRooms(ctx context.Context) ([]Room, error) {
 }
 
 const listRooms = `-- name: ListRooms :many
-SELECT id, name, created_at, updated_at FROM rooms
+SELECT id, name, description, image_filename, created_at, updated_at FROM rooms
 ORDER BY name
 LIMIT $1
 OFFSET $2
@@ -118,6 +135,8 @@ func (q *Queries) ListRooms(ctx context.Context, arg ListRoomsParams) ([]Room, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Description,
+			&i.ImageFilename,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -134,17 +153,24 @@ func (q *Queries) ListRooms(ctx context.Context, arg ListRoomsParams) ([]Room, e
 const updateRoom = `-- name: UpdateRoom :exec
 UPDATE rooms
   set   name = $2,
-        updated_at = $3
+        description = $3,
+        updated_at = $4
 WHERE id = $1
 `
 
 type UpdateRoomParams struct {
-	ID        int64              `json:"id"`
-	Name      string             `json:"name"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID          int64              `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpdateRoom(ctx context.Context, arg UpdateRoomParams) error {
-	_, err := q.db.Exec(ctx, updateRoom, arg.ID, arg.Name, arg.UpdatedAt)
+	_, err := q.db.Exec(ctx, updateRoom,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.UpdatedAt,
+	)
 	return err
 }

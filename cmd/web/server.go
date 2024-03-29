@@ -42,19 +42,18 @@ func NewServer(store db.DatabaseStore) *Server {
 	mux.Get("/about", server.AboutHandler)
 
 	mux.Get("/generals-quarters", server.GeneralsHandler)
-	mux.Post("/generals-quarters", server.PostAvailabilityHandler)
+	mux.Post("/generals-quarters", server.PostSearchAvailabilityHandler)
 
 	mux.Get("/majors-suite", server.MajorsHandler)
-	mux.Post("/majors-suite", server.PostAvailabilityHandler)
+	mux.Post("/majors-suite", server.PostSearchAvailabilityHandler)
 
 	mux.Get("/contact", server.ContactHandler)
 
-	mux.Get("/search-availability", server.AvailabilityHandler)
-	mux.Post("/search-availability", server.PostAvailabilityHandler)
-	mux.Post("/search-availability-json", server.PostAvailabilityJsonHandler)
+	mux.Get("/search-availability", server.SearchAvailabilityHandler)
+	mux.Post("/search-availability", server.PostSearchAvailabilityHandler)
 
-	mux.Get("/make-reservation", server.ReservationHandler)
-	mux.Post("/make-reservation", server.PostReservationHandler)
+	mux.Get("/make-reservation", server.MakeReservationHandler)
+	mux.Post("/make-reservation", server.PostMakeReservationHandler)
 	mux.Get("/reservation-summary", server.ReservationSummaryHandler)
 
 	// setting file server

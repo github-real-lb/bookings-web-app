@@ -12,7 +12,7 @@ type Querier interface {
 	CheckRoomAvailabilty(ctx context.Context, arg CheckRoomAvailabiltyParams) (bool, error)
 	CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 	CreateRestriction(ctx context.Context, name string) (Restriction, error)
-	CreateRoom(ctx context.Context, name string) (Room, error)
+	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
 	CreateRoomRestriction(ctx context.Context, arg CreateRoomRestrictionParams) (RoomRestriction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteReservation(ctx context.Context, id int64) error
@@ -27,7 +27,7 @@ type Querier interface {
 	GetRoom(ctx context.Context, id int64) (Room, error)
 	GetRoomRestriction(ctx context.Context, id int64) (RoomRestriction, error)
 	GetUser(ctx context.Context, id int64) (User, error)
-	ListAvailableRooms(ctx context.Context) ([]Room, error)
+	ListAvailableRooms(ctx context.Context, arg ListAvailableRoomsParams) ([]Room, error)
 	ListReservations(ctx context.Context, arg ListReservationsParams) ([]Reservation, error)
 	ListReservationsByRoom(ctx context.Context, arg ListReservationsByRoomParams) ([]Reservation, error)
 	ListRestrictions(ctx context.Context, arg ListRestrictionsParams) ([]Restriction, error)

@@ -87,7 +87,7 @@ func TestForm_IsEmailValid(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.key, func(t *testing.T) {
 			form.Set(test.key, test.value)
-			assert.Equal(t, test.result, form.IsEmailValid(test.key))
+			assert.Equal(t, test.result, form.CheckEmail(test.key))
 		})
 	}
 }
@@ -108,17 +108,17 @@ func TestForm_MinLenght(t *testing.T) {
 	form := createRandomForm(t)
 
 	// check ok
-	assert.True(t, form.MinLenght("key1", 3))
+	assert.True(t, form.CheckMinLenght("key1", 3))
 
 	// check not ok
-	assert.False(t, form.MinLenght("key1", 100))
+	assert.False(t, form.CheckMinLenght("key1", 100))
 
 	// check missing key
-	assert.False(t, form.MinLenght(util.RandomName(), 3))
+	assert.False(t, form.CheckMinLenght(util.RandomName(), 3))
 
 	// check white spaces value
 	form.Set("WhiteSpaces", "     ")
-	assert.True(t, form.MinLenght("WhiteSpaces", 3))
+	assert.True(t, form.CheckMinLenght("WhiteSpaces", 3))
 }
 
 func TestForm_Required(t *testing.T) {

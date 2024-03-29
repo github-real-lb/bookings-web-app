@@ -34,6 +34,18 @@ func (r *Restriction) Marshal() map[string]string {
 }
 
 // Marshal returns data of r
+func (r *Room) Marshal() map[string]string {
+	data := make(map[string]string)
+	data["id"] = fmt.Sprint(r.ID)
+	data["name"] = r.Name
+	data["description"] = r.Description
+	data["image_filename"] = r.ImageFilename.String
+	data["created_at"] = r.CreatedAt.Time.Format(time.RFC3339)
+	data["updated_at"] = r.UpdatedAt.Time.Format(time.RFC3339)
+	return data
+}
+
+// Marshal returns data of r
 func (r *RoomRestriction) Marshal() map[string]string {
 	data := make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)

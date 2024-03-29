@@ -27,6 +27,8 @@ CREATE TABLE "reservations" (
 CREATE TABLE "rooms" (
   "id" bigserial PRIMARY KEY,
   "name" varchar(255) NOT NULL,
+  "description" text NOT NULL,
+  "image_filename" varchar(255),
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );

@@ -31,10 +31,12 @@ type Restriction struct {
 }
 
 type Room struct {
-	ID        int64              `json:"id"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	ImageFilename pgtype.Text        `json:"image_filename"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 type RoomRestriction struct {

@@ -1,8 +1,8 @@
 -- name: CreateRoom :one
 INSERT INTO rooms (
-  name
+  name, description, image_filename
 ) VALUES (
-  $1
+  $1, $2, $3
 )
 RETURNING *;
 
@@ -20,7 +20,7 @@ FROM rooms
 WHERE id NOT IN (
 SELECT room_id
 FROM room_restrictions
-WHERE (start_date < '2024-02-05' AND end_date > '2024-02-01')
+WHERE (start_date < @end_date::date AND end_date > @start_date::date)
 );
 
 -- name: ListRooms :many
@@ -32,5 +32,6 @@ OFFSET $2;
 -- name: UpdateRoom :exec
 UPDATE rooms
   set   name = $2,
-        updated_at = $3
+        description = $3,
+        updated_at = $4
 WHERE id = $1;

@@ -126,9 +126,9 @@ func (_m *MockStore) CreateRestriction(ctx context.Context, name string) (db.Res
 	return r0, r1
 }
 
-// CreateRoom provides a mock function with given fields: ctx, name
-func (_m *MockStore) CreateRoom(ctx context.Context, name string) (db.Room, error) {
-	ret := _m.Called(ctx, name)
+// CreateRoom provides a mock function with given fields: ctx, arg
+func (_m *MockStore) CreateRoom(ctx context.Context, arg db.CreateRoomParams) (db.Room, error) {
+	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateRoom")
@@ -136,17 +136,17 @@ func (_m *MockStore) CreateRoom(ctx context.Context, name string) (db.Room, erro
 
 	var r0 db.Room
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (db.Room, error)); ok {
-		return rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateRoomParams) (db.Room, error)); ok {
+		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) db.Room); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateRoomParams) db.Room); ok {
+		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Get(0).(db.Room)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, name)
+	if rf, ok := ret.Get(1).(func(context.Context, db.CreateRoomParams) error); ok {
+		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -496,9 +496,9 @@ func (_m *MockStore) GetUser(ctx context.Context, id int64) (db.User, error) {
 	return r0, r1
 }
 
-// ListAvailableRooms provides a mock function with given fields: ctx
-func (_m *MockStore) ListAvailableRooms(ctx context.Context) ([]db.Room, error) {
-	ret := _m.Called(ctx)
+// ListAvailableRooms provides a mock function with given fields: ctx, arg
+func (_m *MockStore) ListAvailableRooms(ctx context.Context, arg db.ListAvailableRoomsParams) ([]db.Room, error) {
+	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAvailableRooms")
@@ -506,19 +506,19 @@ func (_m *MockStore) ListAvailableRooms(ctx context.Context) ([]db.Room, error) 
 
 	var r0 []db.Room
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]db.Room, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListAvailableRoomsParams) ([]db.Room, error)); ok {
+		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []db.Room); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListAvailableRoomsParams) []db.Room); ok {
+		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Room)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, db.ListAvailableRoomsParams) error); ok {
+		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
 	}

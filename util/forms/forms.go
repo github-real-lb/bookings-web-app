@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 )
@@ -22,6 +23,53 @@ func New(data url.Values) *Form {
 	}
 }
 
+// CheckDateRange checks if the startDateField is prior to the endDateField, and returns the result.
+// Run TrimSpaces before to remove leading and trailing white spaces if needed.
+// Error message is added to f.Errors.
+func (f *Form) CheckDateRange(startDateField string, endDateField string) bool {
+	startDate, err := time.Parse("2006-01-02", f.Get(startDateField))
+	if err != nil {
+		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
+		return false
+	}
+
+	endDate, err := time.Parse("2006-01-02", f.Get(endDateField))
+	if err != nil {
+		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
+		return false
+	}
+
+	if endDate.Before(startDate) {
+		f.Errors.Add(endDateField, "End date cannot be prior to start date.")
+		return false
+	}
+
+	return true
+}
+
+// CheckEmail checks if the field passed has a valid email, and returns the result.
+// Error message is added to f.Errors.
+func (f *Form) CheckEmail(field string) bool {
+	if !govalidator.IsEmail(f.GetValue(field)) {
+		f.Errors.Add(field, "Invalid email address!")
+		return false
+	}
+
+	return true
+}
+
+// CheckMinLenght checks if the first value of the field passed has minimum characters, and returns the result.
+// Run TrimSpaces before to remove leading and trailing white spaces if needed.
+// Error message is added to f.Errors.
+func (f *Form) CheckMinLenght(field string, lenght int) bool {
+	if len(f.Get(field)) < lenght {
+		f.Errors.Add(field, fmt.Sprintf("Field requires at least %d characters!", lenght))
+		return false
+	}
+
+	return true
+}
+
 // Has checks if the field passed contains data, and returns the result.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
 // Error message is NOT added to f.Errors in case the field is empty.
@@ -35,17 +83,6 @@ func (f *Form) GetValue(field string) string {
 	return strings.TrimSpace(f.Get(field))
 }
 
-// IsEmail checks if the field passed has a valid email, and returns the result.
-// Error message is added to f.Errors.
-func (f *Form) IsEmailValid(field string) bool {
-	if !govalidator.IsEmail(f.GetValue(field)) {
-		f.Errors.Add(field, "Invalid email address!")
-		return false
-	}
-
-	return true
-}
-
 // Marshal returns the data of the first values in each field of f.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
 func (f *Form) Marshal() (data map[string]string) {
@@ -57,18 +94,6 @@ func (f *Form) Marshal() (data map[string]string) {
 		}
 	}
 	return
-}
-
-// MinLenght checks if the first value of the field passed has minimum characters, and returns the result.
-// Run TrimSpaces before to remove leading and trailing white spaces if needed.
-// Error message is added to f.Errors.
-func (f *Form) MinLenght(field string, lenght int) bool {
-	if len(f.Get(field)) < lenght {
-		f.Errors.Add(field, fmt.Sprintf("Field requires at least %d characters!", lenght))
-		return false
-	}
-
-	return true
 }
 
 // Required checks if the first values of all fields passed contain data, and returns the result.

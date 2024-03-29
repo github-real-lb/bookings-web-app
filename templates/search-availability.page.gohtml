@@ -10,10 +10,20 @@
                     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="input-group mb-3" id="reservation-dates">
                         <span class="input-group-text">Arrival Date</span>
-                        <input type="text" class="form-control" name="start_date" required autocomplete="off" aria-label="Arrival Date" aria-describedby="start-date" placeholder="YYYY/MM/DD">
+                        <input type="text" class="form-control"  value='{{.Form.Get "start_date"}}' name="start_date"
+                            required autocomplete="off" aria-label="Arrival Date" aria-describedby="start-date" 
+                            placeholder="YYYY-MM-DD">
                         <span class="input-group-text">Departure Date</span>
-                        <input type="text" class="form-control" name="end_date" required autocomplete="off" aria-label="Departure Date" aria-describedby="end-date" placeholder="YYYY/MM/DD">  
+                        <input type="text" class="form-control" value='{{.Form.Get "end_date"}}'
+                            name="end_date" required autocomplete="off" aria-label="Departure Date" aria-describedby="end-date" 
+                            placeholder="YYYY-MM-DD">  
                     </div>
+                    {{with .Form.Errors.Get "start_date"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}} 
+                    {{with .Form.Errors.Get "end_date"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}} 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="submit" class="btn btn-success">Check Availability</button>
                     </div>   
