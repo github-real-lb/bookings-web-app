@@ -54,6 +54,9 @@ func NewServer(store db.DatabaseStore) *Server {
 
 	mux.Get("/make-reservation", server.MakeReservationHandler)
 	mux.Post("/make-reservation", server.PostMakeReservationHandler)
+
+	mux.Get("/choose-room/{index}", server.ChooseRoomHandler)
+
 	mux.Get("/reservation-summary", server.ReservationSummaryHandler)
 
 	// setting file server

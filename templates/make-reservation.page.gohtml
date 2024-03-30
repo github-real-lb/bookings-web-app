@@ -5,9 +5,32 @@
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10 col-sm-12 col-xs-12">
                 <h1 class="mt-5">Make Reservation</h1>
+                <hr>
+
+                {{$res := index .Data "reservation"}}
+                <div class="card">
+                    <div class="row align-items-center ms-3 me-3 mt-3 mb-3">
+                        <div class="col-4">
+                            <img src="/static/images/{{$res.Room.ImageFilename}}" class="card-img-top" alt="Room Image">
+                        </div>
+                        <div class="col-8">
+                            <div class="card-body">
+                                <h5 class="card-title">{{$res.Room.Name}}</h5>
+                                <p class="card-text">{{$res.Room.Description}}</p> 
+                                <p class="card-text">Arrival Date: {{$res.StartDate}}</p>
+                                <p class="card-text">Departure Date: {{$res.EndDate}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <form class="" method="post" action="" novalidate>
                     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                    <hr>
+                    <input type="hidden" name="start_date" value="{{$res.StartDate}}">
+                    <input type="hidden" name="end_date" value="{{$res.EndDate}}">
+                    <input type="hidden" name="room_id" value="{{$res.Room.ID}}">
+
+                  
                     <div class="input-group flex-nowrap mt-3">
                         <span class="input-group-text" id="first-name">First Name</span>
                         <input  type="text" class='form-control {{with .Form.Errors.Get "first_name"}} is-invalid {{end}}' 
@@ -43,15 +66,10 @@
                     {{with .Form.Errors.Get "phone"}}      
                     <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
                     {{end}}   
-         
-                    <div class="input-group mt-3">
-                        <span class="input-group-text" id="start-date">Start Date</span>
-                        <input  type="text" class='form-control' name="start_date" autocomplete="on" placeholder="YYYY-MM-DD" required>
-                    </div>
 
                     <div class="input-group mt-3">
-                        <span class="input-group-text" id="end-date">End Date</span>
-                        <input  type="text" class='form-control' name="end_date" autocomplete="on" placeholder="YYYY-MM-DD" required>
+                        <span class="input-group-text" id="notes">Notes</span>
+                        <input  type="text" class="form-control" value='{{.Form.Get "notes"}}' name="notes" autocomplete="off">
                     </div>
                     
                     <hr>

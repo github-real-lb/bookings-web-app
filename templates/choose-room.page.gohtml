@@ -4,19 +4,30 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Choose a room</h1>
+                <h1>Availabe Rooms</h1>
+                <hr>
+                
                 {{$rooms := index .Data "rooms"}}
-                {{range $rooms}}
-                <div class="card" style="width: 18rem;">
-                    <img src="..." class="card-img-top" alt="...">
-                    <div class="card-body">
-                      <h5 class="card-title">Card title</h5>
-                      <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                      <a href="#" class="btn btn-primary">Go somewhere</a>
+                {{range $index, $room :=  $rooms}}
+                <div class="card">
+                    <div class="row align-items-center ms-3 me-3 mt-3 mb-3">
+                        <div class="col-4">
+                            <img src="/static/images/{{$room.ImageFilename}}" class="card-img-top" alt="Room Image">
+                        </div>
+                        <div class="col-8">
+                            <div class="card-body">
+                                <h5 class="card-title">{{$room.Name}}</h5>
+                                <p class="card-text">{{$room.Description}}</p>
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="/choose-room/{{$index}}" class="btn btn-success">Reserve</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
+                </div>
                 {{end}}
             </div>
         </div>
     </div>
 {{end}}
+

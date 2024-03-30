@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
-	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
+	"github.com/go-chi/chi/v5"
 )
 
-// HomeHandler is the home page handler
+// HomeHandler is the GET "/" home page handler
 func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
@@ -17,7 +17,7 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AboutHandler is the about page handler
+// AboutHandler is the GET "/about" page handler
 func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
 	if err != nil {
@@ -25,7 +25,7 @@ func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ReservationHandler is the generals-quarters room page handler
+// ReservationHandler is the GET "/generals-quarters" room page handler
 func (s *Server) GeneralsHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "generals.room.page.gohtml", &TemplateData{})
 	if err != nil {
@@ -33,7 +33,7 @@ func (s *Server) GeneralsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// MajorsHandler is the majors-suite room page handler
+// MajorsHandler is the GET "/majors-suite" room page handler
 func (s *Server) MajorsHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "majors.room.page.gohtml", &TemplateData{})
 	if err != nil {
@@ -41,7 +41,7 @@ func (s *Server) MajorsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ContactHandler is the contact page handler
+// ContactHandler is the GET "/contact" page handler
 func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AvailabilityHandler is the search-availability page handler
+// AvailabilityHandler is the GET "/search-availability" page handler
 func (s *Server) SearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
 		Form: forms.New(nil),
@@ -59,7 +59,7 @@ func (s *Server) SearchAvailabilityHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// PostAvailability is the search-availability page post handler
+// PostAvailability is the POST "/search-availability" page handler
 func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -85,15 +85,22 @@ func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// parse form's data to query arguments
-	var arg db.ListAvailableRoomsParams
-	arg.Unmarshal(form.Marshal())
-	rooms, err := s.DatabaseStore.ListAvailableRooms(context.Background(), arg)
+	// parse form's data to reservation
+	var reservation Reservation
+	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
 		app.LogServerError(w, err)
 		return
 	}
 
+	// get list of availabe rooms
+	rooms, err := s.ListAvailableRooms(reservation)
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// check if there are rooms availabe
 	if len(rooms) == 0 {
 		app.Session.Put(r.Context(), "warning", "No rooms are availabe. Please try different dates.")
 		err = RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
@@ -105,28 +112,78 @@ func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// parse form's data to reservation
-	var reservation Reservation
-	err = reservation.Unmarshal(form.Marshal())
-	if err != nil {
-		app.LogServerError(w, err)
-	}
-
+	// load reservation to session data
 	app.Session.Put(r.Context(), "reservation", reservation)
-	err = RenderTemplate(w, r, "choose-room.page.gohtml", &TemplateData{
-		Data: map[string]any{
-			"rooms": rooms,
-		},
-	})
-	if err != nil {
-		app.LogServerError(w, err)
-	}
+	app.Session.Put(r.Context(), "rooms", rooms)
 
+	// redirecting to choose-room page
+	http.Redirect(w, r, "/choose-room/available", http.StatusSeeOther)
 }
 
-// ReservationHandler is the make-reservation page handler
+// ChooseRoomHandler is the GET "/choose-room/{index}" page handler
+func (s *Server) ChooseRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// get available rooms data from session
+	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
+	if !ok {
+		app.LogError(errors.New("cannot get available rooms list from the session"))
+		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// if no id paramater exists in URL render a new page
+	if chi.URLParam(r, "index") == "available" {
+		err := RenderTemplate(w, r, "choose-room.page.gohtml", &TemplateData{
+			Data: map[string]any{
+				"rooms": rooms,
+			},
+		})
+		if err != nil {
+			app.LogServerError(w, err)
+		}
+		return
+	}
+
+	// get room id from URL
+	index, err := strconv.Atoi(chi.URLParam(r, "index"))
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// get reservation data from session
+	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
+	if !ok {
+		app.LogError(errors.New("cannot get reservation from the session"))
+		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	reservation.Room.ID = rooms[index].ID
+	reservation.Room.Name = rooms[index].Name
+	reservation.Room.Description = rooms[index].Description
+	reservation.Room.ImageFilename = rooms[index].ImageFilename
+	app.Session.Put(r.Context(), "reservation", reservation)
+
+	// redirecting to make-reservation page
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+}
+
+// ReservationHandler is the GET "/make-reservation" page handler
 func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) {
+	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
+	if !ok {
+		app.LogError(errors.New("cannot get reservation data from the session"))
+		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
 	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
+		Data: map[string]any{
+			"reservation": reservation,
+		},
 		Form: forms.New(nil),
 	})
 	if err != nil {
@@ -134,7 +191,7 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// PostReservationHandler is the make-reservation post page handler
+// PostReservationHandler is the POST "/make-reservation" page handler
 func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -142,13 +199,16 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
+	if !ok {
+		app.LogError(errors.New("cannot get reservation data from the session"))
+		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
 	// create a new form with data and validate the form
 	form := forms.New(r.PostForm)
-
-	//TODO: replace this code part with code loading the data from the session
-	form.Add("room_id", "1")
-
-	//TODO: update validation to include all fields
 	form.TrimSpaces()
 	form.Required("first_name", "last_name", "email")
 	form.CheckMinLenght("first_name", 3)
@@ -157,6 +217,9 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 
 	if !form.Valid() {
 		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
+			Data: map[string]any{
+				"reservation": reservation,
+			},
 			Form: form,
 		})
 		if err != nil {
@@ -166,7 +229,6 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// parse form's data to reservation
-	var reservation Reservation
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
 		app.LogServerError(w, err)
@@ -174,30 +236,34 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// insert reservation into database
-	// TODO: the 1 should be replaced with UI input of restriction id
+	// TODO: the 1 should be replaced with database ENUM input of restriction id
 	err = s.CreateReservation(&reservation, 1)
 	if err != nil {
 		app.LogServerError(w, err)
 		return
 	}
 
-	// load reservation into session data
+	// load reservation data into session
 	app.Session.Put(r.Context(), "reservation", reservation)
 
 	// redirecting to summery page
 	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
 }
 
+// ReservationSummaryHandler is the GET "/reservation-summery" page handler
 func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		app.LogError(errors.New("cannot get reservation from the session"))
+		app.LogError(errors.New("cannot get reservation data from the session"))
 		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
+	// remove reservation and rooms data from session
 	app.Session.Remove(r.Context(), "reservation")
+	app.Session.Remove(r.Context(), "rooms")
 
 	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &TemplateData{
 		Data: map[string]any{
