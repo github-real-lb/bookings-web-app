@@ -181,6 +181,10 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
+		StringMap: map[string]string{
+			"start_date": reservation.StartDate.Format("2006-01-02"),
+			"end_date":   reservation.EndDate.Format("2006-01-02"),
+		},
 		Data: map[string]any{
 			"reservation": reservation,
 		},
@@ -217,6 +221,10 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 
 	if !form.Valid() {
 		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
+			StringMap: map[string]string{
+				"start_date": reservation.StartDate.Format("2006-01-02"),
+				"end_date":   reservation.StartDate.Format("2006-01-02"),
+			},
 			Data: map[string]any{
 				"reservation": reservation,
 			},
@@ -266,6 +274,10 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	app.Session.Remove(r.Context(), "rooms")
 
 	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &TemplateData{
+		StringMap: map[string]string{
+			"start_date": reservation.StartDate.Format("2006-01-02"),
+			"end_date":   reservation.EndDate.Format("2006-01-02"),
+		},
 		Data: map[string]any{
 			"reservation": reservation,
 		},
