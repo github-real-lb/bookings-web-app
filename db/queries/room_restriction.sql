@@ -1,8 +1,3 @@
--- name: CheckRoomAvailabilty :one
-SELECT count(*) = 0 as availabe
-FROM room_restrictions
-WHERE room_id = $1 AND (start_date < @end_date::date AND end_date > @start_date::date);
-
 -- name: CreateRoomRestriction :one
 INSERT INTO room_restrictions (
   start_date, end_date, room_id, reservation_id, restrictions_id

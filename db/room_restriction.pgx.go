@@ -8,38 +8,6 @@ import (
 )
 
 // Unmarshal parse data into p
-func (p *CheckRoomAvailabiltyParams) Unmarshal(data map[string]string) error {
-	var err error = nil
-	var t time.Time
-
-	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
-		if err != nil {
-			return err
-		}
-
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
-		}
-	}
-
-	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
-		if err != nil {
-			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
-		}
-	}
-
-	return err
-}
-
-// Unmarshal parse data into p
 func (p *CreateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
 	var t time.Time

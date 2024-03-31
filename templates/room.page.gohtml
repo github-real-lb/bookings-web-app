@@ -29,7 +29,7 @@
         <!-- check-availability-modal -->
         <div class="modal fade" id="check-availability-modal" aria-labelledby="availability-modal-label" aria-hidden="true"  tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <form id="check-availability-form" novalidate>
+                <form id="check-availability-form" class="" method="" action="" novalidate>
                     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -37,51 +37,26 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">                         
-                            <div class="input-group mb-3" id="reservation-dates">
+                            <div class="input-group" id="reservation-dates">
                                 <span class="input-group-text">Arrival Date</span>
                                 <input type="text" class="form-control" name="start_date" required autocomplete="off" aria-label="Arrival Date" aria-describedby="start-date" placeholder="YYYY/MM/DD">
                                 <span class="input-group-text">Departure Date</span>
                                 <input type="text" class="form-control" name="end_date" required autocomplete="off" aria-label="Departure Date" aria-describedby="end-date" placeholder="YYYY/MM/DD">  
                             </div>
-                        </div>
+                        </div>                            
+                        <div class="form-text text-danger text-center fst-italic fw-semibold mb-3" id="reservation-dates-error"></div>
                         <div class="modal-footer"> 
-                            <!-- id="check-availability-button" data-bs-target="#show-result-modal" data-bs-toggle="modal" -->
                             <button type="submit" class="btn btn-success">Check Availability</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div> 
-        
-        <!-- show-result-modal -->
-        <div class="modal fade" id="show-result-modal" aria-hidden="true" aria-labelledby="result-modal-label" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-3" id="result-modal-label">Availability Result</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="result-modal-body">
-                    <div class="mb-3" id="result-modal-body1">
-                        ...
-                    </div>
-                    <div class="mb-3" id="result-modal-body2">
-                        ...
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-                </div>
-            </div>
-            </div>          
-        </div>  
 {{end}}
 
 {{define "js"}} 
     <script>  
         const searchModal = new bootstrap.Modal(document.getElementById("check-availability-modal"));
-        const resultModal = new bootstrap.Modal(document.getElementById("show-result-modal"));
 
         // Validates Search-Availability form and execute POST method
         document.getElementById("check-availability-form").addEventListener("submit", event => {
@@ -92,18 +67,22 @@
 
             if (form.checkValidity()) {                    
                 let formDate = new FormData(form);
-                formDate.append("csrf_token","{{.CSRFToken}}");
-                
-                fetch("/search-availability-json",{
+
+                fetch("/search-room-availability",{
                     method: "post",
                     body: formDate,})
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById("result-modal-body1").textContent = "Start date: " + data.start_date;
-                    document.getElementById("result-modal-body2").textContent = "End date: " + data.end_date; 
-                                        
-                    resultModal.show();
-                    searchModal.hide(); 
+                    if (data) {
+                        if (data.errors) {
+                            const errors = data.errors;
+                            const firstError = Object.values(errors)[0]; // Get the first error message
+                            document.getElementById("reservation-dates-error").textContent = firstError;                   
+                        }
+                        if (data.message) {
+                            document.getElementById("reservation-dates-error").textContent = data.message;                   
+                        }
+                    }                    
                 })
                 .catch(error => console.error('Error:', error));                                   
             }
@@ -116,7 +95,8 @@
             format: "yyyy-mm-dd",
             clearButton: true,
             todayButton: true,
-            todayHighlight: true
+            todayHighlight: true,
+            minDate: new Date(),
         });   
     </script>   
 {{end}}    

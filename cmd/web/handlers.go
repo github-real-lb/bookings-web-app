@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -96,6 +98,93 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.LogServerError(w, err)
 	}
+}
+
+// PostSearchRoomAvailabilityHandler is the POST "/search-room-availability" page handler
+func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+	room, ok := app.Session.Get(r.Context(), "room").(Room)
+	if !ok {
+		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// create a new form with data and validate the form
+	form := forms.New(r.PostForm)
+
+	log.Println("App mode:", app.AppMode)
+
+	// validate form
+	form.TrimSpaces()
+	form.Required("start_date", "end_date")
+	form.CheckDateRange("start_date", "end_date")
+
+	if !form.Valid() {
+		bs, err := json.Marshal(form)
+		if err != nil {
+			app.LogServerError(w, err)
+			return
+		}
+
+		_, err = w.Write(bs)
+		if err != nil {
+			app.LogError(err)
+			return
+		}
+		return
+	}
+
+	// parse form's data to reservation
+	var reservation Reservation
+	reservation.Room = room
+	err = reservation.Unmarshal(form.Marshal())
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// check if room is available
+	ok, err = s.CheckRoomAvailability(reservation)
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// return response if room is not available
+	if !ok {
+		form.Errors.Add("availabe", "Room is unavailable. PLease try different dates.")
+		bs, err := json.Marshal(form)
+		if err != nil {
+			app.LogServerError(w, err)
+			return
+		}
+
+		_, err = w.Write(bs)
+		if err != nil {
+			app.LogError(err)
+			return
+		}
+		return
+	}
+
+	_, err = w.Write([]byte(`{
+		"message": "Room is available"
+	}`))
+	if err != nil {
+		app.LogError(err)
+		return
+	}
+
+	// // load reservation to session data
+	// app.Session.Put(r.Context(), "reservation", reservation)
+
+	// // redirecting to make-reservation page
+	// http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
 
 // ContactHandler is the GET "/contact" page handler

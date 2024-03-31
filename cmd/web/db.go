@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
@@ -9,6 +10,23 @@ import (
 )
 
 const ContextTimeout = 3 * time.Second
+
+// CheckRoomAvailability checks if room in reservation is available
+func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
+	// parse form's data to query arguments
+	var arg db.CheckRoomAvailabiltyParams
+	arg.Unmarshal(r.Marshal())
+
+	log.Println("reservation:", r)
+	log.Println("CheckRoomAvailabiltyParams:", arg)
+
+	// create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cancel()
+
+	// get list of availabe rooms
+	return s.DatabaseStore.CheckRoomAvailabilty(ctx, arg)
+}
 
 // CreateReservation insert reservation data into database.
 // it updates r with new data from database.

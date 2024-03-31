@@ -11,8 +11,8 @@ import (
 
 // Form is used to hold the data and error of the fields of an html form
 type Form struct {
-	url.Values
-	Errors errors
+	url.Values `json:"values"`
+	Errors     errors `json:"errors"`
 }
 
 // New initialized a form struct

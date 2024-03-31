@@ -11,25 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const checkRoomAvailabilty = `-- name: CheckRoomAvailabilty :one
-SELECT count(*) = 0 as availabe
-FROM room_restrictions
-WHERE room_id = $1 AND (start_date < $2::date AND end_date > $3::date)
-`
-
-type CheckRoomAvailabiltyParams struct {
-	RoomID    int64       `json:"room_id"`
-	EndDate   pgtype.Date `json:"end_date"`
-	StartDate pgtype.Date `json:"start_date"`
-}
-
-func (q *Queries) CheckRoomAvailabilty(ctx context.Context, arg CheckRoomAvailabiltyParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkRoomAvailabilty, arg.RoomID, arg.EndDate, arg.StartDate)
-	var availabe bool
-	err := row.Scan(&availabe)
-	return availabe, err
-}
-
 const createRoomRestriction = `-- name: CreateRoomRestriction :one
 INSERT INTO room_restrictions (
   start_date, end_date, room_id, reservation_id, restrictions_id

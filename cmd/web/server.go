@@ -43,6 +43,7 @@ func NewServer(store db.DatabaseStore) *Server {
 
 	mux.Get("/rooms/{index}", server.RoomsHandler)
 	mux.Get("/rooms/room/{name}", server.RoomHandler)
+	mux.Post("/search-room-availability", server.PostSearchRoomAvailabilityHandler)
 
 	mux.Get("/contact", server.ContactHandler)
 
