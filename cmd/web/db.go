@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
@@ -16,9 +15,6 @@ func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 	// parse form's data to query arguments
 	var arg db.CheckRoomAvailabiltyParams
 	arg.Unmarshal(r.Marshal())
-
-	log.Println("reservation:", r)
-	log.Println("CheckRoomAvailabiltyParams:", arg)
 
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)

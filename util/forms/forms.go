@@ -25,7 +25,7 @@ func New(data url.Values) *Form {
 
 // CheckDateRange checks if the startDateField is prior to the endDateField, and returns the result.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
-// Error message is added to f.Errors.
+// Error message is added to f.Errors for the startDateField field.
 func (f *Form) CheckDateRange(startDateField string, endDateField string) bool {
 	startDate, err := time.Parse("2006-01-02", f.Get(startDateField))
 	if err != nil {

@@ -21,7 +21,7 @@
             <div class="col text-center">          
                 <!-- <button type="button" class="btn btn-success" id="chk-availability">Check Availabilty</button>   -->
                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#check-availability-modal">
-                    Check Availabilty
+                    Book Now
                 </button>         
             </div>            
         </div>        
@@ -46,7 +46,7 @@
                         </div>                            
                         <div class="form-text text-danger text-center fst-italic fw-semibold mb-3" id="reservation-dates-error"></div>
                         <div class="modal-footer"> 
-                            <button type="submit" class="btn btn-success">Check Availability</button>
+                            <button type="submit" class="btn btn-success">Book Now</button>
                         </div>
                     </div>
                 </form>
@@ -58,7 +58,7 @@
     <script>  
         const searchModal = new bootstrap.Modal(document.getElementById("check-availability-modal"));
 
-        // Validates Search-Availability form and execute POST method
+        // Validates check-availability-form and execute POST method
         document.getElementById("check-availability-form").addEventListener("submit", event => {
             event.preventDefault();
             
@@ -72,17 +72,14 @@
                     method: "post",
                     body: formDate,})
                 .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        if (data.errors) {
-                            const errors = data.errors;
-                            const firstError = Object.values(errors)[0]; // Get the first error message
-                            document.getElementById("reservation-dates-error").textContent = firstError;                   
-                        }
-                        if (data.message) {
-                            document.getElementById("reservation-dates-error").textContent = data.message;                   
-                        }
-                    }                    
+                .then(data => {    
+                    if (data.ok) {
+                        // redirect to make-reservation
+                        window.location.href = "/make-reservation"; 
+                    } else {        
+                        // display the error message
+                        document.getElementById("reservation-dates-error").textContent = data.message;                                 
+                    }
                 })
                 .catch(error => console.error('Error:', error));                                   
             }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,7 +13,7 @@ import (
 )
 
 // HomeHandler is the GET "/" home page handler
-func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		app.LogServerError(w, err)
@@ -101,6 +100,7 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // PostSearchRoomAvailabilityHandler is the POST "/search-room-availability" page handler
+// It is fetched by the room.page and excpect a json response
 func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	room, ok := app.Session.Get(r.Context(), "room").(Room)
 	if !ok {
@@ -114,18 +114,29 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
+	// define the json response
+	var resp struct {
+		OK      bool   `json:"ok"`
+		Message string `json:"message"`
+	}
+
 	// create a new form with data and validate the form
 	form := forms.New(r.PostForm)
-
-	log.Println("App mode:", app.AppMode)
-
-	// validate form
 	form.TrimSpaces()
-	form.Required("start_date", "end_date")
-	form.CheckDateRange("start_date", "end_date")
+	if ok = form.Required("start_date"); !ok {
+		resp.OK = false
+		resp.Message = form.Errors.Get("start_date")
+	} else if ok = form.Required("end_date"); !ok {
+		resp.OK = false
+		resp.Message = form.Errors.Get("end_date")
+	} else if ok = form.CheckDateRange("start_date", "end_date"); !ok {
+		resp.OK = false
+		resp.Message = form.Errors.Get("start_date")
+	}
 
+	// returns response if form data are invalid
 	if !form.Valid() {
-		bs, err := json.Marshal(form)
+		bs, err := json.Marshal(resp)
 		if err != nil {
 			app.LogServerError(w, err)
 			return
@@ -157,8 +168,10 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 
 	// return response if room is not available
 	if !ok {
-		form.Errors.Add("availabe", "Room is unavailable. PLease try different dates.")
-		bs, err := json.Marshal(form)
+		resp.OK = false
+		resp.Message = "Room is unavailable. PLease try different dates."
+
+		bs, err := json.Marshal(resp)
 		if err != nil {
 			app.LogServerError(w, err)
 			return
@@ -172,19 +185,21 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_, err = w.Write([]byte(`{
-		"message": "Room is available"
-	}`))
+	resp.OK = true
+
+	bs, err := json.Marshal(resp)
 	if err != nil {
-		app.LogError(err)
+		app.LogServerError(w, err)
 		return
 	}
 
-	// // load reservation to session data
-	// app.Session.Put(r.Context(), "reservation", reservation)
+	// load reservation to session data
+	app.Session.Put(r.Context(), "reservation", reservation)
 
-	// // redirecting to make-reservation page
-	// http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+	_, err = w.Write(bs)
+	if err != nil {
+		app.LogError(err)
+	}
 }
 
 // ContactHandler is the GET "/contact" page handler
@@ -195,9 +210,9 @@ func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AvailabilityHandler is the GET "/search-availability" page handler
-func (s *Server) SearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+// AvailabilityHandler is the GET "/available-rooms-search" page handler
+func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Request) {
+	err := RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
 		Form: forms.New(nil),
 	})
 	if err != nil {
@@ -205,8 +220,8 @@ func (s *Server) SearchAvailabilityHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// PostAvailability is the POST "/search-availability" page handler
-func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+// PostAvailability is the POST "/available-rooms-search" page handler
+func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.LogServerError(w, err)
@@ -215,14 +230,12 @@ func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Re
 
 	// create a new form with data and validate the form
 	form := forms.New(r.PostForm)
-
-	// validate form
 	form.TrimSpaces()
 	form.Required("start_date", "end_date")
 	form.CheckDateRange("start_date", "end_date")
 
 	if !form.Valid() {
-		err = RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+		err = RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
 			Form: form,
 		})
 		if err != nil {
@@ -249,7 +262,7 @@ func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Re
 	// check if there are rooms availabe
 	if len(rooms) == 0 {
 		app.Session.Put(r.Context(), "warning", "No rooms are availabe. Please try different dates.")
-		err = RenderTemplate(w, r, "search-availability.page.gohtml", &TemplateData{
+		err = RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
 			Form: form,
 		})
 		if err != nil {
@@ -263,11 +276,11 @@ func (s *Server) PostSearchAvailabilityHandler(w http.ResponseWriter, r *http.Re
 	app.Session.Put(r.Context(), "rooms", rooms)
 
 	// redirecting to choose-room page
-	http.Redirect(w, r, "/choose-room/available", http.StatusSeeOther)
+	http.Redirect(w, r, "/available-rooms/available", http.StatusSeeOther)
 }
 
-// ChooseRoomHandler is the GET "/choose-room/{index}" page handler
-func (s *Server) ChooseRoomHandler(w http.ResponseWriter, r *http.Request) {
+// ChooseRoomHandler is the GET "/available-rooms/{index}" page handler
+func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Request) {
 	// get available rooms data from session
 	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
 	if !ok {
@@ -279,7 +292,7 @@ func (s *Server) ChooseRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// if no id paramater exists in URL render a new page
 	if chi.URLParam(r, "index") == "available" {
-		err := RenderTemplate(w, r, "choose-room.page.gohtml", &TemplateData{
+		err := RenderTemplate(w, r, "available-rooms.page.gohtml", &TemplateData{
 			Data: map[string]any{
 				"rooms": rooms,
 			},

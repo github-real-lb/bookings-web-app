@@ -38,7 +38,7 @@ func NewServer(store db.DatabaseStore) *Server {
 	}
 
 	// setting routes
-	mux.Get("/", server.Home)
+	mux.Get("/", server.HomeHandler)
 	mux.Get("/about", server.AboutHandler)
 
 	mux.Get("/rooms/{index}", server.RoomsHandler)
@@ -47,13 +47,12 @@ func NewServer(store db.DatabaseStore) *Server {
 
 	mux.Get("/contact", server.ContactHandler)
 
-	mux.Get("/search-availability", server.SearchAvailabilityHandler)
-	mux.Post("/search-availability", server.PostSearchAvailabilityHandler)
+	mux.Get("/available-rooms-search", server.AvailableRoomsSearchHandler)
+	mux.Post("/available-rooms-search", server.PostAvailableRoomsSearchHandler)
+	mux.Get("/available-rooms/{index}", server.AvailableRoomsListHandler)
 
 	mux.Get("/make-reservation", server.MakeReservationHandler)
 	mux.Post("/make-reservation", server.PostMakeReservationHandler)
-
-	mux.Get("/choose-room/{index}", server.ChooseRoomHandler)
 
 	mux.Get("/reservation-summary", server.ReservationSummaryHandler)
 
