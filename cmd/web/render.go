@@ -68,7 +68,6 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 	app.TemplatePath = strings.TrimSuffix(app.TemplatePath, "/")
 	pattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
 	baseFilename := fmt.Sprintf("%s/base.layout.gohtml", app.TemplatePath)
-	roomFilename := fmt.Sprintf("%s/room.layout.gohtml", app.TemplatePath)
 
 	// get the names of all the files matching *.page.gohtml from ./templates
 	pages, err := filepath.Glob(pattern)
@@ -90,13 +89,6 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 		ts, err = ts.ParseFiles(baseFilename)
 		if err != nil {
 			return tc, err
-		}
-
-		if strings.HasSuffix(name, ".room.page.gohtml") {
-			ts, err = ts.ParseFiles(roomFilename)
-			if err != nil {
-				return tc, err
-			}
 		}
 
 		tc[name] = ts

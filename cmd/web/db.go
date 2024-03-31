@@ -69,5 +69,34 @@ func (s *Server) ListAvailableRooms(r Reservation) (Rooms, error) {
 	}
 
 	return rooms, nil
+}
 
+func (s *Server) ListRooms(limit, offset int) (Rooms, error) {
+	arg := db.ListRoomsParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
+
+	// create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cancel()
+
+	// get list of availabe rooms
+	dbRooms, err := s.DatabaseStore.ListRooms(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	// unmarhsal list of availabe rooms into Rooms
+	var rooms Rooms
+	for i, v := range dbRooms {
+		rooms = append(rooms, Room{})
+
+		err = rooms[i].Unmarshal(v.Marshal())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rooms, nil
 }

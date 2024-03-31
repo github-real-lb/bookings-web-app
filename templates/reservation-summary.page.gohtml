@@ -35,14 +35,18 @@
                             <td>Email:</td>
                             <td>{{$res.Email}}</td> 
                         </tr>
+                        {{with $res.Phone}}  
                         <tr>
                             <td>Phone:</td>
-                            <td>{{$res.Phone}}</td> 
+                            <td>{{.}}</td> 
                         </tr>
+                        {{end}}
+                        {{with $res.Notes}} 
                         <tr>
                             <td>Notes:</td>
-                            <td>{{$res.Notes}}</td> 
+                            <td>{{.}}</td> 
                         </tr>
+                        {{end}}
                     </tbody>
                 </table>
             </div>

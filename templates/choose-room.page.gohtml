@@ -9,7 +9,7 @@
                 
                 {{$rooms := index .Data "rooms"}}
                 {{range $index, $room :=  $rooms}}
-                <div class="card">
+                <div class="card mb-3">
                     <div class="row align-items-center ms-3 me-3 mt-3 mb-3">
                         <div class="col-4">
                             <img src="/static/images/{{$room.ImageFilename}}" class="card-img-top" alt="Room Image">
