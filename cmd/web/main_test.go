@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -22,12 +23,12 @@ func NewTestRequest() *http.Request {
 }
 
 // NewTestRequestWithSession creates a new get request with new session data for use in testing
-func NewTestRequestWithSession(t *testing.T) *http.Request {
+func NewTestRequestWithSession(t *testing.T, method string, url string, body io.Reader) *http.Request {
 	// checks that the session manager is loaded
 	require.NotNil(t, app.Session)
 
 	// creating new request
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r := httptest.NewRequest(method, url, body)
 
 	// adding new session data to context
 	ctx, err := app.Session.Load(r.Context(), "X-Session")

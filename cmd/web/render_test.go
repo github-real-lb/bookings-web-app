@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func TestAddDefaultData(t *testing.T) {
-	request := NewTestRequestWithSession(t)
+	request := NewTestRequestWithSession(t, http.MethodGet, "/", nil)
 
 	// add data into session
 	app.Session.Put(request.Context(), "flash", "flash")
@@ -26,7 +27,7 @@ func TestAddDefaultData(t *testing.T) {
 
 func TestRenderTemplate(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	request := NewTestRequestWithSession(t)
+	request := NewTestRequestWithSession(t, http.MethodGet, "/", nil)
 
 	// test ok on reloading templates cache (developement and testing modes)
 	err := RenderTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
