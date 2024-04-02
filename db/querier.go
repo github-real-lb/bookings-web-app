@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	CheckRoomAvailabilty(ctx context.Context, arg CheckRoomAvailabiltyParams) (bool, error)
+	CheckRoomAvailability(ctx context.Context, arg CheckRoomAvailabilityParams) (bool, error)
 	CreateReservation(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 	CreateRestriction(ctx context.Context, name string) (Restriction, error)
 	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)

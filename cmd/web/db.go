@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
-	"github.com/github-real-lb/bookings-web-app/util"
 )
 
 const ContextTimeout = 3 * time.Second
@@ -13,7 +12,7 @@ const ContextTimeout = 3 * time.Second
 // CheckRoomAvailability checks if room in reservation is available
 func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 	// parse form's data to query arguments
-	var arg db.CheckRoomAvailabiltyParams
+	var arg db.CheckRoomAvailabilityParams
 	arg.Unmarshal(r.Marshal())
 
 	// create context with timeout
@@ -21,7 +20,7 @@ func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 	defer cancel()
 
 	// get list of availabe rooms
-	return s.DatabaseStore.CheckRoomAvailabilty(ctx, arg)
+	return s.DatabaseStore.CheckRoomAvailability(ctx, arg)
 }
 
 // CreateReservation insert reservation data into database.
@@ -30,12 +29,6 @@ func (s *Server) CreateReservation(r *Reservation, restrictionID int64) error {
 	// parse form's data to query arguments
 	arg := db.CreateReservationParams{}
 	err := arg.Unmarshal(r.Marshal())
-	if err != nil {
-		return err
-	}
-
-	// generate reservation code to add to parameters
-	arg.Code, err = util.GenerateReservationCode(r.LastName, ReservationCodeLenght)
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 	"github.com/go-chi/chi/v5"
 )
@@ -397,6 +398,13 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 
 	// parse form's data to reservation
 	err = reservation.Unmarshal(form.Marshal())
+	if err != nil {
+		app.LogServerError(w, err)
+		return
+	}
+
+	// generate reservation code
+	reservation.Code, err = util.GenerateReservationCode(reservation.LastName, ReservationCodeLenght)
 	if err != nil {
 		app.LogServerError(w, err)
 		return

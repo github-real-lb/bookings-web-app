@@ -124,6 +124,22 @@ func TestRandomString(t *testing.T) {
 	}
 }
 
+func TestRandomDate(t *testing.T) {
+	dates := make(keysMap)
+	for i := 0; i < N; i++ {
+		date := RandomDate()
+
+		days := time.Since(date).Hours() / 24.00
+		assert.True(t, days <= 365.00)
+		assert.Equal(t, 0, date.Hour())
+		assert.Equal(t, 0, date.Minute())
+		assert.Equal(t, 0, date.Second())
+
+		requireUnique(t, date, dates)
+
+	}
+}
+
 func TestRandomDatetime(t *testing.T) {
 	dates := make(keysMap)
 	for i := 0; i < N; i++ {

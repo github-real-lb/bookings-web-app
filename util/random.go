@@ -56,6 +56,13 @@ func RandomString(n int) string {
 	return sb.String()
 }
 
+// RandomDate generates a random date for the past year with no time information.
+func RandomDate() time.Time {
+	randomTime := RandomDatetime()
+	randomTime, _ = time.Parse("2006-01-02", randomTime.Format("2006-01-02"))
+	return randomTime
+}
+
 // RandomDatetime generates a random datetime for the past year.
 func RandomDatetime() time.Time {
 	standardYear := time.Hour * 24 * 365

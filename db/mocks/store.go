@@ -14,26 +14,26 @@ type MockStore struct {
 	mock.Mock
 }
 
-// CheckRoomAvailabilty provides a mock function with given fields: ctx, arg
-func (_m *MockStore) CheckRoomAvailabilty(ctx context.Context, arg db.CheckRoomAvailabiltyParams) (bool, error) {
+// CheckRoomAvailability provides a mock function with given fields: ctx, arg
+func (_m *MockStore) CheckRoomAvailability(ctx context.Context, arg db.CheckRoomAvailabilityParams) (bool, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CheckRoomAvailabilty")
+		panic("no return value specified for CheckRoomAvailability")
 	}
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabiltyParams) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabilityParams) (bool, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabiltyParams) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, db.CheckRoomAvailabilityParams) bool); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, db.CheckRoomAvailabiltyParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, db.CheckRoomAvailabilityParams) error); ok {
 		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)

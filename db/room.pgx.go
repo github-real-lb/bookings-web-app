@@ -8,7 +8,7 @@ import (
 )
 
 // Unmarshal parse data into p
-func (p *CheckRoomAvailabiltyParams) Unmarshal(data map[string]string) error {
+func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 	var err error = nil
 	var t time.Time
 
