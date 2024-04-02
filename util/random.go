@@ -1,9 +1,6 @@
 package util
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -70,6 +67,11 @@ func RandomDatetime() time.Time {
 	return time.Now().Add(-randomDuration)
 }
 
+// RandomID generates a random id between 1 and 10000
+func RandomID() int64 {
+	return RandomInt64(1, 10000)
+}
+
 // RandomName generates a random first or last name of 8 characters long
 func RandomName() string {
 	return RandomString(8)
@@ -81,7 +83,7 @@ func RandomEmail() string {
 }
 
 // RandomPhoneNumber generates a random phone number in the format +000 0000-0000
-func RandomPhoneNumber() string {
+func RandomPhone() string {
 	return fmt.Sprintf("+%d %d-%d",
 		RandomInt64(100, 999),
 		RandomInt64(1000, 9999),
@@ -129,29 +131,4 @@ func RandomInvoiceAmount() float64 {
 // RandomPaymentAmount returns random float64 between 85.00 and 1200.00
 func RandomPaymentAmount() float64 {
 	return RandomFloat64(85.00, 1200.00)
-}
-
-// NewReservationCode receives reservation name and returns an n characters reservation code.
-// For randomness purposes, if value of n is lower 6, error is returned
-func GenerateReservationCode(reservationName string, n int) (string, error) {
-	if n < 6 {
-		return "", errors.New("for randomness purposes reservation code value must be greater than 6")
-	}
-
-	// concatenating the current time with the reservation name and a 7 digits random number
-	code := fmt.Sprint(time.Now().UnixMicro(), reservationName, 1000000+r.Int63n(9000000))
-
-	// Generate SHA-256 hash of the concatenated string
-	hash := sha256.New()
-	_, err := hash.Write([]byte(code))
-	if err != nil {
-		return "", err
-	}
-	hashedBytes := hash.Sum(nil)
-
-	// Convert the hashed bytes to hexadecimal string
-	code = hex.EncodeToString(hashedBytes)[:n]
-	code = strings.ToUpper(code)
-
-	return code, nil
 }

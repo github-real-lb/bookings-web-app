@@ -2,13 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 	"github.com/go-chi/chi/v5"
 )
@@ -285,9 +283,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get available rooms data from session
 	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
 	if !ok {
-		app.LogError(errors.New("cannot get available rooms list from the session"))
-		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
 		return
 	}
 
@@ -314,9 +310,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		app.LogError(errors.New("cannot get reservation from the session"))
-		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
 		return
 	}
 
@@ -334,9 +328,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		app.LogError(errors.New("cannot get reservation data from the session"))
-		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
 		return
 	}
 
@@ -359,9 +351,7 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		app.LogError(errors.New("cannot get reservation data from the session"))
-		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
 		return
 	}
 
@@ -404,7 +394,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// generate reservation code
-	reservation.Code, err = util.GenerateReservationCode(reservation.LastName, ReservationCodeLenght)
+	err = reservation.GenerateReservationCode()
 	if err != nil {
 		app.LogServerError(w, err)
 		return
@@ -430,9 +420,7 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		app.LogError(errors.New("cannot get reservation data from the session"))
-		app.Session.Put(r.Context(), "error", "No reservation exists. Please make a reservation.")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
 		return
 	}
 
@@ -453,4 +441,10 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		app.LogServerError(w, err)
 	}
+}
+
+// errorRedirect put error message in session and redirect to home page
+func errorRedirect(w http.ResponseWriter, r *http.Request, message string) {
+	app.Session.Put(r.Context(), "error", message)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

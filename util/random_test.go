@@ -179,7 +179,7 @@ func TestRandomEmail(t *testing.T) {
 func TestRandomPhoneNumber(t *testing.T) {
 	phones := make(keysMap)
 	for i := 0; i < N; i++ {
-		phone := RandomPhoneNumber()
+		phone := RandomPhone()
 		assert.NotEmpty(t, phone)
 		assert.Len(t, phone, 14)
 
@@ -279,21 +279,5 @@ func TestRandomPaymentAmount(t *testing.T) {
 		assert.LessOrEqual(t, amount, float64(1200.00))
 
 		requireUnique(t, amount, amounts)
-	}
-}
-
-func TestGenerateReservationCode(t *testing.T) {
-	reservationName := RandomString(4)
-	code, err := GenerateReservationCode(reservationName, 5)
-	assert.Empty(t, code)
-	require.Error(t, err)
-
-	codes := make(keysMap)
-	for i := 0; i < N; i++ {
-		code, err := GenerateReservationCode(reservationName, 6)
-		assert.Len(t, code, 6)
-		require.NoError(t, err)
-
-		requireUnique(t, code, codes)
 	}
 }

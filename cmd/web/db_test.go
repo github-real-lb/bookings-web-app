@@ -18,7 +18,7 @@ import (
 func randomRoom() Room {
 	randomTime := util.RandomDatetime()
 	return Room{
-		ID:            util.RandomInt64(1, 100),
+		ID:            util.RandomID(),
 		Name:          util.RandomName(),
 		Description:   util.RandomNote(),
 		ImageFilename: fmt.Sprint(util.RandomName(), ".png"),
@@ -43,12 +43,12 @@ func randomReservation() Reservation {
 	randomDate := util.RandomDate()
 
 	return Reservation{
-		ID:        util.RandomInt64(1, 1000),
+		ID:        util.RandomID(),
 		Code:      util.RandomString(ReservationCodeLenght),
 		FirstName: util.RandomName(),
 		LastName:  util.RandomName(),
 		Email:     util.RandomEmail(),
-		Phone:     util.RandomPhoneNumber(),
+		Phone:     util.RandomPhone(),
 		StartDate: randomDate.Add(time.Hour * 24 * 30),
 		EndDate:   randomDate.Add(time.Hour * 24 * 37),
 		Room:      randomRoom(),
@@ -91,69 +91,24 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 func TestServer_CreateReservation(t *testing.T) {
 	// create random reservation with room data
 	reservation := randomReservation()
+	reservationData := reservation.Marshal()
 
-	// create mockStore mehod arguments
-	restrictionID := util.RandomInt64(1, 100)
-	arg := db.CreateReservationParams{
-		Code:      reservation.Code,
-		FirstName: reservation.FirstName,
-		LastName:  reservation.LastName,
-		Email:     reservation.Email,
-		Phone: pgtype.Text{
-			String: reservation.Phone,
-			Valid:  true,
-		},
-		StartDate: pgtype.Date{
-			Time:  reservation.StartDate,
-			Valid: true,
-		},
-		EndDate: pgtype.Date{
-			Time:  reservation.EndDate,
-			Valid: true,
-		},
-		RoomID: reservation.Room.ID,
-		Notes: pgtype.Text{
-			String: reservation.Notes,
-			Valid:  true,
-		},
-	}
+	// create a test server and mock database store
+	testServer, mockStore := NewTestServer(t)
 
-	//create mockStore method return arguments
-	dbReservation := db.Reservation{
-		ID:        reservation.ID,
-		Code:      reservation.Code,
-		FirstName: reservation.FirstName,
-		LastName:  reservation.LastName,
-		Email:     reservation.Email,
-		Phone: pgtype.Text{
-			String: reservation.Phone,
-			Valid:  true,
-		},
-		StartDate: pgtype.Date{
-			Time:  reservation.StartDate,
-			Valid: true,
-		},
-		EndDate: pgtype.Date{
-			Time:  reservation.EndDate,
-			Valid: true,
-		},
-		RoomID: reservation.Room.ID,
-		Notes: pgtype.Text{
-			String: reservation.Notes,
-			Valid:  true,
-		},
-		CreatedAt: pgtype.Timestamptz{
-			Time:  reservation.CreatedAt,
-			Valid: true,
-		},
-		UpdatedAt: pgtype.Timestamptz{
-			Time:  reservation.UpdatedAt,
-			Valid: true,
-		},
-	}
+	// create mehod arguments
+	restrictionID := util.RandomID()
 
-	// define the func to receive reservation and return nil
-	mockStore := mocks.NewMockStore(t)
+	arg := db.CreateReservationParams{}
+	err := arg.Unmarshal(reservationData)
+	require.NoError(t, err)
+
+	//create method return arguments
+	dbReservation := db.Reservation{}
+	err = dbReservation.Unmarshal(reservationData)
+	require.NoError(t, err)
+
+	// build stub
 	mockStore.On("CreateReservationTx", mock.Anything, arg, restrictionID).
 		Return(dbReservation, nil).
 		Once()
@@ -162,8 +117,7 @@ func TestServer_CreateReservation(t *testing.T) {
 	copyReservation := reservation
 
 	// test the func
-	server := NewServer(mockStore)
-	err := server.CreateReservation(&copyReservation, restrictionID)
+	err = testServer.CreateReservation(&copyReservation, restrictionID)
 	assert.NoError(t, err)
 	assert.Equal(t, reservation, copyReservation)
 }

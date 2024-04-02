@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util/forms"
@@ -40,6 +43,28 @@ type Reservation struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+const ReservationCodeLenght = 6
+
+// GenerateReservationCode generate the reservation code.
+func (r *Reservation) GenerateReservationCode() error {
+	// concatenating the current time with the reservation last name
+	code := fmt.Sprint(time.Now().Format("2006-01-02"), r.LastName)
+
+	// Generate SHA-256 hash of the concatenated string
+	hash := sha256.New()
+	_, err := hash.Write([]byte(code))
+	if err != nil {
+		return err
+	}
+	hashedBytes := hash.Sum(nil)
+
+	// Convert the hashed bytes to hexadecimal string
+	code = hex.EncodeToString(hashedBytes)[:ReservationCodeLenght]
+	r.Code = strings.ToUpper(code)
+
+	return nil
+}
+
 // Marshal returns the data of r
 func (r *Reservation) Marshal() map[string]string {
 	data := make(map[string]string)
@@ -57,7 +82,7 @@ func (r *Reservation) Marshal() map[string]string {
 	data["room_image_filename"] = fmt.Sprint(r.Room.ImageFilename)
 	data["notes"] = r.Notes
 	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
-	data["updated_at"] = r.StartDate.Format(time.RFC3339)
+	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
 	return data
 }
 

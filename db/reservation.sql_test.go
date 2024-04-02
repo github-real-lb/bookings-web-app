@@ -14,21 +14,16 @@ import (
 const ReservationCodeLenght = 6
 
 func randomReservationData(t *testing.T) map[string]string {
-	name := util.RandomName()
-
-	code, err := util.GenerateReservationCode(name, ReservationCodeLenght)
-	require.NoError(t, err)
 
 	startDate := util.RandomDatetime()
-
 	room := createRandomRoom(t)
 
 	data := make(map[string]string)
-	data["code"] = code
+	data["code"] = util.RandomString(ReservationCodeLenght)
 	data["first_name"] = util.RandomName()
-	data["last_name"] = name
+	data["last_name"] = util.RandomName()
 	data["email"] = util.RandomEmail()
-	data["phone"] = util.RandomPhoneNumber()
+	data["phone"] = util.RandomPhone()
 	data["start_date"] = startDate.Format("2006-01-02")
 	data["end_date"] = startDate.Add(time.Hour * 24 * 7).Format("2006-01-02")
 	data["room_id"] = fmt.Sprint(room.ID)
