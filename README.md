@@ -8,5 +8,6 @@ A demo of an hotel bookings and reservations web app.
 - Uses SCS [https://github.com/alexedwards/scs] for session management
 - Uses nosurf [https://github.com/justinas/nosurf] for CSRF protection
 - Uses testify [https://github.com/stretchr/testify] for testing
+- Uses mockery [https://github.com/vektra/mockery] for mocks
 - Uses  vanillajs-datepicker [https://github.com/mymth/vanillajs-datepicker] for datepicker
 - Uses govalidator [https://github.com/asaskevich/govalidator] for email validation
