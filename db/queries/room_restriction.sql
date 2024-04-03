@@ -1,6 +1,6 @@
 -- name: CreateRoomRestriction :one
 INSERT INTO room_restrictions (
-  start_date, end_date, room_id, reservation_id, restrictions_id
+  start_date, end_date, room_id, reservation_id, restriction
 ) VALUES (
   $1, $2, $3, $4, $5
 )
@@ -26,6 +26,6 @@ UPDATE room_restrictions
         end_date = $3, 
         room_id = $4,
         reservation_id = $5, 
-        restrictions_id =  $6,
+        restriction =  $6,
         updated_at = $7
 WHERE id = $1;

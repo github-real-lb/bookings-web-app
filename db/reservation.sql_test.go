@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +25,8 @@ func randomReservationData(t *testing.T) map[string]string {
 	data["last_name"] = util.RandomName()
 	data["email"] = util.RandomEmail()
 	data["phone"] = util.RandomPhone()
-	data["start_date"] = startDate.Format("2006-01-02")
-	data["end_date"] = startDate.Add(time.Hour * 24 * 7).Format("2006-01-02")
+	data["start_date"] = startDate.Format(config.DateLayout)
+	data["end_date"] = startDate.Add(time.Hour * 24 * 7).Format(config.DateLayout)
 	data["room_id"] = fmt.Sprint(room.ID)
 	data["notes"] = util.RandomNote()
 	return data

@@ -2,38 +2,23 @@ package db
 
 import (
 	"strconv"
-	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Unmarshal parse data into p
 func (p *CreateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
-	var i int64
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		err = p.StartDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
@@ -45,19 +30,14 @@ func (p *CreateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["reservation_id"]; ok {
-		i, err = strconv.ParseInt(v, 10, 64)
+		err = p.ReservationID.Scan(v)
 		if err != nil {
 			return err
 		}
-
-		p.ReservationID = pgtype.Int8{
-			Int64: i,
-			Valid: true,
-		}
 	}
 
-	if v, ok := data["restrictions_id"]; ok {
-		p.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+	if v, ok := data["restriction"]; ok {
+		err = p.Restriction.Scan(v)
 		if err != nil {
 			return err
 		}
@@ -69,8 +49,6 @@ func (p *CreateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 // Unmarshal parse data into p
 func (p *UpdateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
-	var i int64
 
 	if v, ok := data["id"]; ok {
 		p.ID, err = strconv.ParseInt(v, 10, 64)
@@ -80,26 +58,16 @@ func (p *UpdateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		err = p.StartDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
@@ -111,33 +79,23 @@ func (p *UpdateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["reservation_id"]; ok {
-		i, err = strconv.ParseInt(v, 10, 64)
+		err = p.ReservationID.Scan(v)
 		if err != nil {
 			return err
 		}
-
-		p.ReservationID = pgtype.Int8{
-			Int64: i,
-			Valid: true,
-		}
 	}
 
-	if v, ok := data["restrictions_id"]; ok {
-		p.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+	if v, ok := data["restriction"]; ok {
+		err = p.ReservationID.Scan(v)
 		if err != nil {
 			return err
 		}
 	}
 
 	if v, ok := data["updated_at"]; ok {
-		t, err = time.Parse(time.RFC3339, v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.UpdatedAt = pgtype.Timestamptz{
-			Time:  t,
-			Valid: true,
 		}
 	}
 

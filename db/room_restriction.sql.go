@@ -13,19 +13,19 @@ import (
 
 const createRoomRestriction = `-- name: CreateRoomRestriction :one
 INSERT INTO room_restrictions (
-  start_date, end_date, room_id, reservation_id, restrictions_id
+  start_date, end_date, room_id, reservation_id, restriction
 ) VALUES (
   $1, $2, $3, $4, $5
 )
-RETURNING id, start_date, end_date, room_id, reservation_id, restrictions_id, created_at, updated_at
+RETURNING id, start_date, end_date, room_id, reservation_id, restriction, created_at, updated_at
 `
 
 type CreateRoomRestrictionParams struct {
-	StartDate      pgtype.Date `json:"start_date"`
-	EndDate        pgtype.Date `json:"end_date"`
-	RoomID         int64       `json:"room_id"`
-	ReservationID  pgtype.Int8 `json:"reservation_id"`
-	RestrictionsID int64       `json:"restrictions_id"`
+	StartDate     pgtype.Date `json:"start_date"`
+	EndDate       pgtype.Date `json:"end_date"`
+	RoomID        int64       `json:"room_id"`
+	ReservationID pgtype.Int8 `json:"reservation_id"`
+	Restriction   Restriction `json:"restriction"`
 }
 
 func (q *Queries) CreateRoomRestriction(ctx context.Context, arg CreateRoomRestrictionParams) (RoomRestriction, error) {
@@ -34,7 +34,7 @@ func (q *Queries) CreateRoomRestriction(ctx context.Context, arg CreateRoomRestr
 		arg.EndDate,
 		arg.RoomID,
 		arg.ReservationID,
-		arg.RestrictionsID,
+		arg.Restriction,
 	)
 	var i RoomRestriction
 	err := row.Scan(
@@ -43,7 +43,7 @@ func (q *Queries) CreateRoomRestriction(ctx context.Context, arg CreateRoomRestr
 		&i.EndDate,
 		&i.RoomID,
 		&i.ReservationID,
-		&i.RestrictionsID,
+		&i.Restriction,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -61,7 +61,7 @@ func (q *Queries) DeleteRoomRestriction(ctx context.Context, id int64) error {
 }
 
 const getRoomRestriction = `-- name: GetRoomRestriction :one
-SELECT id, start_date, end_date, room_id, reservation_id, restrictions_id, created_at, updated_at FROM room_restrictions
+SELECT id, start_date, end_date, room_id, reservation_id, restriction, created_at, updated_at FROM room_restrictions
 WHERE id = $1 LIMIT 1
 `
 
@@ -74,7 +74,7 @@ func (q *Queries) GetRoomRestriction(ctx context.Context, id int64) (RoomRestric
 		&i.EndDate,
 		&i.RoomID,
 		&i.ReservationID,
-		&i.RestrictionsID,
+		&i.Restriction,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,7 +82,7 @@ func (q *Queries) GetRoomRestriction(ctx context.Context, id int64) (RoomRestric
 }
 
 const listRoomRestrictions = `-- name: ListRoomRestrictions :many
-SELECT id, start_date, end_date, room_id, reservation_id, restrictions_id, created_at, updated_at FROM room_restrictions
+SELECT id, start_date, end_date, room_id, reservation_id, restriction, created_at, updated_at FROM room_restrictions
 ORDER BY room_id, start_date
 LIMIT $1
 OFFSET $2
@@ -108,7 +108,7 @@ func (q *Queries) ListRoomRestrictions(ctx context.Context, arg ListRoomRestrict
 			&i.EndDate,
 			&i.RoomID,
 			&i.ReservationID,
-			&i.RestrictionsID,
+			&i.Restriction,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -128,19 +128,19 @@ UPDATE room_restrictions
         end_date = $3, 
         room_id = $4,
         reservation_id = $5, 
-        restrictions_id =  $6,
+        restriction =  $6,
         updated_at = $7
 WHERE id = $1
 `
 
 type UpdateRoomRestrictionParams struct {
-	ID             int64              `json:"id"`
-	StartDate      pgtype.Date        `json:"start_date"`
-	EndDate        pgtype.Date        `json:"end_date"`
-	RoomID         int64              `json:"room_id"`
-	ReservationID  pgtype.Int8        `json:"reservation_id"`
-	RestrictionsID int64              `json:"restrictions_id"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ID            int64              `json:"id"`
+	StartDate     pgtype.Date        `json:"start_date"`
+	EndDate       pgtype.Date        `json:"end_date"`
+	RoomID        int64              `json:"room_id"`
+	ReservationID pgtype.Int8        `json:"reservation_id"`
+	Restriction   Restriction        `json:"restriction"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpdateRoomRestriction(ctx context.Context, arg UpdateRoomRestrictionParams) error {
@@ -150,7 +150,7 @@ func (q *Queries) UpdateRoomRestriction(ctx context.Context, arg UpdateRoomRestr
 		arg.EndDate,
 		arg.RoomID,
 		arg.ReservationID,
-		arg.RestrictionsID,
+		arg.Restriction,
 		arg.UpdatedAt,
 	)
 	return err

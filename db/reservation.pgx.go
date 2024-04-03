@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -22,7 +23,7 @@ func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -34,7 +35,7 @@ func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -82,7 +83,7 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -94,7 +95,7 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}

@@ -40,9 +40,9 @@ RETURNING id, name, description, image_filename, created_at, updated_at
 `
 
 type CreateRoomParams struct {
-	Name          string      `json:"name"`
-	Description   string      `json:"description"`
-	ImageFilename pgtype.Text `json:"image_filename"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	ImageFilename string `json:"image_filename"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {

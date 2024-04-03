@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (store *PostgresDBStore) CreateReservationTx(ctx context.Context, arg CreateReservationParams, restrictionsID int64) (Reservation, error) {
+func (store *PostgresDBStore) CreateReservationTx(ctx context.Context, arg CreateReservationParams) (Reservation, error) {
 	var reservation Reservation
 
 	err := store.execTx(ctx, func(q *Queries) error {
@@ -25,7 +25,7 @@ func (store *PostgresDBStore) CreateReservationTx(ctx context.Context, arg Creat
 				Int64: reservation.ID,
 				Valid: true,
 			},
-			RestrictionsID: restrictionsID,
+			Restriction: RestrictionReservation,
 		}
 
 		_, err = store.CreateRoomRestriction(ctx, rrArg)

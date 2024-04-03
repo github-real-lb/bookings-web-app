@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -20,7 +21,7 @@ func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -32,7 +33,7 @@ func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -48,14 +49,16 @@ func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 
 // Unmarshal parse data into p
 func (p *CreateRoomParams) Unmarshal(data map[string]string) {
-	p.Name = data["name"]
-	p.Description = data["description"]
+	if v, ok := data["name"]; ok {
+		p.Name = v
+	}
+
+	if v, ok := data["description"]; ok {
+		p.Description = v
+	}
 
 	if v, ok := data["image_filename"]; ok {
-		p.ImageFilename = pgtype.Text{
-			String: v,
-			Valid:  v != "",
-		}
+		p.ImageFilename = v
 	}
 }
 
@@ -65,7 +68,7 @@ func (p *ListAvailableRoomsParams) Unmarshal(data map[string]string) error {
 	var t time.Time
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -77,7 +80,7 @@ func (p *ListAvailableRoomsParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse("2006-01-02", v)
+		t, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}

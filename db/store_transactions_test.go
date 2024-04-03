@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -16,9 +17,7 @@ func TestStore_CreateReservationTx(t *testing.T) {
 	err := arg.Unmarshal(reservationData)
 	require.NoError(t, err)
 
-	restriction := createRandomRestriction(t)
-
-	reservation, err := testStore.CreateReservationTx(context.Background(), arg, restriction.ID)
+	reservation, err := testStore.CreateReservationTx(context.Background(), arg)
 	require.NoError(t, err)
 	assert.NotEmpty(t, reservation.ID)
 	assert.Equal(t, arg.FirstName, reservation.FirstName)
@@ -31,4 +30,8 @@ func TestStore_CreateReservationTx(t *testing.T) {
 	assert.Equal(t, arg.Notes, reservation.Notes)
 	assert.WithinDuration(t, time.Now(), reservation.CreatedAt.Time, time.Second)
 	assert.WithinDuration(t, time.Now(), reservation.UpdatedAt.Time, time.Second)
+
+	//TODO: testify that a room restriction was created
+	log.Println("//TODO: testify that a room restriction was created")
+
 }

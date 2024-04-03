@@ -49,15 +49,3 @@ INSERT INTO rooms (
   Guests can unwind in the lavish surroundings or explore nearby attractions, knowing that every comfort is catered to their needs.',
   'admirals-haven.png'
 );
-
-INSERT INTO restrictions (
-  name
-) VALUES (
-  'Reservation'
-);
-
-INSERT INTO restrictions (
-  name
-) VALUES (
-  'Owner Block'
-);
