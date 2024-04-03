@@ -19,6 +19,9 @@ const (
 	TestingMode     AppMode = 2
 )
 
+const DateTimeLayout = "2006-01-02 15:04:05.999999999Z07:00"
+const DateLayout = "2006-01-02"
+
 // AppConfig holds the application config
 type AppConfig struct {
 	AppMode

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/github-real-lb/bookings-web-app/util/config"
 )
 
 // Form is used to hold the data and error of the fields of an html form
@@ -27,13 +28,13 @@ func New(data url.Values) *Form {
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
 // Error message is added to f.Errors for the startDateField field.
 func (f *Form) CheckDateRange(startDateField string, endDateField string) bool {
-	startDate, err := time.Parse("2006-01-02", f.Get(startDateField))
+	startDate, err := time.Parse(config.DateLayout, f.Get(startDateField))
 	if err != nil {
 		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
 		return false
 	}
 
-	endDate, err := time.Parse("2006-01-02", f.Get(endDateField))
+	endDate, err := time.Parse(config.DateLayout, f.Get(endDateField))
 	if err != nil {
 		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
 		return false
