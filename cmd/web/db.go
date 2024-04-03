@@ -25,7 +25,7 @@ func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 
 // CreateReservation insert reservation data into database.
 // it updates r with new data from database.
-func (s *Server) CreateReservation(r *Reservation, restrictionID int64) error {
+func (s *Server) CreateReservation(r *Reservation) error {
 	// parse form's data to query arguments
 	arg := db.CreateReservationParams{}
 	err := arg.Unmarshal(r.Marshal())
@@ -38,7 +38,7 @@ func (s *Server) CreateReservation(r *Reservation, restrictionID int64) error {
 	defer cancel()
 
 	// create new reservation
-	reservation, err := s.DatabaseStore.CreateReservationTx(ctx, arg, restrictionID)
+	reservation, err := s.DatabaseStore.CreateReservationTx(ctx, arg)
 	if err != nil {
 		return err
 	}

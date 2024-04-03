@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
 
@@ -48,7 +49,7 @@ const ReservationCodeLenght = 6
 // GenerateReservationCode generate the reservation code.
 func (r *Reservation) GenerateReservationCode() error {
 	// concatenating the current time with the reservation last name
-	code := fmt.Sprint(time.Now().Format("2006-01-02"), r.LastName)
+	code := fmt.Sprint(time.Now().Format(config.DateLayout), r.LastName)
 
 	// Generate SHA-256 hash of the concatenated string
 	hash := sha256.New()
@@ -74,15 +75,15 @@ func (r *Reservation) Marshal() map[string]string {
 	data["last_name"] = r.LastName
 	data["email"] = r.Email
 	data["phone"] = r.Phone
-	data["start_date"] = r.StartDate.Format("2006-01-02")
-	data["end_date"] = r.EndDate.Format("2006-01-02")
+	data["start_date"] = r.StartDate.Format(config.DateLayout)
+	data["end_date"] = r.EndDate.Format(config.DateLayout)
 	data["room_id"] = fmt.Sprint(r.Room.ID)
 	data["room_name"] = fmt.Sprint(r.Room.Name)
 	data["room_description"] = fmt.Sprint(r.Room.Description)
 	data["room_image_filename"] = fmt.Sprint(r.Room.ImageFilename)
 	data["notes"] = r.Notes
-	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
-	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
+	data["created_at"] = r.CreatedAt.Format(config.DateTimeLayout)
+	data["updated_at"] = r.UpdatedAt.Format(config.DateTimeLayout)
 	return data
 }
 
@@ -90,125 +91,75 @@ func (r *Reservation) Marshal() map[string]string {
 func (r *Reservation) Unmarshal(data map[string]string) error {
 	var err error = nil
 
-	if _, ok := data["id"]; ok {
-		r.ID, err = strconv.ParseInt(data["id"], 10, 64)
+	if v, ok := data["id"]; ok {
+		r.ID, err = strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, ok := data["first_name"]; ok {
-		r.FirstName = data["first_name"]
+	if v, ok := data["first_name"]; ok {
+		r.FirstName = v
 	}
 
-	if _, ok := data["last_name"]; ok {
-		r.LastName = data["last_name"]
+	if v, ok := data["last_name"]; ok {
+		r.LastName = v
 	}
 
-	if _, ok := data["email"]; ok {
-		r.Email = data["email"]
+	if v, ok := data["email"]; ok {
+		r.Email = v
 	}
 
-	if _, ok := data["phone"]; ok {
-		r.Phone = data["phone"]
+	if v, ok := data["phone"]; ok {
+		r.Phone = v
 	}
 
 	if v, ok := data["start_date"]; ok {
-		r.StartDate, err = time.Parse("2006-01-02", v[:10])
+		r.StartDate, err = time.Parse(config.DateLayout, v[:10])
 		if err != nil {
 			return err
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		r.EndDate, err = time.Parse("2006-01-02", v[:10])
+		r.EndDate, err = time.Parse(config.DateLayout, v[:10])
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, ok := data["room_id"]; ok {
-		r.Room.ID, err = strconv.ParseInt(data["room_id"], 10, 64)
+	if v, ok := data["room_id"]; ok {
+		r.Room.ID, err = strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, ok := data["room_name"]; ok {
-		r.Room.Name = data["room_name"]
+	if v, ok := data["room_name"]; ok {
+		r.Room.Name = v
 	}
 
-	if _, ok := data["room_description"]; ok {
-		r.Room.Description = data["room_description"]
+	if v, ok := data["room_description"]; ok {
+		r.Room.Description = v
 	}
 
-	if _, ok := data["room_image_filename"]; ok {
-		r.Room.ImageFilename = data["room_image_filename"]
+	if v, ok := data["room_image_filename"]; ok {
+		r.Room.ImageFilename = v
 	}
 
-	if _, ok := data["notes"]; ok {
-		r.Notes = data["notes"]
+	if v, ok := data["notes"]; ok {
+		r.Notes = v
 	}
 
-	if _, ok := data["created_at"]; ok {
-		r.CreatedAt, err = time.Parse(time.RFC3339, data["created_at"])
+	if v, ok := data["created_at"]; ok {
+		r.CreatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, ok := data["updated_at"]; ok {
-		r.UpdatedAt, err = time.Parse(time.RFC3339, data["updated_at"])
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
-}
-
-// Restriction is used to hold different type of restrictions for rooms availabilty
-type Restriction struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// Marshal returns data of r
-func (r *Restriction) Marshal() map[string]string {
-	data := make(map[string]string)
-	data["id"] = fmt.Sprint(r.ID)
-	data["name"] = r.Name
-	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
-	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
-	return data
-}
-
-// Unmarshal parse data into r
-func (r *Restriction) Unmarshal(data map[string]string) error {
-	var err error = nil
-
-	if _, ok := data["id"]; ok {
-		r.ID, err = strconv.ParseInt(data["id"], 10, 64)
-		if err != nil {
-			return err
-		}
-	}
-
-	if _, ok := data["name"]; ok {
-		r.Name = data["name"]
-	}
-
-	if _, ok := data["created_at"]; ok {
-		r.CreatedAt, err = time.Parse(time.RFC3339, data["created_at"])
-		if err != nil {
-			return err
-		}
-	}
-
-	if _, ok := data["updated_at"]; ok {
-		r.UpdatedAt, err = time.Parse(time.RFC3339, data["updated_at"])
+	if v, ok := data["updated_at"]; ok {
+		r.UpdatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}
@@ -235,8 +186,8 @@ func (r *Room) Marshal() map[string]string {
 	data["name"] = r.Name
 	data["description"] = r.Description
 	data["image_filename"] = r.ImageFilename
-	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
-	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
+	data["created_at"] = r.CreatedAt.Format(config.DateTimeLayout)
+	data["updated_at"] = r.UpdatedAt.Format(config.DateTimeLayout)
 	return data
 }
 
@@ -251,27 +202,27 @@ func (r *Room) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	if _, ok := data["name"]; ok {
-		r.Name = data["name"]
+	if v, ok := data["name"]; ok {
+		r.Name = v
 	}
 
-	if _, ok := data["description"]; ok {
-		r.Description = data["description"]
+	if v, ok := data["description"]; ok {
+		r.Description = v
 	}
 
-	if _, ok := data["image_filename"]; ok {
-		r.ImageFilename = data["image_filename"]
+	if v, ok := data["image_filename"]; ok {
+		r.ImageFilename = v
 	}
 
-	if _, ok := data["created_at"]; ok {
-		r.CreatedAt, err = time.Parse(time.RFC3339, data["created_at"])
+	if v, ok := data["created_at"]; ok {
+		r.CreatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, ok := data["updated_at"]; ok {
-		r.UpdatedAt, err = time.Parse(time.RFC3339, data["updated_at"])
+	if v, ok := data["updated_at"]; ok {
+		r.UpdatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}
@@ -296,13 +247,13 @@ type RoomRestriction struct {
 func (r *RoomRestriction) Marshal() map[string]string {
 	data := make(map[string]string)
 	data["id"] = fmt.Sprint(r.ID)
-	data["start_date"] = r.StartDate.Format("2006-01-02")
-	data["end_date"] = r.EndDate.Format("2006-01-02")
+	data["start_date"] = r.StartDate.Format(config.DateLayout)
+	data["end_date"] = r.EndDate.Format(config.DateLayout)
 	data["room_id"] = fmt.Sprint(r.RoomID)
 	data["reservation_id"] = fmt.Sprint(r.ReservationID)
 	data["restrictions_id"] = fmt.Sprint(r.RestrictionsID)
-	data["created_at"] = r.CreatedAt.Format(time.RFC3339)
-	data["updated_at"] = r.UpdatedAt.Format(time.RFC3339)
+	data["created_at"] = r.CreatedAt.Format(config.DateTimeLayout)
+	data["updated_at"] = r.UpdatedAt.Format(config.DateTimeLayout)
 	return data
 }
 
@@ -318,14 +269,14 @@ func (r *RoomRestriction) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		r.StartDate, err = time.Parse("2006-01-02", v)
+		r.StartDate, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		r.EndDate, err = time.Parse("2006-01-02", v)
+		r.EndDate, err = time.Parse(config.DateLayout, v)
 		if err != nil {
 			return err
 		}
@@ -353,14 +304,14 @@ func (r *RoomRestriction) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["created_at"]; ok {
-		r.CreatedAt, err = time.Parse(time.RFC3339, v)
+		r.CreatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}
 	}
 
 	if v, ok := data["updated_at"]; ok {
-		r.UpdatedAt, err = time.Parse(time.RFC3339, v)
+		r.UpdatedAt, err = time.Parse(config.DateTimeLayout, v)
 		if err != nil {
 			return err
 		}

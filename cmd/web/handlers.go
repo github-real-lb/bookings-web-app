@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 	"github.com/go-chi/chi/v5"
 )
@@ -27,12 +28,15 @@ func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LimitRoomsPerPage sets the maximum number of rooms to display on the rooms page
+const LimitRoomsPerPage = 10
+
 // RoomsHandler is the GET "/rooms/{index}" page handler
 func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 	// if no id paramater exists in URL render a new page
 	if chi.URLParam(r, "index") == "list" {
-		//TODO: change this to UI input
-		rooms, err := s.ListRooms(10, 0)
+		//TODO: change the offset to request input
+		rooms, err := s.ListRooms(LimitRoomsPerPage, 0)
 		if err != nil {
 			app.LogServerError(w, err)
 			return
@@ -60,7 +64,13 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 	// get room id from URL
 	index, err := strconv.Atoi(chi.URLParam(r, "index"))
 	if err != nil {
-		app.LogServerError(w, err)
+		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// check if index is out of scope
+	if index >= len(rooms) {
+		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -334,8 +344,8 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 
 	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 		StringMap: map[string]string{
-			"start_date": reservation.StartDate.Format("2006-01-02"),
-			"end_date":   reservation.EndDate.Format("2006-01-02"),
+			"start_date": reservation.StartDate.Format(config.DateLayout),
+			"end_date":   reservation.EndDate.Format(config.DateLayout),
 		},
 		Data: map[string]any{
 			"reservation": reservation,
@@ -372,8 +382,8 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	if !form.Valid() {
 		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 			StringMap: map[string]string{
-				"start_date": reservation.StartDate.Format("2006-01-02"),
-				"end_date":   reservation.StartDate.Format("2006-01-02"),
+				"start_date": reservation.StartDate.Format(config.DateLayout),
+				"end_date":   reservation.StartDate.Format(config.DateLayout),
 			},
 			Data: map[string]any{
 				"reservation": reservation,
@@ -401,8 +411,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// insert reservation into database
-	// TODO: the 1 should be replaced with database ENUM input of restriction id
-	err = s.CreateReservation(&reservation, 1)
+	err = s.CreateReservation(&reservation)
 	if err != nil {
 		app.LogServerError(w, err)
 		return
@@ -430,8 +439,8 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 
 	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &TemplateData{
 		StringMap: map[string]string{
-			"start_date": reservation.StartDate.Format("2006-01-02"),
-			"end_date":   reservation.EndDate.Format("2006-01-02"),
+			"start_date": reservation.StartDate.Format(config.DateLayout),
+			"end_date":   reservation.EndDate.Format(config.DateLayout),
 		},
 		Data: map[string]any{
 			"reservation": reservation,

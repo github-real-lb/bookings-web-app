@@ -18,21 +18,26 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// NewTestServer creates and returns a server connected to a mock database store
-func NewTestServer(t *testing.T) (*Server, *mocks.MockStore) {
+type TestServer Server
+
+// NewTestServer creates and returns a test server connected to a mock database store
+func NewTestServer(t *testing.T) (*TestServer, *mocks.MockStore) {
 	mockStore := mocks.NewMockStore(t)
 	server := NewServer(mockStore)
 
-	return server, mockStore
+	return &TestServer{
+		Router:        server.Router,
+		DatabaseStore: server.DatabaseStore,
+	}, mockStore
 }
 
 // NewTestRequest creates a new get request for use in testing
-func NewTestRequest() *http.Request {
-	return httptest.NewRequest(http.MethodGet, "/", nil)
+func (ts *TestServer) NewRequest(method string, url string, body io.Reader) *http.Request {
+	return httptest.NewRequest(method, url, body)
 }
 
 // NewTestRequestWithSession creates a new get request with new session data for use in testing
-func NewTestRequestWithSession(t *testing.T, method string, url string, body io.Reader) *http.Request {
+func (ts *TestServer) NewRequestWithSession(t *testing.T, method string, url string, body io.Reader) *http.Request {
 	// checks that the session manager is loaded
 	require.NotNil(t, app.Session)
 
@@ -49,4 +54,12 @@ func NewTestRequestWithSession(t *testing.T, method string, url string, body io.
 	require.NotNil(t, ctx)
 
 	return r.WithContext(ctx)
+}
+
+// ServeRequest execute a ServerHTTP method and return the response recorder
+func (ts *TestServer) ServeRequest(r *http.Request) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	ts.Router.Handler.ServeHTTP(rr, r)
+
+	return rr
 }

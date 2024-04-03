@@ -75,15 +75,19 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 		},
 	}
 
-	// define the func to receive reservation and return true + nil
+	// create a new server with mock database store
 	mockStore := mocks.NewMockStore(t)
+	server := NewServer(mockStore)
+
+	// build stub
 	mockStore.On("CheckRoomAvailability", mock.Anything, arg).
 		Return(true, nil).
 		Once()
 
-	// test the func
-	server := NewServer(mockStore)
+	// execute method
 	ok, err := server.CheckRoomAvailability(reservation)
+
+	// testify
 	assert.NoError(t, err)
 	assert.True(t, ok)
 }
@@ -92,12 +96,6 @@ func TestServer_CreateReservation(t *testing.T) {
 	// create random reservation with room data
 	reservation := randomReservation()
 	reservationData := reservation.Marshal()
-
-	// create a test server and mock database store
-	testServer, mockStore := NewTestServer(t)
-
-	// create mehod arguments
-	restrictionID := util.RandomID()
 
 	arg := db.CreateReservationParams{}
 	err := arg.Unmarshal(reservationData)
@@ -108,16 +106,22 @@ func TestServer_CreateReservation(t *testing.T) {
 	err = dbReservation.Unmarshal(reservationData)
 	require.NoError(t, err)
 
+	// create a new server with mock database store
+	mockStore := mocks.NewMockStore(t)
+	server := NewServer(mockStore)
+
 	// build stub
-	mockStore.On("CreateReservationTx", mock.Anything, arg, restrictionID).
+	mockStore.On("CreateReservationTx", mock.Anything, arg).
 		Return(dbReservation, nil).
 		Once()
 
 	// create a copy of reservation to pass to method
 	copyReservation := reservation
 
-	// test the func
-	err = testServer.CreateReservation(&copyReservation, restrictionID)
+	// execute method
+	err = server.CreateReservation(&copyReservation)
+
+	// tesify
 	assert.NoError(t, err)
 	assert.Equal(t, reservation, copyReservation)
 }
@@ -146,13 +150,10 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 	dbRooms := make([]db.Room, n)
 	for i, v := range rooms {
 		dbRooms[i] = db.Room{
-			ID:          v.ID,
-			Name:        v.Name,
-			Description: v.Description,
-			ImageFilename: pgtype.Text{
-				String: v.ImageFilename,
-				Valid:  true,
-			},
+			ID:            v.ID,
+			Name:          v.Name,
+			Description:   v.Description,
+			ImageFilename: v.ImageFilename,
 			CreatedAt: pgtype.Timestamptz{
 				Time:  v.CreatedAt,
 				Valid: true,
@@ -164,15 +165,19 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 	}
 
-	// define the func to receive reservation and return nil
+	// create a new server with mock database store
 	mockStore := mocks.NewMockStore(t)
+	server := NewServer(mockStore)
+
+	// build stub
 	mockStore.On("ListAvailableRooms", mock.Anything, arg).
 		Return(dbRooms, nil).
 		Once()
 
-	// test the func
-	server := NewServer(mockStore)
+	// execute method
 	returnedRooms, err := server.ListAvailableRooms(reservation)
+
+	// tesify
 	assert.NoError(t, err)
 	require.Len(t, returnedRooms, n)
 
