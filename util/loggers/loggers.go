@@ -1,6 +1,7 @@
 package loggers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -34,8 +35,10 @@ func (al *AppLogger) LogServerError(w http.ResponseWriter, err error) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// LogError logs server side errors
-func (al *AppLogger) LogError(err error) {
+// LogError logs server side errors.
+// message is used to prefix the error with a string
+func (al *AppLogger) LogError(prefix string, err error) {
 	//trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	al.ErrorLog.Println(err.Error())
+	trace := fmt.Sprintf("%s\n%s", prefix, err.Error())
+	al.ErrorLog.Println(trace)
 }

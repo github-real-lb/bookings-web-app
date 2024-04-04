@@ -1,5 +1,7 @@
 {
-    "template_path_production": "./templates",
-    "template_path_testing": "./../../templates"
+    "starting_path_production": "./",
+    "starting_path_testing": "./../../",
+    "static_directory_name": "static",
+    "template_directory_name": "templates"
 }
 

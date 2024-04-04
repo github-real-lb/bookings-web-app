@@ -79,8 +79,8 @@ func TestAppLogger_LogError(t *testing.T) {
 
 	// run the test
 	appLogger := NewAppLogger()
-	sErr := "this is a test error message"
-	appLogger.LogError(errors.New(sErr))
+	sErr := "this is the error message"
+	appLogger.LogError("this is the prefix", errors.New(sErr))
 
 	// restore Stdout after test
 	restoreStdout(originalStdout, w)
