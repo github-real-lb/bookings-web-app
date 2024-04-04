@@ -57,8 +57,8 @@ func NewServer(store db.DatabaseStore) *Server {
 	mux.Get("/reservation-summary", server.ReservationSummaryHandler)
 
 	// setting file server
-	fileServer := http.FileServer(http.Dir("./static/"))
-	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
+	fileServer := http.FileServer(http.Dir(app.StaticPath))
+	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))
 
 	return &server
 }

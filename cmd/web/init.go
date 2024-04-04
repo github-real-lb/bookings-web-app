@@ -35,12 +35,12 @@ func InitializeApp(appMode config.AppMode) error {
 
 	var appCfgFilename, dbCfgFilename string
 
-	if appMode != config.TestingMode {
-		appCfgFilename = AppConfigFilename
-		dbCfgFilename = DBConfigFilename
-	} else {
+	if appMode == config.TestingMode || appMode == config.DebuggingMode {
 		appCfgFilename = TestingAppConfigFilename
 		dbCfgFilename = TestingDBConfigFilename
+	} else {
+		appCfgFilename = AppConfigFilename
+		dbCfgFilename = DBConfigFilename
 	}
 
 	// load application default configurations
