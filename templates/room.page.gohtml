@@ -76,12 +76,32 @@
                     if (data.ok) {
                         // redirect to make-reservation
                         window.location.href = "/make-reservation"; 
-                    } else {        
-                        // display the error message
-                        document.getElementById("reservation-dates-error").textContent = data.message;                                 
+                    } else {   
+                        // display error
+                        if (data.error != "") {
+                            notify.toast({                
+                                message: data.error,
+                                theme: Themes.Red,
+                                bsIcon: "bi-x-square",
+                                duration: 10000,
+                            });
+                        }
+
+                        // display the message
+                        if (data.message != "") {
+                            document.getElementById("reservation-dates-error").textContent = data.message;
+                        }
+                        
                     }
                 })
-                .catch(error => console.error('Error:', error));                                   
+                .catch(error => {
+                    notify.toast({                
+                        message: "Internal Server Error. Please reload and try again.",
+                        theme: Themes.Red,
+                        bsIcon: "bi-x-square",
+                        duration: 100000,
+                    });
+                });                                   
             }
         });          
 
