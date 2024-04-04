@@ -44,7 +44,7 @@ type Reservation struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-const ReservationCodeLenght = 6
+const ReservationCodeLenght = 8
 
 // GenerateReservationCode generate the reservation code.
 func (r *Reservation) GenerateReservationCode() error {
