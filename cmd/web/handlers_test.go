@@ -474,5 +474,4 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		assert.Equal(t, "/", rr.Header().Get("Location"))
 
 	})
-
 }

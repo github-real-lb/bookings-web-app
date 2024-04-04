@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/justinas/nosurf"
 )
@@ -65,7 +64,6 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *T
 func GetTemplatesCache() (map[string]*template.Template, error) {
 	tc := map[string]*template.Template{}
 
-	app.TemplatePath = strings.TrimSuffix(app.TemplatePath, "/")
 	pattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
 	baseFilename := fmt.Sprintf("%s/base.layout.gohtml", app.TemplatePath)
 

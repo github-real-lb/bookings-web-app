@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,7 +25,7 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to render about.page.gohtml template", err)
 	}
 }
 
@@ -38,7 +39,7 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		//TODO: change the offset to request input
 		rooms, err := s.ListRooms(LimitRoomsPerPage, 0)
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to load rooms from database", err)
 			return
 		}
 
@@ -50,7 +51,7 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to render rooms.page.gohtml template", err)
 		}
 		return
 	}
@@ -104,58 +105,58 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to render rooms.page.gohtml template", err)
 	}
 }
 
 // PostSearchRoomAvailabilityHandler is the POST "/search-room-availability" page handler
 // It is fetched by the room.page and excpect a json response
 func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+	// define the type of json response
+	type Resp struct {
+		OK      bool   `json:"ok"`
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+
 	room, ok := app.Session.Get(r.Context(), "room").(Room)
 	if !ok {
-		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
+		jsonResponse(w, r, Resp{
+			OK:    false,
+			Error: "Internal Error. Please reload and try again.",
+		})
+		errorLog(r, "unable to get room from session", errors.New("ERROR: wrong routing"))
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		app.LogServerError(w, err)
+		jsonResponse(w, r, Resp{
+			OK:    false,
+			Error: "Internal Clinet Error. Please reload and try again.",
+		})
+		errorLog(r, "unable to parse form", err)
 		return
 	}
 
-	// define the json response
-	var resp struct {
-		OK      bool   `json:"ok"`
-		Message string `json:"message"`
-	}
-
 	// create a new form with data and validate the form
+	var errMsg string
 	form := forms.New(r.PostForm)
 	form.TrimSpaces()
 	if ok = form.Required("start_date"); !ok {
-		resp.OK = false
-		resp.Message = form.Errors.Get("start_date")
+		errMsg = form.Errors.Get("start_date")
 	} else if ok = form.Required("end_date"); !ok {
-		resp.OK = false
-		resp.Message = form.Errors.Get("end_date")
+		errMsg = form.Errors.Get("end_date")
 	} else if ok = form.CheckDateRange("start_date", "end_date"); !ok {
-		resp.OK = false
-		resp.Message = form.Errors.Get("start_date")
+		errMsg = form.Errors.Get("start_date")
 	}
 
 	// returns response if form data are invalid
 	if !form.Valid() {
-		bs, err := json.Marshal(resp)
-		if err != nil {
-			app.LogServerError(w, err)
-			return
-		}
-
-		_, err = w.Write(bs)
-		if err != nil {
-			app.LogError(err)
-			return
-		}
+		jsonResponse(w, r, Resp{
+			OK:      false,
+			Message: errMsg,
+		})
 		return
 	}
 
@@ -164,50 +165,38 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	reservation.Room = room
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		app.LogServerError(w, err)
+		jsonResponse(w, r, Resp{
+			OK:    false,
+			Error: "Internal Error. Please reload and try again.",
+		})
+		errorLog(r, "unable to unmarshal reservation", err)
 		return
 	}
 
 	// check if room is available
 	ok, err = s.CheckRoomAvailability(reservation)
 	if err != nil {
-		app.LogServerError(w, err)
+		jsonResponse(w, r, Resp{
+			OK:    false,
+			Error: "Internal Error. Please reload and try again.",
+		})
+		errorLog(r, "unable to check room availability", err)
 		return
 	}
 
-	// return response if room is not available
-	if !ok {
-		resp.OK = false
-		resp.Message = "Room is unavailable. PLease try different dates."
+	if ok {
+		// load reservation to session data
+		app.Session.Put(r.Context(), "reservation", reservation)
 
-		bs, err := json.Marshal(resp)
-		if err != nil {
-			app.LogServerError(w, err)
+		// write the json response
+		if err = jsonResponse(w, r, Resp{OK: true}); err != nil {
 			return
 		}
-
-		_, err = w.Write(bs)
-		if err != nil {
-			app.LogError(err)
-			return
-		}
-		return
-	}
-
-	resp.OK = true
-
-	bs, err := json.Marshal(resp)
-	if err != nil {
-		app.LogServerError(w, err)
-		return
-	}
-
-	// load reservation to session data
-	app.Session.Put(r.Context(), "reservation", reservation)
-
-	_, err = w.Write(bs)
-	if err != nil {
-		app.LogError(err)
+	} else {
+		jsonResponse(w, r, Resp{
+			OK:      false,
+			Message: "Room is unavailable. PLease try different dates.",
+		})
 	}
 }
 
@@ -215,7 +204,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to render contact.page.gohtml template", err)
 	}
 }
 
@@ -225,7 +214,7 @@ func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Requ
 		Form: forms.New(nil),
 	})
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to render available-rooms-search.page.gohtml template", err)
 	}
 }
 
@@ -233,7 +222,7 @@ func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Requ
 func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to parse form", err)
 		return
 	}
 
@@ -248,7 +237,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 			Form: form,
 		})
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to render available-rooms-search.page.gohtml template", err)
 		}
 		return
 	}
@@ -275,7 +264,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 			Form: form,
 		})
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to render available-rooms-search.page.gohtml template", err)
 		}
 		return
 	}
@@ -293,7 +282,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get available rooms data from session
 	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
 	if !ok {
-		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
+		errorLogAndRedirect(w, r, "No reservation exists. Please make a reservation.", errors.New("ERROR: wrong routing"))
 		return
 	}
 
@@ -305,7 +294,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 			},
 		})
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to render available-rooms.page.gohtml template", err)
 		}
 		return
 	}
@@ -320,7 +309,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
+		errorLogAndRedirect(w, r, "No reservation exists. Please make a reservation.", errors.New("ERROR: wrong routing"))
 		return
 	}
 
@@ -338,7 +327,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
+		errorLogAndRedirect(w, r, "No reservation exists. Please make a reservation.", errors.New("ERROR: wrong routing"))
 		return
 	}
 
@@ -361,13 +350,13 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
+		errorLogAndRedirect(w, r, "No reservation exists. Please make a reservation.", errors.New("ERROR: wrong routing"))
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to parse form", err)
 		return
 	}
 
@@ -391,7 +380,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 			Form: form,
 		})
 		if err != nil {
-			app.LogServerError(w, err)
+			errorLogAndRedirect(w, r, "unable to render make-reservation.page.gohtml", err)
 		}
 		return
 	}
@@ -399,21 +388,21 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	// parse form's data to reservation
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to parse form data into reservation", err)
 		return
 	}
 
 	// generate reservation code
 	err = reservation.GenerateReservationCode()
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to generate reservation code", err)
 		return
 	}
 
 	// insert reservation into database
 	err = s.CreateReservation(&reservation)
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to create reservation", err)
 		return
 	}
 
@@ -429,7 +418,7 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		errorRedirect(w, r, "No reservation exists. Please make a reservation.")
+		errorLogAndRedirect(w, r, "No reservation exists. Please make a reservation.", errors.New("ERROR: wrong routing"))
 		return
 	}
 
@@ -446,14 +435,39 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 			"reservation": reservation,
 		},
 	})
-
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to create reservation", err)
 	}
 }
 
-// errorRedirect put error message in session and redirect to home page
-func errorRedirect(w http.ResponseWriter, r *http.Request, message string) {
+// errorLog logs error with prefix string
+func errorLog(r *http.Request, prefix string, err error) {
+	prefix = fmt.Sprintf("messege: %s\nurl: %s", prefix, r.URL.Path)
+	app.LogError(prefix, err)
+}
+
+// errorLogAndRedirect logs error, put message in session, and redirect to home page
+func errorLogAndRedirect(w http.ResponseWriter, r *http.Request, message string, err error) {
 	app.Session.Put(r.Context(), "error", message)
+
+	message = fmt.Sprintf("PROMPT: %s\nURL: %s", message, r.URL.Path)
+	app.LogError(message, err)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+// jsonResponse write v to w as json response
+func jsonResponse(w http.ResponseWriter, r *http.Request, v any) error {
+	bs, err := json.Marshal(v)
+	if err != nil {
+		errorLog(r, "unable to marshal json response", err)
+		return err
+	}
+
+	_, err = w.Write(bs)
+	if err != nil {
+		errorLog(r, "unable to write json response", err)
+		return err
+	}
+
+	return nil
 }
