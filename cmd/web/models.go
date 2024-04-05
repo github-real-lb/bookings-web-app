@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
@@ -96,6 +97,10 @@ func (r *Reservation) Unmarshal(data map[string]string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if v, ok := data["code"]; ok {
+		r.Code = v
 	}
 
 	if v, ok := data["first_name"]; ok {
@@ -231,16 +236,36 @@ func (r *Room) Unmarshal(data map[string]string) error {
 	return err
 }
 
+// Restriction is the database restriction enum
+type Restriction db.Restriction
+
+const (
+	RestrictionReservation Restriction = Restriction(db.RestrictionReservation)
+	RestrictionOwnerBlock  Restriction = Restriction(db.RestrictionOwnerBlock)
+)
+
+func (r *Restriction) Scan(src any) error {
+	switch s := src.(type) {
+	case []byte:
+		*r = Restriction(s)
+	case string:
+		*r = Restriction(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Restriction: %T", src)
+	}
+	return nil
+}
+
 // RoomRestriction is used to hold room restriction data
 type RoomRestriction struct {
-	ID             int64     `json:"id"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	RoomID         int64     `json:"room_id"`
-	ReservationID  int64     `json:"reservation_id"`
-	RestrictionsID int64     `json:"restrictions_id"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID            int64       `json:"id"`
+	StartDate     time.Time   `json:"start_date"`
+	EndDate       time.Time   `json:"end_date"`
+	RoomID        int64       `json:"room_id"`
+	ReservationID int64       `json:"reservation_id"`
+	Restriction   Restriction `json:"restriction"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
 }
 
 // Marshal returns data of r
@@ -251,7 +276,7 @@ func (r *RoomRestriction) Marshal() map[string]string {
 	data["end_date"] = r.EndDate.Format(config.DateLayout)
 	data["room_id"] = fmt.Sprint(r.RoomID)
 	data["reservation_id"] = fmt.Sprint(r.ReservationID)
-	data["restrictions_id"] = fmt.Sprint(r.RestrictionsID)
+	data["restriction"] = string(RestrictionOwnerBlock)
 	data["created_at"] = r.CreatedAt.Format(config.DateTimeLayout)
 	data["updated_at"] = r.UpdatedAt.Format(config.DateTimeLayout)
 	return data
@@ -296,8 +321,8 @@ func (r *RoomRestriction) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	if v, ok := data["restrictions_id"]; ok {
-		r.RestrictionsID, err = strconv.ParseInt(v, 10, 64)
+	if v, ok := data["restriction"]; ok {
+		err = r.Restriction.Scan(v)
 		if err != nil {
 			return err
 		}

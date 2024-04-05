@@ -6,27 +6,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // N states the number of times to test randomness
 const N int = 5
-
-type keysMap map[any]bool
-
-// requireUnique checks if key exists in keys.
-// If key exists it fails the test, otherwise it adds the key to the map.
-func requireUnique(t *testing.T, key any, keys keysMap) {
-	require.NotNil(t, key)
-	require.NotNil(t, keys)
-
-	if len(keys) != 0 {
-		_, exist := keys[key]
-		require.False(t, exist)
-	}
-
-	keys[key] = true
-}
 
 func TestRandomInt64(t *testing.T) {
 	tests := []struct {
@@ -54,14 +37,14 @@ func TestRandomInt64(t *testing.T) {
 	}
 
 	t.Run("Randomness", func(t *testing.T) {
-		numbers := make(keysMap)
+		numbers := make(KeysMap)
 		min := int64(0)
 		max := int64(50)
 		for i := 0; i < N; i++ {
 			number := RandomInt64(min, max)
 			assert.True(t, number >= min && number <= max)
 
-			requireUnique(t, number, numbers)
+			RequireUnique(t, number, numbers)
 		}
 	})
 }
@@ -96,14 +79,14 @@ func TestRandomFloat64(t *testing.T) {
 	}
 
 	t.Run("Randomness", func(t *testing.T) {
-		numbers := make(keysMap)
+		numbers := make(KeysMap)
 		min := 0.00
 		max := 50.00
 		for i := 0; i < N; i++ {
 			number := RandomFloat64(min, max)
 			assert.True(t, number >= min && number <= max)
 
-			requireUnique(t, number, numbers)
+			RequireUnique(t, number, numbers)
 		}
 	})
 }
@@ -112,20 +95,20 @@ func TestRandomString(t *testing.T) {
 	s := RandomString(0)
 	assert.Empty(t, s)
 
-	ss := make(keysMap)
+	ss := make(KeysMap)
 	for len := 2; len < 4; len++ {
 		for i := 0; i < N; i++ {
 			s := RandomString(len)
 			assert.NotEmpty(t, s)
 			assert.Len(t, s, len)
 
-			requireUnique(t, s, ss)
+			RequireUnique(t, s, ss)
 		}
 	}
 }
 
 func TestRandomDate(t *testing.T) {
-	dates := make(keysMap)
+	dates := make(KeysMap)
 	for i := 0; i < N; i++ {
 		date := RandomDate()
 
@@ -135,49 +118,49 @@ func TestRandomDate(t *testing.T) {
 		assert.Equal(t, 0, date.Minute())
 		assert.Equal(t, 0, date.Second())
 
-		requireUnique(t, date, dates)
+		RequireUnique(t, date, dates)
 
 	}
 }
 
 func TestRandomDatetime(t *testing.T) {
-	dates := make(keysMap)
+	dates := make(KeysMap)
 	for i := 0; i < N; i++ {
 		date := RandomDatetime()
 
 		days := time.Since(date).Hours() / 24.00
 		assert.True(t, days <= 365.00)
 
-		requireUnique(t, date, dates)
+		RequireUnique(t, date, dates)
 	}
 }
 
 func TestRandomName(t *testing.T) {
-	names := make(keysMap)
+	names := make(KeysMap)
 	for i := 0; i < N; i++ {
 		name := RandomName()
 		assert.NotEmpty(t, name)
 		assert.Len(t, name, 8)
 
-		requireUnique(t, name, names)
+		RequireUnique(t, name, names)
 	}
 
 }
 
 func TestRandomEmail(t *testing.T) {
-	emails := make(keysMap)
+	emails := make(KeysMap)
 	for i := 0; i < N; i++ {
 		email := RandomEmail()
 		assert.NotEmpty(t, email)
 		assert.Len(t, email, 20)
 		assert.Contains(t, email, "@gmail.com")
 
-		requireUnique(t, email, emails)
+		RequireUnique(t, email, emails)
 	}
 }
 
 func TestRandomPhoneNumber(t *testing.T) {
-	phones := make(keysMap)
+	phones := make(KeysMap)
 	for i := 0; i < N; i++ {
 		phone := RandomPhone()
 		assert.NotEmpty(t, phone)
@@ -198,86 +181,86 @@ func TestRandomPhoneNumber(t *testing.T) {
 		_, err = strconv.Atoi(phone[10:14])
 		assert.NoError(t, err)
 
-		requireUnique(t, phone, phones)
+		RequireUnique(t, phone, phones)
 	}
 }
 
 func TestRandomAddress(t *testing.T) {
-	addresses := make(keysMap)
+	addresses := make(KeysMap)
 	for i := 0; i < N; i++ {
 		address := RandomAddress()
 		assert.NotEmpty(t, address)
 		assert.GreaterOrEqual(t, len(address), 10)
 
-		requireUnique(t, address, addresses)
+		RequireUnique(t, address, addresses)
 	}
 
 }
 
 func TestRandomHourlyFee(t *testing.T) {
-	fees := make(keysMap)
+	fees := make(KeysMap)
 	for i := 0; i < N; i++ {
 		fee := RandomHourlyFee()
 		assert.GreaterOrEqual(t, fee, float64(85.00))
 		assert.LessOrEqual(t, fee, float64(300.00))
 
-		requireUnique(t, fee, fees)
+		RequireUnique(t, fee, fees)
 	}
 
 }
 
 func TestRandomNote(t *testing.T) {
-	notes := make(keysMap)
+	notes := make(KeysMap)
 	for i := 0; i < N; i++ {
 		note := RandomNote()
 		assert.NotEmpty(t, note)
 		assert.GreaterOrEqual(t, len(note), 10)
 
-		requireUnique(t, note, notes)
+		RequireUnique(t, note, notes)
 	}
 
 }
 
 func TestRandomLessonDuration(t *testing.T) {
-	durations := make(keysMap)
+	durations := make(KeysMap)
 	for i := 0; i < N; i++ {
 		duration := RandomLessonDuration()
 		assert.GreaterOrEqual(t, duration, int64(30))
 		assert.LessOrEqual(t, duration, int64(240))
 
-		requireUnique(t, duration, durations)
+		RequireUnique(t, duration, durations)
 	}
 }
 
 func TestRandomDiscount(t *testing.T) {
-	discounts := make(keysMap)
+	discounts := make(KeysMap)
 	for i := 0; i < N; i++ {
 		discount := RandomDiscount()
 		assert.GreaterOrEqual(t, discount, float64(0.00))
 		assert.LessOrEqual(t, discount, float64(0.30))
 
-		requireUnique(t, discount, discounts)
+		RequireUnique(t, discount, discounts)
 	}
 }
 
 func TestRandomInvoiceAmount(t *testing.T) {
-	amounts := make(keysMap)
+	amounts := make(KeysMap)
 	for i := 0; i < N; i++ {
 		amount := RandomInvoiceAmount()
 		assert.GreaterOrEqual(t, amount, float64(85.00))
 		assert.LessOrEqual(t, amount, float64(1200.00))
 
-		requireUnique(t, amount, amounts)
+		RequireUnique(t, amount, amounts)
 	}
 }
 
 func TestRandomPaymentAmount(t *testing.T) {
-	amounts := make(keysMap)
+	amounts := make(KeysMap)
 	for i := 0; i < N; i++ {
 		amount := RandomPaymentAmount()
 		assert.GreaterOrEqual(t, amount, float64(85.00))
 		assert.LessOrEqual(t, amount, float64(1200.00))
 
-		requireUnique(t, amount, amounts)
+		RequireUnique(t, amount, amounts)
 	}
 }
