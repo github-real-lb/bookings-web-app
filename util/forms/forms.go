@@ -26,17 +26,17 @@ func New(data url.Values) *Form {
 
 // CheckDateRange checks if the startDateField is prior to the endDateField, and returns the result.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
-// Error message is added to f.Errors for the startDateField field.
+// Any error message is added to f.Errors for the endDateField field.
 func (f *Form) CheckDateRange(startDateField string, endDateField string) bool {
 	startDate, err := time.Parse(config.DateLayout, f.Get(startDateField))
 	if err != nil {
-		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
+		f.Errors.Add(endDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
 		return false
 	}
 
 	endDate, err := time.Parse(config.DateLayout, f.Get(endDateField))
 	if err != nil {
-		f.Errors.Add(startDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
+		f.Errors.Add(endDateField, "Invalid date. Please enter date in the following format: YYYY-MM-DD.")
 		return false
 	}
 

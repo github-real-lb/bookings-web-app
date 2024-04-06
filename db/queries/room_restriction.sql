@@ -10,6 +10,12 @@ RETURNING *;
 DELETE FROM room_restrictions
 WHERE id = $1;
 
+-- name: GetLastRoomRestriction :one
+SELECT * FROM room_restrictions
+WHERE room_id = $1 
+ORDER BY created_at DESC
+LIMIT 1;
+
 -- name: GetRoomRestriction :one
 SELECT * FROM room_restrictions
 WHERE id = $1 LIMIT 1;

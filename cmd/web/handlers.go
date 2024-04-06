@@ -109,19 +109,19 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// define the type of json response
+type SearchRoomAvailabilityResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+	Error   string `json:"error"`
+}
+
 // PostSearchRoomAvailabilityHandler is the POST "/search-room-availability" page handler
 // It is fetched by the room.page and excpect a json response
 func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
-	// define the type of json response
-	type Resp struct {
-		OK      bool   `json:"ok"`
-		Message string `json:"message"`
-		Error   string `json:"error"`
-	}
-
 	room, ok := app.Session.Get(r.Context(), "room").(Room)
 	if !ok {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
 			Error: "Internal Error. Please reload and try again.",
 		})
@@ -131,7 +131,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 
 	err := r.ParseForm()
 	if err != nil {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
 			Error: "Internal Clinet Error. Please reload and try again.",
 		})
@@ -148,12 +148,12 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	} else if ok = form.Required("end_date"); !ok {
 		errMsg = form.Errors.Get("end_date")
 	} else if ok = form.CheckDateRange("start_date", "end_date"); !ok {
-		errMsg = form.Errors.Get("start_date")
+		errMsg = form.Errors.Get("end_date")
 	}
 
 	// returns response if form data are invalid
 	if !form.Valid() {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:      false,
 			Message: errMsg,
 		})
@@ -165,7 +165,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	reservation.Room = room
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
 			Error: "Internal Error. Please reload and try again.",
 		})
@@ -176,7 +176,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	// check if room is available
 	ok, err = s.CheckRoomAvailability(reservation)
 	if err != nil {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
 			Error: "Internal Error. Please reload and try again.",
 		})
@@ -189,11 +189,11 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 		app.Session.Put(r.Context(), "reservation", reservation)
 
 		// write the json response
-		if err = jsonResponse(w, r, Resp{OK: true}); err != nil {
+		if err = jsonResponse(w, r, SearchRoomAvailabilityResponse{OK: true}); err != nil {
 			return
 		}
 	} else {
-		jsonResponse(w, r, Resp{
+		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:      false,
 			Message: "Room is unavailable. PLease try different dates.",
 		})

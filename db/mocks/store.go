@@ -254,6 +254,34 @@ func (_m *MockStore) DeleteUser(ctx context.Context, id int64) error {
 	return r0
 }
 
+// GetLastRoomRestriction provides a mock function with given fields: ctx, roomID
+func (_m *MockStore) GetLastRoomRestriction(ctx context.Context, roomID int64) (db.RoomRestriction, error) {
+	ret := _m.Called(ctx, roomID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLastRoomRestriction")
+	}
+
+	var r0 db.RoomRestriction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (db.RoomRestriction, error)); ok {
+		return rf(ctx, roomID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) db.RoomRestriction); ok {
+		r0 = rf(ctx, roomID)
+	} else {
+		r0 = ret.Get(0).(db.RoomRestriction)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, roomID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetReservation provides a mock function with given fields: ctx, id
 func (_m *MockStore) GetReservation(ctx context.Context, id int64) (db.Reservation, error) {
 	ret := _m.Called(ctx, id)

@@ -18,6 +18,7 @@ type Querier interface {
 	DeleteRoom(ctx context.Context, id int64) error
 	DeleteRoomRestriction(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
+	GetLastRoomRestriction(ctx context.Context, roomID int64) (RoomRestriction, error)
 	GetReservation(ctx context.Context, id int64) (Reservation, error)
 	GetReservationByCode(ctx context.Context, code string) (Reservation, error)
 	GetReservationByLastName(ctx context.Context, arg GetReservationByLastNameParams) (Reservation, error)

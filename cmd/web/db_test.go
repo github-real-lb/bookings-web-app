@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -59,6 +60,28 @@ func randomReservation() Reservation {
 }
 
 func TestServer_CheckRoomAvailability(t *testing.T) {
+	tests := []struct {
+		Name      string
+		Available bool
+		Error     error
+	}{
+		{
+			Name:      "Room Available",
+			Available: true,
+			Error:     nil,
+		},
+		{
+			Name:      "Room Unavailable",
+			Available: false,
+			Error:     nil,
+		},
+		{
+			Name:      "Error",
+			Available: false,
+			Error:     errors.New("any error"),
+		},
+	}
+
 	// create random reservation with room data
 	reservation := randomReservation()
 
@@ -75,55 +98,90 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 		},
 	}
 
-	// create a new server with mock database store
-	mockStore := mocks.NewMockStore(t)
-	server := NewServer(mockStore)
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			// create a new server with mock database store
+			mockStore := mocks.NewMockStore(t)
+			server := NewServer(mockStore)
 
-	// build stub
-	mockStore.On("CheckRoomAvailability", mock.Anything, arg).
-		Return(true, nil).
-		Once()
+			// build stub
+			mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+				Return(test.Available, test.Error).
+				Once()
 
-	// execute method
-	ok, err := server.CheckRoomAvailability(reservation)
+			// execute method
+			ok, err := server.CheckRoomAvailability(reservation)
 
-	// testify
-	assert.NoError(t, err)
-	assert.True(t, ok)
+			// testify
+			assert.Equal(t, test.Available, ok)
+			assert.Equal(t, test.Error, err)
+		})
+	}
 }
 
 func TestServer_CreateReservation(t *testing.T) {
-	// create random reservation with room data
-	reservation := randomReservation()
-	reservationData := reservation.Marshal()
+	t.Run("Test OK", func(t *testing.T) {
+		// create random reservation with room data
+		reservation := randomReservation()
+		reservationData := reservation.Marshal()
 
-	arg := db.CreateReservationParams{}
-	err := arg.Unmarshal(reservationData)
-	require.NoError(t, err)
+		arg := db.CreateReservationParams{}
+		err := arg.Unmarshal(reservationData)
+		require.NoError(t, err)
 
-	//create method return arguments
-	dbReservation := db.Reservation{}
-	err = dbReservation.Unmarshal(reservationData)
-	require.NoError(t, err)
+		//create method return arguments
+		dbReservation := db.Reservation{}
+		err = dbReservation.Unmarshal(reservationData)
+		require.NoError(t, err)
 
-	// create a new server with mock database store
-	mockStore := mocks.NewMockStore(t)
-	server := NewServer(mockStore)
+		// create a new server with mock database store
+		mockStore := mocks.NewMockStore(t)
+		server := NewServer(mockStore)
 
-	// build stub
-	mockStore.On("CreateReservationTx", mock.Anything, arg).
-		Return(dbReservation, nil).
-		Once()
+		// build stub
+		mockStore.On("CreateReservationTx", mock.Anything, arg).
+			Return(dbReservation, nil).
+			Once()
 
-	// create a copy of reservation to pass to method
-	copyReservation := reservation
+		// create a copy of reservation to pass to method
+		copyReservation := reservation
 
-	// execute method
-	err = server.CreateReservation(&copyReservation)
+		// execute method
+		err = server.CreateReservation(&copyReservation)
 
-	// tesify
-	assert.NoError(t, err)
-	assert.Equal(t, reservation, copyReservation)
+		// tesify
+		assert.NoError(t, err)
+		assert.Equal(t, reservation, copyReservation)
+	})
+
+	t.Run("Test Error", func(t *testing.T) {
+		// create random reservation with room data
+		reservation := randomReservation()
+		reservationData := reservation.Marshal()
+
+		arg := db.CreateReservationParams{}
+		err := arg.Unmarshal(reservationData)
+		require.NoError(t, err)
+
+		// create a new server with mock database store
+		mockStore := mocks.NewMockStore(t)
+		server := NewServer(mockStore)
+
+		// build stub
+		mockStore.On("CreateReservationTx", mock.Anything, arg).
+			Return(db.Reservation{}, errors.New("any error")).
+			Once()
+
+		// create a copy of reservation to pass to method
+		copyReservation := reservation
+
+		// execute method
+		err = server.CreateReservation(&copyReservation)
+
+		// tesify
+		assert.Error(t, err)
+		assert.Equal(t, reservation, copyReservation)
+	})
 }
 
 func TestServer_ListAvailableRooms(t *testing.T) {

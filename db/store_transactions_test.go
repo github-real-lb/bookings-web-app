@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
@@ -11,27 +10,58 @@ import (
 )
 
 func TestStore_CreateReservationTx(t *testing.T) {
-	reservationData := randomReservationData(t)
+	t.Run("Test OK", func(t *testing.T) {
+		rsrvData := randomReservationData(t)
 
-	arg := CreateReservationParams{}
-	err := arg.Unmarshal(reservationData)
-	require.NoError(t, err)
+		arg := CreateReservationParams{}
+		err := arg.Unmarshal(rsrvData)
+		require.NoError(t, err)
 
-	reservation, err := testStore.CreateReservationTx(context.Background(), arg)
-	require.NoError(t, err)
-	assert.NotEmpty(t, reservation.ID)
-	assert.Equal(t, arg.FirstName, reservation.FirstName)
-	assert.Equal(t, arg.LastName, reservation.LastName)
-	assert.Equal(t, arg.Email, reservation.Email)
-	assert.Equal(t, arg.Phone, reservation.Phone)
-	assert.Equal(t, arg.StartDate, reservation.StartDate)
-	assert.Equal(t, arg.EndDate, reservation.EndDate)
-	assert.Equal(t, arg.RoomID, reservation.RoomID)
-	assert.Equal(t, arg.Notes, reservation.Notes)
-	assert.WithinDuration(t, time.Now(), reservation.CreatedAt.Time, time.Second)
-	assert.WithinDuration(t, time.Now(), reservation.UpdatedAt.Time, time.Second)
+		// execute transaction
+		rsrv, err := testStore.CreateReservationTx(context.Background(), arg)
 
-	//TODO: testify that a room restriction was created
-	log.Println("//TODO: testify that a room restriction was created")
+		// testify reservation
+		require.NoError(t, err)
+		assert.NotEmpty(t, rsrv.ID)
+		assert.Equal(t, arg.FirstName, rsrv.FirstName)
+		assert.Equal(t, arg.LastName, rsrv.LastName)
+		assert.Equal(t, arg.Email, rsrv.Email)
+		assert.Equal(t, arg.Phone, rsrv.Phone)
+		assert.Equal(t, arg.StartDate, rsrv.StartDate)
+		assert.Equal(t, arg.EndDate, rsrv.EndDate)
+		assert.Equal(t, arg.RoomID, rsrv.RoomID)
+		assert.Equal(t, arg.Notes, rsrv.Notes)
+		assert.WithinDuration(t, time.Now(), rsrv.CreatedAt.Time, time.Second)
+		assert.True(t, rsrv.CreatedAt.Valid)
+		assert.WithinDuration(t, time.Now(), rsrv.UpdatedAt.Time, time.Second)
+		assert.True(t, rsrv.UpdatedAt.Valid)
 
+		// get last room restriciton
+		rr, err := testStore.GetLastRoomRestriction(context.Background(), rsrv.RoomID)
+
+		// testify room restriction
+		require.NoError(t, err)
+		assert.WithinDuration(t, rsrv.StartDate.Time, rr.StartDate.Time, time.Second)
+		assert.True(t, rr.StartDate.Valid)
+		assert.WithinDuration(t, rsrv.EndDate.Time, rr.EndDate.Time, time.Second)
+		assert.True(t, rr.EndDate.Valid)
+		assert.Equal(t, rsrv.ID, rr.ReservationID.Int64)
+		assert.True(t, rr.ReservationID.Valid)
+		assert.Equal(t, RestrictionReservation, rr.Restriction)
+		assert.WithinDuration(t, time.Now(), rr.CreatedAt.Time, time.Second)
+		assert.True(t, rr.CreatedAt.Valid)
+		assert.WithinDuration(t, time.Now(), rr.UpdatedAt.Time, time.Second)
+		assert.True(t, rr.CreatedAt.Valid)
+	})
+
+	t.Run("Test Error", func(t *testing.T) {
+		arg := CreateReservationParams{}
+
+		// execute transaction
+		rsrv, err := testStore.CreateReservationTx(context.Background(), arg)
+
+		//testify
+		require.Error(t, err)
+		require.Empty(t, rsrv)
+	})
 }

@@ -60,6 +60,29 @@ func (q *Queries) DeleteRoomRestriction(ctx context.Context, id int64) error {
 	return err
 }
 
+const getLastRoomRestriction = `-- name: GetLastRoomRestriction :one
+SELECT id, start_date, end_date, room_id, reservation_id, restriction, created_at, updated_at FROM room_restrictions
+WHERE room_id = $1 
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLastRoomRestriction(ctx context.Context, roomID int64) (RoomRestriction, error) {
+	row := q.db.QueryRow(ctx, getLastRoomRestriction, roomID)
+	var i RoomRestriction
+	err := row.Scan(
+		&i.ID,
+		&i.StartDate,
+		&i.EndDate,
+		&i.RoomID,
+		&i.ReservationID,
+		&i.Restriction,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getRoomRestriction = `-- name: GetRoomRestriction :one
 SELECT id, start_date, end_date, room_id, reservation_id, restriction, created_at, updated_at FROM room_restrictions
 WHERE id = $1 LIMIT 1

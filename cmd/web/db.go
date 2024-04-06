@@ -13,7 +13,10 @@ const ContextTimeout = 3 * time.Second
 func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 	// parse form's data to query arguments
 	var arg db.CheckRoomAvailabilityParams
-	arg.Unmarshal(r.Marshal())
+	err := arg.Unmarshal(r.Marshal())
+	if err != nil {
+		return false, err
+	}
 
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
@@ -52,7 +55,10 @@ func (s *Server) CreateReservation(r *Reservation) error {
 func (s *Server) ListAvailableRooms(r Reservation) (Rooms, error) {
 	// parse form's data to query arguments
 	var arg db.ListAvailableRoomsParams
-	arg.Unmarshal(r.Marshal())
+	err := arg.Unmarshal(r.Marshal())
+	if err != nil {
+		return nil, err
+	}
 
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)

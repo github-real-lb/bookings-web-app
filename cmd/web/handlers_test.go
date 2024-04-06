@@ -1,8 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -10,6 +15,7 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +33,7 @@ func TestStaticPageHandlers(t *testing.T) {
 		{"home page", http.MethodGet, "/", http.StatusOK},
 		{"/about page", http.MethodGet, "/about", http.StatusOK},
 		{"/contact page", http.MethodGet, "/contact", http.StatusOK},
+		{"/available-rooms-search page", http.MethodGet, "/available-rooms-search", http.StatusOK},
 	}
 
 	for _, test := range tests {
@@ -223,6 +230,313 @@ func TestServer_RoomHandler(t *testing.T) {
 	})
 }
 
+func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
+	// Test OK: room is available
+	t.Run("Room Available", func(t *testing.T) {
+		// create room with random data to put in the session
+		room := randomRoom()
+
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{}
+		values.Set("start_date", startDate.Format(config.DateLayout))
+		values.Set("end_date", endDate.Format(config.DateLayout))
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+			Room:      room,
+		}
+
+		arg := db.CheckRoomAvailabilityParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		//build stub
+		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+			Return(true, nil).
+			Once()
+
+		// put room in session
+		app.Session.Put(req.Context(), "room", room)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove room from session
+		app.Session.Remove(req.Context(), "room")
+
+		// get the json response
+		resp := SearchRoomAvailabilityResponse{}
+		jsonResponseUnmarshal(t, rr, &resp)
+
+		// check reservation is in session and removes it
+		sessionReservation := app.Session.Pop(req.Context(), "reservation").(Reservation)
+		require.WithinDuration(t, reservation.StartDate, sessionReservation.StartDate, time.Second)
+		require.WithinDuration(t, reservation.EndDate, sessionReservation.EndDate, time.Second)
+		require.Equal(t, reservation.Room, sessionReservation.Room)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.True(t, resp.OK)
+		assert.Empty(t, resp.Message)
+		assert.Empty(t, resp.Error)
+	})
+
+	// Test OK: room is available
+	t.Run("Room Unavailable", func(t *testing.T) {
+		// create room with random data to put in the session
+		room := randomRoom()
+
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{}
+		values.Set("start_date", startDate.Format(config.DateLayout))
+		values.Set("end_date", endDate.Format(config.DateLayout))
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+			Room:      room,
+		}
+
+		arg := db.CheckRoomAvailabilityParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		//build stub
+		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+			Return(false, nil).
+			Once()
+
+		// put room in session
+		app.Session.Put(req.Context(), "room", room)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove room from session
+		app.Session.Remove(req.Context(), "room")
+
+		// get the json response
+		resp := SearchRoomAvailabilityResponse{}
+		jsonResponseUnmarshal(t, rr, &resp)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.False(t, resp.OK)
+		assert.Equal(t, "Room is unavailable. PLease try different dates.", resp.Message)
+		assert.Empty(t, resp.Error)
+	})
+
+	// Test Error: room missing from session
+	t.Run("Missing Room from Session", func(t *testing.T) {
+		// create a new test server and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", nil)
+
+		// build stub
+		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
+			Return(mock.Anything, mock.Anything).
+			Times(0)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove uncalled stub
+		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
+
+		// get the json response
+		resp := SearchRoomAvailabilityResponse{}
+		jsonResponseUnmarshal(t, rr, &resp)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.False(t, resp.OK)
+		assert.Empty(t, resp.Message)
+		assert.Equal(t, "Internal Error. Please reload and try again.", resp.Error)
+	})
+
+	// Test Error: room exists in session but form is invalid
+	t.Run("Invalid Form", func(t *testing.T) {
+		// create room with random data to put in the session
+		room := randomRoom()
+
+		// create the dates to use in the tests
+		date := util.RandomDate()
+		startDate := date.Format(config.DateLayout)
+		endDate := date.Add(-time.Hour * 24 * 7).Format(config.DateLayout)
+
+		// create test cases for the form validation
+		tests := []struct {
+			Name string
+			Data map[string]string
+		}{
+			{
+				Name: "Missing Start Date",
+				Data: map[string]string{
+					"end_date": endDate,
+				},
+			},
+			{
+				Name: "Missing End Date",
+				Data: map[string]string{
+					"start_date": startDate,
+				},
+			},
+			{
+				Name: "End Date Prior to Start Date",
+				Data: map[string]string{
+					"start_date": startDate,
+					"end_date":   endDate,
+				},
+			},
+			{
+				Name: "Invalid Start Date",
+				Data: map[string]string{
+					"start_date": util.RandomName(),
+					"end_date":   endDate,
+				},
+			},
+			{
+				Name: "Invalid End Date",
+				Data: map[string]string{
+					"start_date": startDate,
+					"end_date":   util.RandomName(),
+				},
+			},
+		}
+
+		// create a new test server and a mock database store
+		ts, mockStore := NewTestServer(t)
+
+		for _, v := range tests {
+			t.Run(v.Name, func(t *testing.T) {
+				// create the body of the request
+				values := url.Values{}
+				for key, value := range v.Data {
+					values.Set(key, value)
+				}
+				body := strings.NewReader(values.Encode())
+
+				// create a new request
+				req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
+
+				// build stub
+				mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
+					Return(mock.Anything, mock.Anything).
+					Times(0)
+
+				// put room in session
+				app.Session.Put(req.Context(), "room", room)
+
+				//  server the request
+				rr := ts.ServeRequest(req)
+
+				// remove room from session
+				app.Session.Remove(req.Context(), "room")
+
+				// remove uncalled stub
+				mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
+
+				// get the json response
+				resp := SearchRoomAvailabilityResponse{}
+				jsonResponseUnmarshal(t, rr, &resp)
+
+				// testify
+				assert.Equal(t, http.StatusOK, rr.Code)
+				assert.False(t, resp.OK)
+				assert.NotEmpty(t, resp.Message)
+				assert.Empty(t, resp.Error)
+			})
+		}
+	})
+
+	// Test Error: room exists and form is invalid, but internal server error on CheckRoomAvailability
+	t.Run("Internal Server Error", func(t *testing.T) {
+		// create room with random data to put in the session
+		room := randomRoom()
+
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{}
+		values.Set("start_date", startDate.Format(config.DateLayout))
+		values.Set("end_date", endDate.Format(config.DateLayout))
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+			Room:      room,
+		}
+
+		arg := db.CheckRoomAvailabilityParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		//build stub
+		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+			Return(false, errors.New("internal server error")).
+			Once()
+
+		// put room in session
+		app.Session.Put(req.Context(), "room", room)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove room from session
+		app.Session.Remove(req.Context(), "room")
+
+		// get the json response
+		resp := SearchRoomAvailabilityResponse{}
+		jsonResponseUnmarshal(t, rr, &resp)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.False(t, resp.OK)
+		assert.Empty(t, resp.Message)
+		assert.Equal(t, "Internal Error. Please reload and try again.", resp.Error)
+	})
+}
+
+// jsonResponseUnmarshal parses rr body and stores the result in the value pointed to by v.
+// Any error is testified.
+func jsonResponseUnmarshal(t *testing.T, rr *httptest.ResponseRecorder, v any) {
+	// get the json response
+	respBody, err := io.ReadAll(rr.Body)
+	require.NoErrorf(t, err, "unable to read response body")
+
+	err = json.Unmarshal(respBody, v)
+	require.NoErrorf(t, err, "unable to unmarshal json response")
+}
+
 func TestServer_MakeReservationHandler(t *testing.T) {
 	// Test OK: reservation exists in session
 	t.Run("OK", func(t *testing.T) {
@@ -344,6 +658,33 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		assert.Equal(t, "/reservation-summary", rr.Header().Get("Location"))
 	})
 
+	// Test Error: reservation missing from session
+	t.Run("Missing Reservation from Session", func(t *testing.T) {
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", nil)
+
+		// build stub
+		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
+			Return(mock.Anything, mock.Anything).
+			Times(0)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove uncalled stub
+		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
+
+		// get error message from session and removes it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
+
+	})
+
 	// Test Error: reservation exists in session but form is invalid
 	t.Run("Invalid Form", func(t *testing.T) {
 		// create initial reservation with random data to put in the session
@@ -422,13 +763,13 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 				}
 				body := strings.NewReader(values.Encode())
 
+				// create a new request
+				req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
+
 				// build stub
 				mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 					Return(mock.Anything, mock.Anything).
 					Times(0)
-
-				// create a new request
-				req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 				// put reservation in session
 				app.Session.Put(req.Context(), "reservation", initialReservation)
@@ -448,30 +789,9 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		}
 	})
 
-	// Test Error: reservation missing from session
-	t.Run("Missing Reservation from Session", func(t *testing.T) {
-		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
-		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", nil)
-
-		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
-			Return(mock.Anything, mock.Anything).
-			Times(0)
-
-		//  server the request
-		rr := ts.ServeRequest(req)
-
-		// remove uncalled stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
-
-		// get error message from session and removes it
-		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
-
-		// testify
-		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/", rr.Header().Get("Location"))
-
+	// Test Error: reservation exists and form it valid, but internal server error on CreateReservation
+	//TODO:
+	t.Run("Internal Server Error", func(t *testing.T) {
+		log.Println("*********   TODO   *********")
 	})
 }
