@@ -133,7 +133,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	if err != nil {
 		jsonResponse(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
-			Error: "Internal Clinet Error. Please reload and try again.",
+			Error: "Internal Error. Please reload and try again.",
 		})
 		errorLog(r, "unable to parse form", err)
 		return
