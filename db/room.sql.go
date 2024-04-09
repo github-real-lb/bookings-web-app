@@ -14,17 +14,17 @@ import (
 const checkRoomAvailability = `-- name: CheckRoomAvailability :one
 SELECT count(*) = 0 as availabe
 FROM room_restrictions
-WHERE room_id = $1 AND (start_date < $2::date AND end_date > $3::date)
+WHERE room_id = $1 AND (end_date > $2::date AND start_date < $3::date)
 `
 
 type CheckRoomAvailabilityParams struct {
 	RoomID    int64       `json:"room_id"`
-	EndDate   pgtype.Date `json:"end_date"`
 	StartDate pgtype.Date `json:"start_date"`
+	EndDate   pgtype.Date `json:"end_date"`
 }
 
 func (q *Queries) CheckRoomAvailability(ctx context.Context, arg CheckRoomAvailabilityParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkRoomAvailability, arg.RoomID, arg.EndDate, arg.StartDate)
+	row := q.db.QueryRow(ctx, checkRoomAvailability, arg.RoomID, arg.StartDate, arg.EndDate)
 	var availabe bool
 	err := row.Scan(&availabe)
 	return availabe, err

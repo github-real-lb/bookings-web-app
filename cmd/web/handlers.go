@@ -251,7 +251,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	}
 
 	// get list of available rooms
-	rooms, err := s.ListAvailableRooms(reservation)
+	rooms, err := s.ListAvailableRooms(reservation, LimitRoomsPerPage, 0)
 	if err != nil {
 		errorLogAndRedirect(w, r, "unable to load available rooms", err)
 		return

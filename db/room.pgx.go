@@ -2,16 +2,11 @@ package db
 
 import (
 	"strconv"
-	"time"
-
-	"github.com/github-real-lb/bookings-web-app/util/config"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Unmarshal parse data into p
 func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
 
 	if v, ok := data["room_id"]; ok {
 		p.RoomID, err = strconv.ParseInt(v, 10, 64)
@@ -21,26 +16,16 @@ func (p *CheckRoomAvailabilityParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+		err = p.StartDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
@@ -65,29 +50,36 @@ func (p *CreateRoomParams) Unmarshal(data map[string]string) {
 // Unmarshal parse data into p
 func (p *ListAvailableRoomsParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
 
-	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+	if v, ok := data["limit"]; ok {
+		i, err := strconv.Atoi(v)
 		if err != nil {
 			return err
 		}
 
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
+		p.Limit = int32(i)
+	}
+
+	if v, ok := data["offset"]; ok {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			return err
+		}
+
+		p.Offset = int32(i)
+	}
+
+	if v, ok := data["start_date"]; ok {
+		err = p.StartDate.Scan(v)
+		if err != nil {
+			return err
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 

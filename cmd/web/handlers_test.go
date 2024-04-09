@@ -846,6 +846,10 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 	})
 }
 
+func TestServer_AvailableRoomsListHandler(t *testing.T) {
+
+}
+
 func TestServer_MakeReservationHandler(t *testing.T) {
 	// Test OK: reservation exists in session
 	t.Run("OK", func(t *testing.T) {

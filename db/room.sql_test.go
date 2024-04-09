@@ -78,7 +78,7 @@ func TestQueries_ListAvailableRooms(t *testing.T) {
 		currentStartDate = currentStartDate.Add(time.Hour * 24 * 14)
 	}
 
-	t.Run("All Available", func(t *testing.T) {
+	t.Run("All Rooms Available", func(t *testing.T) {
 		arg := ListAvailableRoomsParams{
 			Limit:  N * 2,
 			Offset: 0,
@@ -99,6 +99,25 @@ func TestQueries_ListAvailableRooms(t *testing.T) {
 		for _, v := range resultRooms {
 			require.Contains(t, rooms, v)
 		}
+	})
+
+	t.Run("All Rooms Unavailable", func(t *testing.T) {
+		arg := ListAvailableRoomsParams{
+			Limit:  N * 2,
+			Offset: 0,
+			StartDate: pgtype.Date{
+				Time:  startDate.Add(-time.Hour * 24 * 7),
+				Valid: true,
+			},
+			EndDate: pgtype.Date{
+				Time:  startDate.Add(time.Hour * 24 * 365),
+				Valid: true,
+			},
+		}
+
+		resultRooms, err := testStore.ListAvailableRooms(context.Background(), arg)
+		require.NoError(t, err)
+		require.Len(t, resultRooms, 0)
 	})
 
 	t.Run("1st Room Unavailable", func(t *testing.T) {
@@ -124,7 +143,7 @@ func TestQueries_ListAvailableRooms(t *testing.T) {
 		}
 	})
 
-	t.Run("2nd & 3rd Room Unavailable", func(t *testing.T) {
+	t.Run("2nd & 3rd Rooms Unavailable", func(t *testing.T) {
 		arg := ListAvailableRoomsParams{
 			Limit:  N * 2,
 			Offset: 0,

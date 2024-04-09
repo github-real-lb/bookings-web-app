@@ -185,28 +185,30 @@ func TestServer_CreateReservation(t *testing.T) {
 }
 
 func TestServer_ListAvailableRooms(t *testing.T) {
-	t.Run("Test OK", func(t *testing.T) {
+	t.Run("Test Available Rooms", func(t *testing.T) {
 		// create random reservation with room data
 		reservation := randomReservation()
 
 		//create rooms slice with random data of n rooms
-		n := 5
-		rooms := randomRooms(n)
+		const N = 5
+		rooms := randomRooms(N)
 
 		//create mockStore method return arguments
 		arg := db.ListAvailableRoomsParams{
-			EndDate: pgtype.Date{
-				Time:  reservation.EndDate,
-				Valid: true,
-			},
+			Limit:  N,
+			Offset: 0,
 			StartDate: pgtype.Date{
 				Time:  reservation.StartDate,
+				Valid: true,
+			},
+			EndDate: pgtype.Date{
+				Time:  reservation.EndDate,
 				Valid: true,
 			},
 		}
 
 		//create mockStore method return arguments
-		dbRooms := make([]db.Room, n)
+		dbRooms := make([]db.Room, N)
 		for i, v := range rooms {
 			dbRooms[i] = db.Room{
 				ID:            v.ID,
@@ -234,22 +236,57 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 			Once()
 
 		// execute method
-		returnedRooms, err := server.ListAvailableRooms(reservation)
+		resultRooms, err := server.ListAvailableRooms(reservation, N, 0)
 
 		// tesify
 		assert.NoError(t, err)
-		require.Len(t, returnedRooms, n)
+		require.Len(t, resultRooms, N)
 
-		for i := 0; i < n; i++ {
+		for i := 0; i < N; i++ {
 			room := rooms[i]
-			returnedRoom := returnedRooms[i]
-			require.Equal(t, room.ID, returnedRoom.ID)
-			require.Equal(t, room.Name, returnedRoom.Name)
-			require.Equal(t, room.Description, returnedRoom.Description)
-			require.Equal(t, room.ImageFilename, returnedRoom.ImageFilename)
-			require.WithinDuration(t, room.CreatedAt, returnedRoom.CreatedAt, time.Second)
-			require.WithinDuration(t, room.UpdatedAt, returnedRoom.UpdatedAt, time.Second)
+			resultRoom := resultRooms[i]
+			require.Equal(t, room.ID, resultRoom.ID)
+			require.Equal(t, room.Name, resultRoom.Name)
+			require.Equal(t, room.Description, resultRoom.Description)
+			require.Equal(t, room.ImageFilename, resultRoom.ImageFilename)
+			require.WithinDuration(t, room.CreatedAt, resultRoom.CreatedAt, time.Second)
+			require.WithinDuration(t, room.UpdatedAt, resultRoom.UpdatedAt, time.Second)
 		}
+	})
+
+	t.Run("Test No Available Rooms", func(t *testing.T) {
+		// create random reservation with room data
+		reservation := randomReservation()
+
+		//create mockStore method return arguments
+		arg := db.ListAvailableRoomsParams{
+			Limit:  5,
+			Offset: 0,
+			StartDate: pgtype.Date{
+				Time:  reservation.StartDate,
+				Valid: true,
+			},
+			EndDate: pgtype.Date{
+				Time:  reservation.EndDate,
+				Valid: true,
+			},
+		}
+
+		// create a new server with mock database store
+		mockStore := mocks.NewMockStore(t)
+		server := NewServer(mockStore)
+
+		// build stub
+		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+			Return([]db.Room{}, nil).
+			Once()
+
+		// execute method
+		resultRooms, err := server.ListAvailableRooms(reservation, 5, 0)
+
+		// tesify
+		assert.NoError(t, err)
+		require.Len(t, resultRooms, 0)
 	})
 
 	t.Run("Test Error", func(t *testing.T) {
@@ -258,12 +295,14 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 
 		//create mockStore method return arguments
 		arg := db.ListAvailableRoomsParams{
-			EndDate: pgtype.Date{
-				Time:  reservation.EndDate,
-				Valid: true,
-			},
+			Limit:  5,
+			Offset: 0,
 			StartDate: pgtype.Date{
 				Time:  reservation.StartDate,
+				Valid: true,
+			},
+			EndDate: pgtype.Date{
+				Time:  reservation.EndDate,
 				Valid: true,
 			},
 		}
@@ -278,7 +317,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 			Once()
 
 		// execute method
-		rooms, err := server.ListAvailableRooms(reservation)
+		rooms, err := server.ListAvailableRooms(reservation, 5, 0)
 
 		// tesify
 		assert.Error(t, err)
@@ -287,19 +326,19 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 }
 
 func TestServer_ListRooms(t *testing.T) {
-	t.Run("Test OK", func(t *testing.T) {
+	t.Run("Test All Rooms", func(t *testing.T) {
 		//create rooms slice with random data of n rooms
-		n := 5
-		rooms := randomRooms(n)
+		const N = 5
+		rooms := randomRooms(N)
 
 		//create mockStore method return arguments
 		arg := db.ListRoomsParams{
-			Limit:  int32(n),
+			Limit:  int32(N),
 			Offset: 0,
 		}
 
 		//create mockStore method return arguments
-		dbRooms := make([]db.Room, n)
+		dbRooms := make([]db.Room, N)
 		for i, v := range rooms {
 			dbRooms[i] = db.Room{
 				ID:            v.ID,
@@ -327,13 +366,13 @@ func TestServer_ListRooms(t *testing.T) {
 			Once()
 
 		// execute method
-		returnedRooms, err := server.ListRooms(n, 0)
+		returnedRooms, err := server.ListRooms(N, 0)
 
 		// tesify
 		assert.NoError(t, err)
-		require.Len(t, returnedRooms, n)
+		require.Len(t, returnedRooms, N)
 
-		for i := 0; i < n; i++ {
+		for i := 0; i < N; i++ {
 			room := rooms[i]
 			returnedRoom := returnedRooms[i]
 			require.Equal(t, room.ID, returnedRoom.ID)
@@ -343,6 +382,30 @@ func TestServer_ListRooms(t *testing.T) {
 			require.WithinDuration(t, room.CreatedAt, returnedRoom.CreatedAt, time.Second)
 			require.WithinDuration(t, room.UpdatedAt, returnedRoom.UpdatedAt, time.Second)
 		}
+	})
+
+	t.Run("Test No Rooms", func(t *testing.T) {
+		//create mockStore method return arguments
+		arg := db.ListRoomsParams{
+			Limit:  5,
+			Offset: 0,
+		}
+
+		// create a new server with mock database store
+		mockStore := mocks.NewMockStore(t)
+		server := NewServer(mockStore)
+
+		// build stub
+		mockStore.On("ListRooms", mock.Anything, arg).
+			Return([]db.Room{}, nil).
+			Once()
+
+		// execute method
+		ResultRooms, err := server.ListRooms(5, 0)
+
+		// tesify
+		assert.NoError(t, err)
+		require.Len(t, ResultRooms, 0)
 	})
 
 	t.Run("Test Error", func(t *testing.T) {

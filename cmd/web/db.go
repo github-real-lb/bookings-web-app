@@ -52,9 +52,13 @@ func (s *Server) CreateReservation(r *Reservation) error {
 	return err
 }
 
-func (s *Server) ListAvailableRooms(r Reservation) (Rooms, error) {
+// ListAvailableRooms returns limit amount of avaiable rooms for r, with the offset specified
+func (s *Server) ListAvailableRooms(r Reservation, limit int, offset int) (Rooms, error) {
 	// parse form's data to query arguments
-	var arg db.ListAvailableRoomsParams
+	arg := db.ListAvailableRoomsParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
 	err := arg.Unmarshal(r.Marshal())
 	if err != nil {
 		return nil, err
