@@ -115,6 +115,45 @@ func (r *Room) Marshal() map[string]string {
 	return data
 }
 
+func (r *Room) Unmarshal(data map[string]string) error {
+	var err error = nil
+
+	if v, ok := data["id"]; ok {
+		r.ID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["name"]; ok {
+		r.Name = v
+	}
+
+	if v, ok := data["description"]; ok {
+		r.Description = v
+	}
+
+	if v, ok := data["image_filename"]; ok {
+		r.ImageFilename = v
+	}
+
+	if v, ok := data["created_at"]; ok {
+		err = r.CreatedAt.Scan(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["updated_at"]; ok {
+		err = r.UpdatedAt.Scan(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
 // Marshal returns data of r
 func (r *RoomRestriction) Marshal() map[string]string {
 	data := make(map[string]string)

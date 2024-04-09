@@ -14,6 +14,9 @@ type Querier interface {
 	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
 	CreateRoomRestriction(ctx context.Context, arg CreateRoomRestrictionParams) (RoomRestriction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteAllReservations(ctx context.Context) error
+	DeleteAllRoomRestrictions(ctx context.Context) error
+	DeleteAllRooms(ctx context.Context) error
 	DeleteReservation(ctx context.Context, id int64) error
 	DeleteRoom(ctx context.Context, id int64) error
 	DeleteRoomRestriction(ctx context.Context, id int64) error

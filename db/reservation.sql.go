@@ -62,6 +62,15 @@ func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationPa
 	return i, err
 }
 
+const deleteAllReservations = `-- name: DeleteAllReservations :exec
+DELETE FROM reservations
+`
+
+func (q *Queries) DeleteAllReservations(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteAllReservations)
+	return err
+}
+
 const deleteReservation = `-- name: DeleteReservation :exec
 DELETE FROM reservations
 WHERE id = $1

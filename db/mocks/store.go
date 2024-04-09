@@ -182,6 +182,60 @@ func (_m *MockStore) CreateUser(ctx context.Context, arg db.CreateUserParams) (d
 	return r0, r1
 }
 
+// DeleteAllReservations provides a mock function with given fields: ctx
+func (_m *MockStore) DeleteAllReservations(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllReservations")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteAllRoomRestrictions provides a mock function with given fields: ctx
+func (_m *MockStore) DeleteAllRoomRestrictions(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllRoomRestrictions")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteAllRooms provides a mock function with given fields: ctx
+func (_m *MockStore) DeleteAllRooms(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllRooms")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteReservation provides a mock function with given fields: ctx, id
 func (_m *MockStore) DeleteReservation(ctx context.Context, id int64) error {
 	ret := _m.Called(ctx, id)

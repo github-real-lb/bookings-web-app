@@ -6,6 +6,9 @@ INSERT INTO room_restrictions (
 )
 RETURNING *;
 
+-- name: DeleteAllRoomRestrictions :exec
+DELETE FROM room_restrictions;
+
 -- name: DeleteRoomRestriction :exec
 DELETE FROM room_restrictions
 WHERE id = $1;

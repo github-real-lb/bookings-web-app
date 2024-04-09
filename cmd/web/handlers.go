@@ -13,6 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// LimitRoomsPerPage sets the maximum number of rooms to display on a page
+const LimitRoomsPerPage = 10
+
 // HomeHandler is the GET "/" home page handler
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
@@ -28,9 +31,6 @@ func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 		errorLogAndRedirect(w, r, "unable to render about.page.gohtml template", err)
 	}
 }
-
-// LimitRoomsPerPage sets the maximum number of rooms to display on the rooms page
-const LimitRoomsPerPage = 10
 
 // RoomsHandler is the GET "/rooms/{index}" page handler
 func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
@@ -246,20 +246,20 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	var reservation Reservation
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to parse form data for reservation ", err)
 		return
 	}
 
-	// get list of availabe rooms
+	// get list of available rooms
 	rooms, err := s.ListAvailableRooms(reservation)
 	if err != nil {
-		app.LogServerError(w, err)
+		errorLogAndRedirect(w, r, "unable to load available rooms", err)
 		return
 	}
 
-	// check if there are rooms availabe
+	// check if there are rooms available
 	if len(rooms) == 0 {
-		app.Session.Put(r.Context(), "warning", "No rooms are availabe. Please try different dates.")
+		app.Session.Put(r.Context(), "warning", "No rooms are available. Please try different dates.")
 		err = RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
 			Form: form,
 		})

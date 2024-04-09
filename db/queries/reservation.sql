@@ -6,6 +6,13 @@ INSERT INTO reservations (
 )
 RETURNING *;
 
+-- name: DeleteAllReservations :exec
+DELETE FROM reservations;
+
+-- name: DeleteReservation :exec
+DELETE FROM reservations
+WHERE id = $1;
+
 -- name: GetReservation :one
 SELECT * FROM reservations
 WHERE id = $1 LIMIT 1;
@@ -43,8 +50,4 @@ UPDATE reservations
         room_id = $9,
         notes = $10,
         updated_at = $11
-WHERE id = $1;
-
--- name: DeleteReservation :exec
-DELETE FROM reservations
 WHERE id = $1;

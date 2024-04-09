@@ -11,6 +11,9 @@ INSERT INTO rooms (
 )
 RETURNING *;
 
+-- name: DeleteAllRooms :exec
+DELETE FROM rooms;
+
 -- name: DeleteRoom :exec
 DELETE FROM rooms
 WHERE id = $1;
@@ -25,8 +28,11 @@ FROM rooms
 WHERE id NOT IN (
 SELECT room_id
 FROM room_restrictions
-WHERE (start_date < @end_date::date AND end_date > @start_date::date)
-);
+WHERE (end_date > @start_date::date AND start_date < @end_date::date)
+)
+ORDER BY name
+LIMIT $1
+OFFSET $2;
 
 -- name: ListRooms :many
 SELECT * FROM rooms

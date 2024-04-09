@@ -94,7 +94,7 @@ func TestReservation_MarshalAndUnmarhsal(t *testing.T) {
 	require.True(t, r2.UpdatedAt.Valid)
 }
 
-func TestRoom_Marshal(t *testing.T) {
+func TestRoom_MarshalAndUnmarhsal(t *testing.T) {
 	r := Room{
 		ID:            util.RandomID(),
 		Name:          util.RandomName(),
@@ -122,6 +122,21 @@ func TestRoom_Marshal(t *testing.T) {
 
 	require.Equal(t, r.UpdatedAt.Time.Format(config.DateTimeLayout), data["updated_at"])
 	require.True(t, r.UpdatedAt.Valid)
+
+	r2 := Room{}
+	err := r2.Unmarshal(data)
+	require.NoError(t, err)
+
+	require.Equal(t, r.ID, r2.ID)
+	require.Equal(t, r.Name, r2.Name)
+	require.Equal(t, r.Description, r2.Description)
+	require.Equal(t, r.ImageFilename, r2.ImageFilename)
+
+	require.WithinDuration(t, r.CreatedAt.Time, r2.CreatedAt.Time, time.Second)
+	require.True(t, r2.CreatedAt.Valid)
+
+	require.WithinDuration(t, r.UpdatedAt.Time, r2.UpdatedAt.Time, time.Second)
+	require.True(t, r2.UpdatedAt.Valid)
 }
 
 func TestRoomRestriction_Marshal(t *testing.T) {

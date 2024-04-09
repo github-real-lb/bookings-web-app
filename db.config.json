@@ -1,5 +1,6 @@
 {
-    "connection_string": "postgresql://root:secret@localhost:5432/bookings?sslmode=disable",
-    "server_address": "localhost:8080"
+    "db_connection_string": "postgresql://root:secret@localhost:5432/bookings?sslmode=disable",
+    "server_address": "localhost:8080",
+    "test_db_connection_string": "postgresql://root:secret@localhost:5432/bookings_test?sslmode=disable"
 }
 

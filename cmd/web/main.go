@@ -16,7 +16,7 @@ func main() {
 	}
 
 	// connecting to postgres database
-	dbStore, err := db.NewPostgresDBStore(app.ConnectionString)
+	dbStore, err := db.NewPostgresDBStore(app.DBConnectionString)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}

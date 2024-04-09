@@ -50,6 +50,15 @@ func (q *Queries) CreateRoomRestriction(ctx context.Context, arg CreateRoomRestr
 	return i, err
 }
 
+const deleteAllRoomRestrictions = `-- name: DeleteAllRoomRestrictions :exec
+DELETE FROM room_restrictions
+`
+
+func (q *Queries) DeleteAllRoomRestrictions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteAllRoomRestrictions)
+	return err
+}
+
 const deleteRoomRestriction = `-- name: DeleteRoomRestriction :exec
 DELETE FROM room_restrictions
 WHERE id = $1

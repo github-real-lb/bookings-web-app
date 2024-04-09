@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	testStore, err = NewPostgresDBStore(dbConfig.ConnectionString)
+	testStore, err = NewPostgresDBStore(dbConfig.TestDBConnectionString)
 	if err != nil {
 		os.Exit(1)
 	}

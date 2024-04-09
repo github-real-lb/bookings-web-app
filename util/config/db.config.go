@@ -6,11 +6,14 @@ import (
 )
 
 type DBConfig struct {
-	// ConnectionString is the connection string for the postgreSql server
-	ConnectionString string `json:"connection_string"`
+	// DBConnectionString is the connection string for the database
+	DBConnectionString string `json:"db_connection_string"`
 
 	// ServerAddress is http.Server listening address
 	ServerAddress string `json:"server_address"`
+
+	// TestDBConnectionString is the connection string for the test database
+	TestDBConnectionString string `json:"test_db_connection_string"`
 }
 
 func LoadDBConfig(filename string) (*DBConfig, error) {

@@ -59,6 +59,15 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 	return i, err
 }
 
+const deleteAllRooms = `-- name: DeleteAllRooms :exec
+DELETE FROM rooms
+`
+
+func (q *Queries) DeleteAllRooms(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteAllRooms)
+	return err
+}
+
 const deleteRoom = `-- name: DeleteRoom :exec
 DELETE FROM rooms
 WHERE id = $1
@@ -94,17 +103,27 @@ FROM rooms
 WHERE id NOT IN (
 SELECT room_id
 FROM room_restrictions
-WHERE (start_date < $1::date AND end_date > $2::date)
+WHERE (end_date > $3::date AND start_date < $4::date)
 )
+ORDER BY name
+LIMIT $1
+OFFSET $2
 `
 
 type ListAvailableRoomsParams struct {
-	EndDate   pgtype.Date `json:"end_date"`
+	Limit     int32       `json:"limit"`
+	Offset    int32       `json:"offset"`
 	StartDate pgtype.Date `json:"start_date"`
+	EndDate   pgtype.Date `json:"end_date"`
 }
 
 func (q *Queries) ListAvailableRooms(ctx context.Context, arg ListAvailableRoomsParams) ([]Room, error) {
-	rows, err := q.db.Query(ctx, listAvailableRooms, arg.EndDate, arg.StartDate)
+	rows, err := q.db.Query(ctx, listAvailableRooms,
+		arg.Limit,
+		arg.Offset,
+		arg.StartDate,
+		arg.EndDate,
+	)
 	if err != nil {
 		return nil, err
 	}

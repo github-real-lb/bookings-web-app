@@ -573,7 +573,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 
 		//build stub
 		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
-			Return(false, errors.New("internal server error")).
+			Return(false, errors.New("any error")).
 			Once()
 
 		// put room in session
@@ -603,6 +603,247 @@ func jsonResponseUnmarshal(t *testing.T, rr *httptest.ResponseRecorder, v any) {
 	// get the json response
 	err := json.Unmarshal(rr.Body.Bytes(), v)
 	require.NoErrorf(t, err, "unable to unmarshal json response")
+}
+
+func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
+	// Test OK: no rooms available for form request dates
+	t.Run("No Available Rooms", func(t *testing.T) {
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{
+			"start_date": {startDate.Format(config.DateLayout)},
+			"end_date":   {endDate.Format(config.DateLayout)},
+		}
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+		}
+
+		arg := db.ListAvailableRoomsParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		//build stub
+		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+			Return([]db.Room{}, nil).
+			Once()
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Contains(t, rr.Body.String(), `message: "No rooms are available. Please try different dates."`)
+	})
+
+	// Test OK: rooms are available
+	t.Run("Available Rooms", func(t *testing.T) {
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{
+			"start_date": {startDate.Format(config.DateLayout)},
+			"end_date":   {endDate.Format(config.DateLayout)},
+		}
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+		}
+
+		arg := db.ListAvailableRoomsParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		// create method return arguments
+		rooms := make(Rooms, LimitRoomsPerPage)
+		dbRooms := make([]db.Room, LimitRoomsPerPage)
+
+		for i := 0; i < LimitRoomsPerPage; i++ {
+			rooms[i] = randomRoom()
+			err = dbRooms[i].Unmarshal(rooms[i].Marshal())
+			require.NoError(t, err)
+		}
+
+		//build stub
+		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+			Return(dbRooms, nil).
+			Once()
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// get reservation from session and remove it
+		sessionReservation := app.Session.Pop(req.Context(), "reservation").(Reservation)
+		assert.WithinDuration(t, reservation.StartDate, sessionReservation.StartDate, time.Second)
+		assert.WithinDuration(t, reservation.EndDate, sessionReservation.EndDate, time.Second)
+
+		// get rooms from session and remove it
+		sessionRooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
+		assert.Len(t, sessionRooms, LimitRoomsPerPage)
+
+		// testify
+		assert.Equal(t, http.StatusSeeOther, rr.Code)
+		assert.Equal(t, "/available-rooms/available", rr.Header().Get("Location"))
+	})
+
+	// Test Error: invalid body data cause error in ParseForm()
+	t.Run("Ivalid Body Data", func(t *testing.T) {
+		// creating invalid body
+		body := strings.NewReader("%^")
+
+		// create a new test server and a request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, "unable to parse form", errMsg)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
+	})
+
+	// Test Error: invalid form data in post request
+	t.Run("Invalid Form", func(t *testing.T) {
+		// create the dates to use in the tests
+		date := util.RandomDate()
+		startDate := date.Format(config.DateLayout)
+		endDate := date.Add(-time.Hour * 24 * 7).Format(config.DateLayout)
+
+		// create test cases for the form validation
+		tests := []struct {
+			Name string
+			Data map[string]string
+		}{
+			{
+				Name: "Missing Start Date",
+				Data: map[string]string{
+					"end_date": endDate,
+				},
+			},
+			{
+				Name: "Missing End Date",
+				Data: map[string]string{
+					"start_date": startDate,
+				},
+			},
+			{
+				Name: "End Date Prior to Start Date",
+				Data: map[string]string{
+					"start_date": startDate,
+					"end_date":   endDate,
+				},
+			},
+			{
+				Name: "Invalid Start Date",
+				Data: map[string]string{
+					"start_date": util.RandomName(),
+					"end_date":   endDate,
+				},
+			},
+			{
+				Name: "Invalid End Date",
+				Data: map[string]string{
+					"start_date": startDate,
+					"end_date":   util.RandomName(),
+				},
+			},
+		}
+
+		// create a new test server and a mock database store
+		ts, mockStore := NewTestServer(t)
+
+		for _, v := range tests {
+			t.Run(v.Name, func(t *testing.T) {
+				// create the body of the request
+				values := url.Values{}
+				for key, value := range v.Data {
+					values.Set(key, value)
+				}
+				body := strings.NewReader(values.Encode())
+
+				// create a new request
+				req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
+
+				// build stub
+				mockStore.On("ListAvailableRooms", mock.Anything, mock.Anything).
+					Return(mock.Anything, mock.Anything).
+					Times(0)
+
+				//  server the request
+				rr := ts.ServeRequest(req)
+
+				// remove uncalled stub
+				mockStore.On("ListAvailableRooms", mock.Anything, mock.Anything).Unset()
+
+				// testify
+				assert.Equal(t, http.StatusOK, rr.Code)
+			})
+		}
+	})
+
+	// Test Error: form is invalid, but internal server error on ListAvailableRooms
+	t.Run("Internal Server Error", func(t *testing.T) {
+		// creating dates for the request
+		startDate := util.RandomDate()
+		endDate := startDate.Add(time.Hour * 24 * 7)
+
+		// create the body of the request
+		values := url.Values{
+			"start_date": {startDate.Format(config.DateLayout)},
+			"end_date":   {endDate.Format(config.DateLayout)},
+		}
+		body := strings.NewReader(values.Encode())
+
+		// create a new test server, a mock database store and a request
+		ts, mockStore := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
+
+		// create mehod arguments
+		reservation := Reservation{
+			StartDate: startDate,
+			EndDate:   endDate,
+		}
+
+		arg := db.ListAvailableRoomsParams{}
+		err := arg.Unmarshal(reservation.Marshal())
+		require.NoError(t, err)
+
+		//build stub
+		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+			Return(nil, errors.New("any error")).
+			Once()
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
+	})
 }
 
 func TestServer_MakeReservationHandler(t *testing.T) {
