@@ -629,7 +629,10 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			EndDate:   endDate,
 		}
 
-		arg := db.ListAvailableRoomsParams{}
+		arg := db.ListAvailableRoomsParams{
+			Limit:  LimitRoomsPerPage,
+			Offset: 0,
+		}
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
@@ -669,7 +672,10 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			EndDate:   endDate,
 		}
 
-		arg := db.ListAvailableRoomsParams{}
+		arg := db.ListAvailableRoomsParams{
+			Limit:  LimitRoomsPerPage,
+			Offset: 0,
+		}
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
@@ -723,7 +729,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/", rr.Header().Get("Location"))
+		assert.Equal(t, "/available-rooms-search", rr.Header().Get("Location"))
 	})
 
 	// Test Error: invalid form data in post request
@@ -828,7 +834,10 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			EndDate:   endDate,
 		}
 
-		arg := db.ListAvailableRoomsParams{}
+		arg := db.ListAvailableRoomsParams{
+			Limit:  LimitRoomsPerPage,
+			Offset: 0,
+		}
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
@@ -842,11 +851,129 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/", rr.Header().Get("Location"))
+		assert.Equal(t, "/available-rooms-search", rr.Header().Get("Location"))
 	})
 }
 
 func TestServer_AvailableRoomsListHandler(t *testing.T) {
+
+	// Test Error: available rooms are missing from session
+	t.Run("Error Missing Available Rooms", func(t *testing.T) {
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/available-rooms-search", rr.Header().Get("Location"))
+	})
+
+	// Test OK: available rooms are missing from session
+	t.Run("OK Available Rooms", func(t *testing.T) {
+		//create rooms slice with random data of n rooms
+		const N = 5
+		rooms := randomRooms(N)
+
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
+
+		// put rooms in session
+		app.Session.Put(req.Context(), "rooms", rooms)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove rooms from session
+		app.Session.Remove(req.Context(), "rooms")
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	// test handling the GET /available-rooms/{index} with index not a number
+	t.Run("Error Index Not a Number", func(t *testing.T) {
+		//create rooms slice with random data of n rooms
+		const N = 5
+		rooms := randomRooms(N)
+
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/abc", nil)
+
+		// put rooms in session
+		app.Session.Put(req.Context(), "rooms", rooms)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove rooms from session
+		app.Session.Remove(req.Context(), "rooms")
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/available-rooms/available", rr.Header().Get("Location"))
+	})
+
+	// Test Error: reservation data is missing from session
+	t.Run("Error Missing Reservation Data", func(t *testing.T) {
+		//create rooms slice with random data of n rooms
+		const N = 5
+		rooms := randomRooms(N)
+
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/1", nil)
+
+		// put rooms in session
+		app.Session.Put(req.Context(), "rooms", rooms)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove rooms from session
+		app.Session.Remove(req.Context(), "rooms")
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
+	})
+
+	// Test OK
+	t.Run("OK", func(t *testing.T) {
+		//create rooms slice with random data of n rooms
+		const N = 5
+		rooms := randomRooms(N)
+
+		// create random reservation
+		reservation := randomReservation()
+
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/1", nil)
+
+		// put rooms and reservation in session
+		app.Session.Put(req.Context(), "rooms", rooms)
+		app.Session.Put(req.Context(), "reservation", reservation)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// remove rooms and reservation from session
+		app.Session.Remove(req.Context(), "rooms")
+		app.Session.Remove(req.Context(), "reservation")
+
+		// testify
+		assert.Equal(t, http.StatusSeeOther, rr.Code)
+		assert.Equal(t, "/make-reservation", rr.Header().Get("Location"))
+	})
 
 }
 
@@ -1038,7 +1165,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/", rr.Header().Get("Location"))
+		assert.Equal(t, "/make-reservation", rr.Header().Get("Location"))
 
 	})
 
@@ -1150,5 +1277,52 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 	//TODO:
 	t.Run("Internal Server Error", func(t *testing.T) {
 		log.Println("*********   TODO   *********")
+	})
+}
+
+func TestServer_ReservationSummaryHandler(t *testing.T) {
+	// Test Error: reservation data is missing from session
+	t.Run("Error Missing Reservation Data", func(t *testing.T) {
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/reservation-summary", nil)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/", rr.Header().Get("Location"))
+	})
+
+	// Test OK
+	t.Run("OK", func(t *testing.T) {
+		//create rooms slice with random data of n rooms
+		const N = 5
+		rooms := randomRooms(N)
+
+		// create random reservation
+		reservation := randomReservation()
+
+		// create a new test server, and a new request
+		ts, _ := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodGet, "/reservation-summary", nil)
+
+		// put rooms and reservation in session
+		app.Session.Put(req.Context(), "rooms", rooms)
+		app.Session.Put(req.Context(), "reservation", reservation)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// checks that rooms and reservation are not in session
+		ok := app.Session.Exists(req.Context(), "rooms")
+		require.False(t, ok)
+
+		ok = app.Session.Exists(req.Context(), "reservation")
+		require.False(t, ok)
+
+		// testify
+		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 }

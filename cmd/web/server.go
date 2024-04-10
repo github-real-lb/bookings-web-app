@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/github-real-lb/bookings-web-app/db"
@@ -61,4 +63,36 @@ func NewServer(store db.DatabaseStore) *Server {
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))
 
 	return &server
+}
+
+// LogError logs error with message as a prefix
+func (s *Server) LogError(r *http.Request, message string, err error) {
+	message = fmt.Sprintf("messege: %s\nurl: %s", message, r.URL.Path)
+	app.LogError(message, err)
+}
+
+// LogErrorAndRedirect logs error, put message in session, and redirect to url
+func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, message string, err error, url string) {
+	app.Session.Put(r.Context(), "error", message)
+
+	message = fmt.Sprintf("PROMPT: %s\nURL: %s", message, r.URL.Path)
+	app.LogError(message, err)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+// ResponseJSON write v to w as json response
+func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	bs, err := json.Marshal(v)
+	if err != nil {
+		s.LogError(r, "unable to marshal json response", err)
+		return err
+	}
+
+	_, err = w.Write(bs)
+	if err != nil {
+		s.LogError(r, "unable to write json response", err)
+		return err
+	}
+
+	return nil
 }
