@@ -86,14 +86,14 @@ func (p *UpdateRoomRestrictionParams) Unmarshal(data map[string]string) error {
 	}
 
 	if v, ok := data["restriction"]; ok {
-		err = p.ReservationID.Scan(v)
+		err = p.Restriction.Scan(v)
 		if err != nil {
 			return err
 		}
 	}
 
 	if v, ok := data["updated_at"]; ok {
-		err = p.EndDate.Scan(v)
+		err = p.UpdatedAt.Scan(v)
 		if err != nil {
 			return err
 		}

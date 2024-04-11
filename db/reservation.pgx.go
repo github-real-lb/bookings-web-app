@@ -2,47 +2,35 @@ package db
 
 import (
 	"strconv"
-	"time"
-
-	"github.com/github-real-lb/bookings-web-app/util/config"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Unmarshal parse data into p
 func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
 
 	p.Code = data["code"]
 	p.FirstName = data["first_name"]
 	p.LastName = data["last_name"]
 	p.Email = data["email"]
-	p.Phone = pgtype.Text{
-		String: data["phone"],
-		Valid:  data["phone"] != "",
-	}
 
-	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+	if v, ok := data["phone"]; ok {
+		err = p.Phone.Scan(v)
 		if err != nil {
 			return err
 		}
+	}
 
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
+	if v, ok := data["start_date"]; ok {
+		err = p.StartDate.Scan(v)
+		if err != nil {
+			return err
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
@@ -53,9 +41,11 @@ func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	p.Notes = pgtype.Text{
-		String: data["notes"],
-		Valid:  data["notes"] != "",
+	if v, ok := data["notes"]; ok {
+		err = p.Notes.Scan(v)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -64,7 +54,6 @@ func (p *CreateReservationParams) Unmarshal(data map[string]string) error {
 // Unmarshal parse data into p
 func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 	var err error = nil
-	var t time.Time
 
 	if v, ok := data["id"]; ok {
 		p.ID, err = strconv.ParseInt(v, 10, 64)
@@ -77,32 +66,25 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 	p.FirstName = data["first_name"]
 	p.LastName = data["last_name"]
 	p.Email = data["email"]
-	p.Phone = pgtype.Text{
-		String: data["phone"],
-		Valid:  data["phone"] != "",
-	}
 
-	if v, ok := data["start_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+	if v, ok := data["phone"]; ok {
+		err = p.Phone.Scan(v)
 		if err != nil {
 			return err
 		}
+	}
 
-		p.StartDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
+	if v, ok := data["start_date"]; ok {
+		err = p.StartDate.Scan(v)
+		if err != nil {
+			return err
 		}
 	}
 
 	if v, ok := data["end_date"]; ok {
-		t, err = time.Parse(config.DateLayout, v)
+		err = p.EndDate.Scan(v)
 		if err != nil {
 			return err
-		}
-
-		p.EndDate = pgtype.Date{
-			Time:  t,
-			Valid: true,
 		}
 	}
 
@@ -113,20 +95,17 @@ func (p *UpdateReservationParams) Unmarshal(data map[string]string) error {
 		}
 	}
 
-	p.Notes = pgtype.Text{
-		String: data["notes"],
-		Valid:  data["notes"] != "",
-	}
-
-	if v, ok := data["updated_at"]; ok {
-		t, err = time.Parse(time.RFC3339, v)
+	if v, ok := data["notes"]; ok {
+		err = p.Notes.Scan(v)
 		if err != nil {
 			return err
 		}
+	}
 
-		p.UpdatedAt = pgtype.Timestamptz{
-			Time:  t,
-			Valid: true,
+	if v, ok := data["updated_at"]; ok {
+		err = p.UpdatedAt.Scan(v)
+		if err != nil {
+			return err
 		}
 	}
 
