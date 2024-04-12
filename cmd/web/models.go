@@ -29,7 +29,7 @@ type TemplateData struct {
 	Error   string // Error message
 }
 
-// Reservation is used to hold reservation data
+// Reservation holds reservation data
 type Reservation struct {
 	ID        int64     `json:"id"`
 	Code      string    `json:"code"`
@@ -173,6 +173,7 @@ func (r *Reservation) Unmarshal(data map[string]string) error {
 	return err
 }
 
+// Room holds hotel room data
 type Room struct {
 	ID            int64     `json:"id"`
 	Name          string    `json:"name"`
@@ -182,6 +183,7 @@ type Room struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+// Rooms holds a slice of Room
 type Rooms []Room
 
 // Marshal returns data of r
@@ -256,7 +258,7 @@ func (r *Restriction) Scan(src any) error {
 	return nil
 }
 
-// RoomRestriction is used to hold room restriction data
+// RoomRestriction holds room restriction data
 type RoomRestriction struct {
 	ID            int64       `json:"id"`
 	StartDate     time.Time   `json:"start_date"`
@@ -345,6 +347,7 @@ func (r *RoomRestriction) Unmarshal(data map[string]string) error {
 	return err
 }
 
+// User holds user data
 type User struct {
 	ID          int64     `json:"id"`
 	FirstName   string    `json:"first_name"`

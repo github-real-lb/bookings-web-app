@@ -26,13 +26,13 @@ type AppConfig struct {
 
 // app holds the configurations and templates of the app
 // It is shared throughout all the package
-var app *AppConfig
+var app *AppConfig = &AppConfig{}
 
 // InitializeApp loads the app configurations and setup based on the application mode
 func InitializeApp(appMode config.AppMode) error {
 	var err error
-	app = &AppConfig{}
 
+	// setting configuration filenames
 	var appCfgFilename, dbCfgFilename string
 
 	if appMode == config.TestingMode || appMode == config.DebuggingMode {

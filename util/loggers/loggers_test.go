@@ -20,32 +20,6 @@ func TestNewAppLogger(t *testing.T) {
 	assert.NotNil(t, al.InfoLog)
 }
 
-func TestAppLogger_LogClientError(t *testing.T) {
-	// bypass Stdout for test
-	originalStdout, r, w := bypassStdout()
-
-	// run the test
-	appLogger := NewAppLogger()
-	recorder := httptest.NewRecorder()
-	appLogger.LogClientError(recorder, http.StatusBadRequest)
-
-	// restore Stdout after test
-	restoreStdout(originalStdout, w)
-
-	// read the output of our prompt() function from our read pipe
-	out, _ := io.ReadAll(r)
-
-	// check results
-	stdoutResult := fmt.Sprint("Client error with status ", http.StatusBadRequest)
-	assert.Contains(t, string(out), stdoutResult)
-
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-
-	bodyResult := fmt.Sprint(http.StatusText(http.StatusBadRequest), "\n")
-	body, _ := io.ReadAll(recorder.Body)
-	assert.Equal(t, bodyResult, string(body))
-}
-
 func TestAppLogger_LogServerError(t *testing.T) {
 	// bypass Stdout for test
 	originalStdout, r, w := bypassStdout()
@@ -54,8 +28,12 @@ func TestAppLogger_LogServerError(t *testing.T) {
 	appLogger := NewAppLogger()
 	recorder := httptest.NewRecorder()
 
-	sErr := "this is a test error message"
-	appLogger.LogServerError(recorder, errors.New(sErr))
+	errData := ErrorData{
+		Prefix: "this is the prefix",
+		Error:  errors.New("this is the error"),
+	}
+
+	appLogger.LogServerError(recorder, errData)
 
 	// restore Stdout after test
 	restoreStdout(originalStdout, w)
@@ -64,7 +42,7 @@ func TestAppLogger_LogServerError(t *testing.T) {
 	out, _ := io.ReadAll(r)
 
 	// check results
-	assert.Contains(t, string(out), sErr)
+	assert.Contains(t, string(out), errData.String())
 
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 
@@ -79,8 +57,13 @@ func TestAppLogger_LogError(t *testing.T) {
 
 	// run the test
 	appLogger := NewAppLogger()
-	sErr := "this is the error message"
-	appLogger.LogError("this is the prefix", errors.New(sErr))
+
+	errData := ErrorData{
+		Prefix: "this is the prefix",
+		Error:  errors.New("this is the error"),
+	}
+
+	appLogger.LogError(errData)
 
 	// restore Stdout after test
 	restoreStdout(originalStdout, w)
@@ -89,7 +72,7 @@ func TestAppLogger_LogError(t *testing.T) {
 	out, _ := io.ReadAll(r)
 
 	// check results
-	assert.Contains(t, string(out), sErr)
+	assert.Contains(t, string(out), errData.String())
 }
 
 // bypassStdout replace original os.Stdout with a connected pair of Files (r, w)

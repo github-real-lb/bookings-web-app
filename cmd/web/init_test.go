@@ -15,7 +15,7 @@ func TestInitializeApp(t *testing.T) {
 		require.NotNil(t, app)
 		require.NotNil(t, app.AppConfig)
 		require.NotNil(t, app.DBConfig)
-		assert.Equal(t, config.TestingMode, app.AppConfig.AppMode)
+		assert.Equal(t, config.TestingMode, app.AppConfig.Mode)
 
 	})
 }

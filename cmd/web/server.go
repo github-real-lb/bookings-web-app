@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
+	"github.com/github-real-lb/bookings-web-app/util/loggers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -65,18 +68,72 @@ func NewServer(store db.DatabaseStore) *Server {
 	return &server
 }
 
-// LogError logs error with message as a prefix
-func (s *Server) LogError(r *http.Request, message string, err error) {
-	message = fmt.Sprintf("messege: %s\nurl: %s", message, r.URL.Path)
-	app.LogError(message, err)
+// Start calls the http.Server ListenAndServer method
+func (s *Server) Start() {
+	fmt.Printf("Starting http server on %s... \n", app.ServerAddress)
+	err := s.Router.ListenAndServe()
+	if err != nil && err.Error() != "http: Server closed" {
+		app.Logger.LogError(loggers.ErrorData{
+			Prefix: "error starting http server",
+			Error:  err,
+		})
+	}
 }
 
-// LogErrorAndRedirect logs error, put message in session, and redirect to url
+// Stop calls the http.Server Shutdown method
+func (s *Server) Stop() {
+	// create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Print("Shutting down http server... ")
+	err := s.Router.Shutdown(ctx)
+	if err != nil {
+		app.Logger.LogError(loggers.ErrorData{
+			Prefix: "error shuting down http server",
+			Error:  err,
+		})
+	} else {
+		fmt.Println("Success")
+	}
+
+}
+
+// LogError logs error with message as a prefix
+func (s *Server) LogError(r *http.Request, message string, err error) {
+	message = fmt.Sprintf("\n\tPROMPT: %s\n\tURL: %s", message, r.URL.Path)
+	app.Logger.ErrorChannel <- loggers.ErrorData{
+		Prefix: message,
+		Error:  err,
+	}
+}
+
+// LogErrorAndRedirect logs error, puts message in session, and redirects to url
 func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, message string, err error, url string) {
 	app.Session.Put(r.Context(), "error", message)
 
-	message = fmt.Sprintf("PROMPT: %s\nURL: %s", message, r.URL.Path)
-	app.LogError(message, err)
+	message = fmt.Sprintf("\n\tPROMPT: %s\n\tURL: %s", message, r.URL.Path)
+	app.Logger.ErrorChannel <- loggers.ErrorData{
+		Prefix: message,
+		Error:  err,
+	}
+
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+// LogRenderErrorAndRedirect logs error with template rendering.
+// It puts error message in session with template name, and redirects to url
+func (s *Server) LogRenderErrorAndRedirect(w http.ResponseWriter, r *http.Request, template string, err error, url string) {
+	message := fmt.Sprintf(`unable to render "%s" template`, template)
+	app.Session.Put(r.Context(), "error", message)
+
+	message = fmt.Sprintf("\n\tPROMPT: %s\n\tURL: %s", message, r.URL.Path)
+
+	app.Logger.ErrorChannel <- loggers.ErrorData{
+		Prefix: message,
+		Error:  err,
+	}
+
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 

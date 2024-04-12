@@ -22,7 +22,7 @@ func TestNewServer(t *testing.T) {
 
 func TestServer_LogErrorAndRedirect(t *testing.T) {
 	ts, _ := NewTestServer(t)
-	req := ts.NewRequestWithSession(t, http.MethodGet, "/", nil)
+	req := ts.NewRequestWithSession(t, http.MethodGet, "/test_url", nil)
 	rr := httptest.NewRecorder()
 
 	s := NewServer(nil)
@@ -35,6 +35,23 @@ func TestServer_LogErrorAndRedirect(t *testing.T) {
 	// check session error message
 	errMsg := app.Session.Pop(req.Context(), "error")
 	assert.Equal(t, "test message", errMsg)
+}
+
+func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
+	ts, _ := NewTestServer(t)
+	req := ts.NewRequestWithSession(t, http.MethodGet, "/test_url", nil)
+	rr := httptest.NewRecorder()
+
+	s := NewServer(nil)
+	s.LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", errors.New("test error"), "/test_url")
+
+	// check Status Code and redirect url
+	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+	assert.Equal(t, "/test_url", rr.Header().Get("Location"))
+
+	// check session error message
+	errMsg := app.Session.Pop(req.Context(), "error")
+	assert.Equal(t, `unable to render "filename.page.gohtml" template`, errMsg)
 }
 
 func TestServer_ResponseJSON(t *testing.T) {

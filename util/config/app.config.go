@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/github-real-lb/bookings-web-app/util/loggers"
+	"github.com/github-real-lb/bookings-web-app/util/mailer"
 )
 
 // AppMode defines the application modes: Production = 0, Development = 1, Testing = 2
@@ -27,9 +28,12 @@ const DateLayout = "2006-01-02"
 
 // AppConfig holds the application config
 type AppConfig struct {
-	AppMode
+	Mode AppMode
 
-	loggers.AppLogger
+	Logger loggers.AppLogger
+
+	// MailChan is a channel used to send emails
+	MailerChan mailer.MailerChannel
 
 	// Session is the session manager
 	Session *scs.SessionManager
@@ -61,9 +65,10 @@ type AppConfig struct {
 }
 
 // LoadConfig returns the Application Configuration.
-func LoadAppConfig(filename string, appMode AppMode) (*AppConfig, error) {
+func LoadAppConfig(filename string, mode AppMode) (*AppConfig, error) {
 	app := AppConfig{}
 
+	// loading configurations from file
 	file, err := os.Open(filename)
 	if err != nil {
 		return &app, err
@@ -76,13 +81,15 @@ func LoadAppConfig(filename string, appMode AppMode) (*AppConfig, error) {
 		return &app, err
 	}
 
+	// setting directories names
 	app.TemplateDirectoryName = strings.TrimSuffix(app.TemplateDirectoryName, "/")
 	app.StaticDirectoryName = strings.TrimSuffix(app.StaticDirectoryName, "/")
 
 	// initializing loggers
-	app.AppLogger = loggers.NewAppLogger()
+	app.Logger = loggers.NewAppLogger()
 
-	switch appMode {
+	// setting application mode
+	switch mode {
 	case ProductionMode:
 		app.SetProductionMode()
 	case DevelopmentMode:
@@ -100,7 +107,7 @@ func LoadAppConfig(filename string, appMode AppMode) (*AppConfig, error) {
 
 // SetProductionMode sets the Application Configuration for production.
 func (app *AppConfig) SetProductionMode() {
-	app.AppMode = ProductionMode
+	app.Mode = ProductionMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathProduction, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathProduction, app.StaticDirectoryName)
 	app.UseTemplateCache = true
@@ -108,7 +115,7 @@ func (app *AppConfig) SetProductionMode() {
 
 // SetDevelopementMode sets the Application Configuration for development.
 func (app *AppConfig) SetDevelopementMode() {
-	app.AppMode = DevelopmentMode
+	app.Mode = DevelopmentMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathProduction, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathProduction, app.StaticDirectoryName)
 	app.UseTemplateCache = false
@@ -116,7 +123,7 @@ func (app *AppConfig) SetDevelopementMode() {
 
 // SetTestingMode sets the Application Configuration for testing.
 func (app *AppConfig) SetTestingMode() {
-	app.AppMode = TestingMode
+	app.Mode = TestingMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathTesting, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathTesting, app.StaticDirectoryName)
 	app.UseTemplateCache = false
@@ -124,7 +131,7 @@ func (app *AppConfig) SetTestingMode() {
 
 // SetDebuggingMode sets the Application Configuration for debugging with the IDE debugger.
 func (app *AppConfig) SetDebuggingMode() {
-	app.AppMode = DebuggingMode
+	app.Mode = DebuggingMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathTesting, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathTesting, app.StaticDirectoryName)
 	app.UseTemplateCache = false
@@ -132,20 +139,20 @@ func (app *AppConfig) SetDebuggingMode() {
 
 // InProductionMode returns true if the Application Configuration is set for production.
 func (app *AppConfig) InProductionMode() bool {
-	return app.AppMode == ProductionMode
+	return app.Mode == ProductionMode
 }
 
 // InDevelopmentMode returns true if the Application Configuration is set for development.
 func (app *AppConfig) InDevelopmentMode() bool {
-	return app.AppMode == DevelopmentMode
+	return app.Mode == DevelopmentMode
 }
 
 // InTestingMode returns true if the Application Configuration is set for testing.
 func (app *AppConfig) InTestingMode() bool {
-	return app.AppMode == TestingMode
+	return app.Mode == TestingMode
 }
 
 // InTestingMode returns true if the Application Configuration is set for testing.
 func (app *AppConfig) InDebuggingMode() bool {
-	return app.AppMode == DebuggingMode
+	return app.Mode == DebuggingMode
 }

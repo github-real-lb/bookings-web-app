@@ -9,6 +9,7 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
+	"github.com/github-real-lb/bookings-web-app/util/loggers"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -19,7 +20,14 @@ const LimitRoomsPerPage = 10
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
-		app.LogServerError(w, err)
+		msg := fmt.Sprintf(
+			`PROMPT: unable to render "home.page.gohtml" template
+			URL: /`)
+
+		app.Logger.LogServerError(w, loggers.ErrorData{
+			Prefix: msg,
+			Error:  err,
+		})
 	}
 }
 
@@ -27,7 +35,7 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
 	if err != nil {
-		s.LogErrorAndRedirect(w, r, "unable to render about.page.gohtml template", err, "/")
+		s.LogRenderErrorAndRedirect(w, r, "about.page.gohtml", err, "/")
 	}
 }
 
@@ -105,7 +113,7 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		s.LogErrorAndRedirect(w, r, "unable to render rooms.page.gohtml template", err, "/rooms/list")
+		s.LogRenderErrorAndRedirect(w, r, "room.page.gohtml", err, "/rooms/list")
 	}
 }
 
@@ -204,7 +212,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
 	if err != nil {
-		s.LogErrorAndRedirect(w, r, "unable to render contact.page.gohtml template", err, "/")
+		s.LogRenderErrorAndRedirect(w, r, "contact.page.gohtml", err, "/")
 	}
 }
 
@@ -214,7 +222,7 @@ func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Requ
 		Form: forms.New(nil),
 	})
 	if err != nil {
-		s.LogErrorAndRedirect(w, r, "unable to render available-rooms-search.page.gohtml template", err, "/")
+		s.LogRenderErrorAndRedirect(w, r, "available-rooms-search.page.gohtml", err, "/")
 	}
 }
 
@@ -294,7 +302,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 			},
 		})
 		if err != nil {
-			s.LogErrorAndRedirect(w, r, "unable to render available-rooms.page.gohtml template", err, "/")
+			s.LogRenderErrorAndRedirect(w, r, "available-rooms.page.gohtml", err, "/")
 		}
 		return
 	}
@@ -342,7 +350,7 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 		Form: forms.New(nil),
 	})
 	if err != nil {
-		app.LogServerError(w, err)
+		s.LogRenderErrorAndRedirect(w, r, "make-reservation.page.gohtml", err, "/")
 	}
 }
 
@@ -436,6 +444,6 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 		},
 	})
 	if err != nil {
-		s.LogErrorAndRedirect(w, r, "unable to create reservation", err, "/")
+		s.LogRenderErrorAndRedirect(w, r, "reservation-summary.page.gohtml", err, "/")
 	}
 }
