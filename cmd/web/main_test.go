@@ -15,6 +15,10 @@ import (
 func TestMain(m *testing.M) {
 	InitializeApp(config.TestingMode)
 
+	// start listenning for errors
+	app.Logger.ListenForErrors()
+	defer close(app.Logger.ErrorChannel)
+
 	os.Exit(m.Run())
 }
 

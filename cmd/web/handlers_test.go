@@ -974,7 +974,6 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		assert.Equal(t, http.StatusSeeOther, rr.Code)
 		assert.Equal(t, "/make-reservation", rr.Header().Get("Location"))
 	})
-
 }
 
 func TestServer_MakeReservationHandler(t *testing.T) {
