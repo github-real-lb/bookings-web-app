@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db/mocks"
 	"github.com/github-real-lb/bookings-web-app/util/config"
@@ -16,10 +17,18 @@ func TestMain(m *testing.M) {
 	InitializeApp(config.TestingMode)
 
 	// start listenning for errors
-	app.Logger.ListenForErrors()
+	app.Logger.ListenAndLogErrors()
 	defer close(app.Logger.ErrorChannel)
 
-	os.Exit(m.Run())
+	// run tests
+	code := m.Run()
+
+	time.Sleep(10 * time.Second)
+
+	// shutdown error logger
+	app.Logger.Shutdown()
+
+	os.Exit(code)
 }
 
 type TestServer Server

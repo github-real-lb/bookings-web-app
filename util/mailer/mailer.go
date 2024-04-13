@@ -3,7 +3,7 @@ package mailer
 import (
 	"html/template"
 
-	"github.com/github-real-lb/bookings-web-app/util/loggers"
+	"github.com/github-real-lb/bookings-web-app/util"
 	mail "github.com/xhit/go-simple-mail/v2"
 )
 
@@ -18,21 +18,21 @@ type MailData struct {
 // MailerChannel is a channel to pass emails data
 type MailerChannel chan MailData
 
-var mc = make(MailerChannel)
+var mailerChan = make(MailerChannel)
 
 func GetMailerChannel() MailerChannel {
-	return mc
+	return mailerChan
 }
 
-func Listen(errChan loggers.ErrorChannel) {
+func Listen(errChan chan error) {
 	go func() {
 		for {
-			errChan <- sendMail(<-mc)
+			errChan <- sendMail(<-mailerChan)
 		}
 	}()
 }
 
-func sendMail(m MailData) loggers.ErrorData {
+func sendMail(m MailData) error {
 	server := mail.NewSMTPClient()
 	server.Host = "localhost"
 	server.Port = 1025
@@ -43,10 +43,9 @@ func sendMail(m MailData) loggers.ErrorData {
 
 	client, err := server.Connect()
 	if err != nil {
-		return loggers.ErrorData{
-			Prefix: "error connecting to SMTP server to send mail",
-			Error:  err,
-		}
+		return util.NewText().
+			AddLineIndent("error connecting to SMTP server to send mail", "\t").
+			AddLineIndent(err, "\t")
 	}
 
 	email := mail.NewMSG()
@@ -56,8 +55,9 @@ func sendMail(m MailData) loggers.ErrorData {
 
 	email.SetBody(mail.TextHTML, "Hello, <strong>world</strong>!")
 
-	return loggers.ErrorData{
-		Prefix: "error sending mail",
-		Error:  email.Send(client),
-	}
+	err = email.Send(client)
+
+	return util.NewText().
+		AddLineIndent("error sending mail", "\t").
+		AddLineIndent(err, "\t")
 }

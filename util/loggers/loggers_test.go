@@ -1,14 +1,11 @@
 package loggers
 
 import (
-	"errors"
-	"fmt"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,24 +13,28 @@ import (
 func TestNewAppLogger(t *testing.T) {
 	al := NewAppLogger()
 	require.NotNil(t, al)
+	assert.NotNil(t, al.ErrorChannel)
 	assert.NotNil(t, al.ErrorLog)
 	assert.NotNil(t, al.InfoLog)
 }
 
-func TestAppLogger_LogServerError(t *testing.T) {
+func TestAppLogger_ListenAndLogErrorsAndShutdown(t *testing.T) {
 	// bypass Stdout for test
 	originalStdout, r, w := bypassStdout()
 
-	// run the test
+	// start ListenAndLogErrors
 	appLogger := NewAppLogger()
-	recorder := httptest.NewRecorder()
+	appLogger.ListenAndLogErrors()
 
-	errData := ErrorData{
-		Prefix: "this is the prefix",
-		Error:  errors.New("this is the error"),
-	}
+	// send error through channel
+	text := util.NewText().
+		AddLine("this is the first error data").
+		AddLine("this is the second error data").
+		AddLine("this is the second error data")
+	appLogger.ErrorChannel <- text
 
-	appLogger.LogServerError(recorder, errData)
+	// shutdown ListenAndLogErrors
+	appLogger.Shutdown()
 
 	// restore Stdout after test
 	restoreStdout(originalStdout, w)
@@ -42,37 +43,56 @@ func TestAppLogger_LogServerError(t *testing.T) {
 	out, _ := io.ReadAll(r)
 
 	// check results
-	assert.Contains(t, string(out), errData.String())
-
-	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
-
-	bodyResult := fmt.Sprint(http.StatusText(http.StatusInternalServerError), "\n")
-	body, _ := io.ReadAll(recorder.Body)
-	assert.Equal(t, bodyResult, string(body))
+	assert.Contains(t, string(out), text.String())
 }
 
 func TestAppLogger_LogError(t *testing.T) {
-	// bypass Stdout for test
-	originalStdout, r, w := bypassStdout()
+	t.Run("LogDebugStack False", func(t *testing.T) {
+		// bypass Stdout for test
+		originalStdout, r, w := bypassStdout()
 
-	// run the test
-	appLogger := NewAppLogger()
+		// run the test
+		appLogger := NewAppLogger()
 
-	errData := ErrorData{
-		Prefix: "this is the prefix",
-		Error:  errors.New("this is the error"),
-	}
+		text := util.NewText().
+			AddLine("this is the first error data").
+			AddLine("this is the second error data").
+			AddLine("this is the second error data")
+		appLogger.LogError(text)
 
-	appLogger.LogError(errData)
+		// restore Stdout after test
+		restoreStdout(originalStdout, w)
 
-	// restore Stdout after test
-	restoreStdout(originalStdout, w)
+		// read the output of our prompt() function from our read pipe
+		out, _ := io.ReadAll(r)
 
-	// read the output of our prompt() function from our read pipe
-	out, _ := io.ReadAll(r)
+		// check results
+		assert.Contains(t, string(out), text.String())
+	})
 
-	// check results
-	assert.Contains(t, string(out), errData.String())
+	t.Run("LogDebugStack True", func(t *testing.T) {
+		// bypass Stdout for test
+		originalStdout, r, w := bypassStdout()
+
+		// run the test
+		appLogger := NewAppLogger()
+		appLogger.LogDebugStack = true
+
+		text := util.NewText().
+			AddLine("this is the first error data").
+			AddLine("this is the second error data").
+			AddLine("this is the second error data")
+		appLogger.LogError(text)
+
+		// restore Stdout after test
+		restoreStdout(originalStdout, w)
+
+		// read the output of our prompt() function from our read pipe
+		out, _ := io.ReadAll(r)
+
+		// check results
+		assert.Contains(t, string(out), text.String())
+	})
 }
 
 // bypassStdout replace original os.Stdout with a connected pair of Files (r, w)

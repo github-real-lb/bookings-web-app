@@ -21,33 +21,64 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServer_LogErrorAndRedirect(t *testing.T) {
+	// create new server, request and response recorder
 	ts, _ := NewTestServer(t)
 	req := ts.NewRequestWithSession(t, http.MethodGet, "/test_url", nil)
 	rr := httptest.NewRecorder()
 
-	s := NewServer(nil)
-	s.LogErrorAndRedirect(rr, req, "test message", errors.New("test error"), "/test_url")
+	// create an error
+	err := ServerError{
+		Prompt: "test prompt",
+		URL:    "/test_url",
+		Err:    errors.New("test error"),
+	}
+
+	// call method
+	NewServer(nil).LogErrorAndRedirect(rr, req, err, "/url")
 
 	// check Status Code and redirect url
 	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-	assert.Equal(t, "/test_url", rr.Header().Get("Location"))
+	assert.Equal(t, "/url", rr.Header().Get("Location"))
 
 	// check session error message
 	errMsg := app.Session.Pop(req.Context(), "error")
-	assert.Equal(t, "test message", errMsg)
+	assert.Equal(t, "test prompt", errMsg)
+}
+
+func TestServer_LogInternalServerError(t *testing.T) {
+	// create new response recorder
+	rr := httptest.NewRecorder()
+
+	// create an error
+	err := ServerError{
+		Prompt: "test prompt",
+		URL:    "/test_url",
+		Err:    errors.New("test error"),
+	}
+
+	// call method
+	NewServer(nil).LogInternalServerError(rr, err)
+
+	expected := fmt.Sprint(http.StatusText(http.StatusInternalServerError), "\n")
+
+	// check Status Code and redirect url
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, expected, rr.Body.String())
+
 }
 
 func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
+	// create new server, request and response recorder
 	ts, _ := NewTestServer(t)
 	req := ts.NewRequestWithSession(t, http.MethodGet, "/test_url", nil)
 	rr := httptest.NewRecorder()
 
-	s := NewServer(nil)
-	s.LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", errors.New("test error"), "/test_url")
+	// call method
+	NewServer(nil).LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", errors.New("test error"), "/url")
 
 	// check Status Code and redirect url
 	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-	assert.Equal(t, "/test_url", rr.Header().Get("Location"))
+	assert.Equal(t, "/url", rr.Header().Get("Location"))
 
 	// check session error message
 	errMsg := app.Session.Pop(req.Context(), "error")
@@ -56,8 +87,6 @@ func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
 
 func TestServer_ResponseJSON(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		s := NewServer(nil)
-
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr := httptest.NewRecorder()
 
@@ -69,8 +98,8 @@ func TestServer_ResponseJSON(t *testing.T) {
 			FieldB: util.RandomString(10),
 		}
 
-		err := s.ResponseJSON(rr, req, obj)
-		require.NoError(t, err)
+		err := NewServer(nil).ResponseJSON(rr, req, obj)
+		require.Nil(t, err)
 
 		jr := fmt.Sprintf(`{"field_a":"%s","field_b":"%s"}`, obj.FieldA, obj.FieldB)
 

@@ -5,8 +5,6 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/github-real-lb/bookings-web-app/util/config"
 )
 
 var r *rand.Rand
@@ -58,7 +56,7 @@ func RandomString(n int) string {
 // RandomDate generates a random date for the past year with no time information.
 func RandomDate() time.Time {
 	randomTime := RandomDatetime()
-	randomTime, _ = time.Parse(config.DateLayout, randomTime.Format(config.DateLayout))
+	randomTime, _ = time.Parse("2006-01-02", randomTime.Format("2006-01-02"))
 	return randomTime
 }
 
