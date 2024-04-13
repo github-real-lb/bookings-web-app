@@ -34,7 +34,7 @@ func TestServer_LogErrorAndRedirect(t *testing.T) {
 	}
 
 	// call method
-	NewServer(nil).LogErrorAndRedirect(rr, req, err, "/url")
+	ts.LogErrorAndRedirect(rr, req, err, "/url")
 
 	// check Status Code and redirect url
 	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -46,7 +46,8 @@ func TestServer_LogErrorAndRedirect(t *testing.T) {
 }
 
 func TestServer_LogInternalServerError(t *testing.T) {
-	// create new response recorder
+	// create new server and response recorder
+	ts, _ := NewTestServer(t)
 	rr := httptest.NewRecorder()
 
 	// create an error
@@ -57,7 +58,7 @@ func TestServer_LogInternalServerError(t *testing.T) {
 	}
 
 	// call method
-	NewServer(nil).LogInternalServerError(rr, err)
+	ts.LogInternalServerError(rr, err)
 
 	expected := fmt.Sprint(http.StatusText(http.StatusInternalServerError), "\n")
 
@@ -74,7 +75,7 @@ func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	// call method
-	NewServer(nil).LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", errors.New("test error"), "/url")
+	ts.LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", errors.New("test error"), "/url")
 
 	// check Status Code and redirect url
 	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -87,6 +88,8 @@ func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
 
 func TestServer_ResponseJSON(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
+		// create new server, request and response recorder
+		ts, _ := NewTestServer(t)
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr := httptest.NewRecorder()
 
@@ -98,7 +101,7 @@ func TestServer_ResponseJSON(t *testing.T) {
 			FieldB: util.RandomString(10),
 		}
 
-		err := NewServer(nil).ResponseJSON(rr, req, obj)
+		err := ts.ResponseJSON(rr, req, obj)
 		require.Nil(t, err)
 
 		jr := fmt.Sprintf(`{"field_a":"%s","field_b":"%s"}`, obj.FieldA, obj.FieldB)

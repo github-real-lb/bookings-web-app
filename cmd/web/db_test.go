@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
-	"github.com/github-real-lb/bookings-web-app/db/mocks"
 	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
@@ -101,8 +100,7 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			// create a new server with mock database store
-			mockStore := mocks.NewMockStore(t)
-			server := NewServer(mockStore)
+			server, mockStore := NewTestServer(t)
 
 			// build stub
 			mockStore.On("CheckRoomAvailability", mock.Anything, arg).
@@ -135,8 +133,7 @@ func TestServer_CreateReservation(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("CreateReservationTx", mock.Anything, arg).
@@ -164,8 +161,7 @@ func TestServer_CreateReservation(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("CreateReservationTx", mock.Anything, arg).
@@ -227,8 +223,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListAvailableRooms", mock.Anything, arg).
@@ -273,8 +268,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListAvailableRooms", mock.Anything, arg).
@@ -308,8 +302,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListAvailableRooms", mock.Anything, arg).
@@ -357,8 +350,7 @@ func TestServer_ListRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListRooms", mock.Anything, arg).
@@ -392,8 +384,7 @@ func TestServer_ListRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListRooms", mock.Anything, arg).
@@ -416,8 +407,7 @@ func TestServer_ListRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		mockStore := mocks.NewMockStore(t)
-		server := NewServer(mockStore)
+		server, mockStore := NewTestServer(t)
 
 		// build stub
 		mockStore.On("ListRooms", mock.Anything, arg).

@@ -1,7 +1,6 @@
 package loggers
 
 import (
-	"errors"
 	"log"
 	"os"
 	"runtime/debug"
@@ -20,7 +19,6 @@ type AppLogger struct {
 // NewAppLogger returns and initialized AppLogger
 func NewAppLogger() AppLogger {
 	return AppLogger{
-		ErrorChannel:  make(chan error),
 		ErrorLog:      log.New(os.Stdout, "ERROR\t", log.Ldate|log.LstdFlags),
 		InfoLog:       log.New(os.Stdout, "INFO\t", log.Ldate|log.LstdFlags),
 		LogDebugStack: false,
@@ -28,19 +26,21 @@ func NewAppLogger() AppLogger {
 }
 
 // ListenAndLogErrors runs a go routine that listens to error channel and logs the errors data
-func (al *AppLogger) ListenAndLogErrors() {
-	if al.ErrorChannel == nil {
-		return
-	}
+// Make sure to use done channel to stop go routine and close channel
+func (al *AppLogger) ListenAndLogErrors(done chan struct{}) {
+	// create error channel
+	al.ErrorChannel = make(chan error)
 
+	// start go routine
 	go func() {
 		for {
-			err := <-al.ErrorChannel
-			if err.Error() == "$$$SHUTDOWN$$$" {
+			select {
+			case err := <-al.ErrorChannel:
+				al.LogError(err)
+			case <-done:
+				close(al.ErrorChannel)
 				return
 			}
-
-			al.LogError(err)
 		}
 	}()
 }
@@ -56,10 +56,10 @@ func (al *AppLogger) LogError(err error) {
 }
 
 // StopListen stop the go routine that listens for errors
-func (al *AppLogger) Shutdown() {
-	if al.ErrorChannel == nil {
+func (al *AppLogger) Shutdown(done chan struct{}) {
+	if done == nil {
 		return
 	}
 
-	al.ErrorChannel <- errors.New("$$$SHUTDOWN$$$")
+	done <- struct{}{}
 }

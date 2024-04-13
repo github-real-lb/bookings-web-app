@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db/mocks"
 	"github.com/github-real-lb/bookings-web-app/util/config"
@@ -17,31 +16,28 @@ func TestMain(m *testing.M) {
 	InitializeApp(config.TestingMode)
 
 	// start listenning for errors
-	app.Logger.ListenAndLogErrors()
-	defer close(app.Logger.ErrorChannel)
+	done := make(chan struct{})
+	app.Logger.ListenAndLogErrors(done)
+	defer func() {
+		app.Logger.Shutdown(done)
+		close(done)
+	}()
 
 	// run tests
 	code := m.Run()
 
-	time.Sleep(10 * time.Second)
-
-	// shutdown error logger
-	app.Logger.Shutdown()
-
 	os.Exit(code)
 }
 
-type TestServer Server
+type TestServer struct {
+	*Server
+}
 
 // NewTestServer creates and returns a test server connected to a mock database store
 func NewTestServer(t *testing.T) (*TestServer, *mocks.MockStore) {
 	mockStore := mocks.NewMockStore(t)
 	server := NewServer(mockStore)
-
-	return &TestServer{
-		Router:        server.Router,
-		DatabaseStore: server.DatabaseStore,
-	}, mockStore
+	return &TestServer{Server: server}, mockStore
 }
 
 // NewTestRequest creates a new get request for use in testing

@@ -26,8 +26,12 @@ func main() {
 	defer dbStore.(*db.PostgresDBStore).DBConnPool.Close()
 
 	// start listenning for errors
-	app.Logger.ListenAndLogErrors()
-	defer close(app.Logger.ErrorChannel)
+	done := make(chan struct{})
+	app.Logger.ListenAndLogErrors(done)
+	defer func() {
+		app.Logger.Shutdown(done)
+		close(done)
+	}()
 
 	// create email channel and start listening for data
 	app.MailerChan = mailer.GetMailerChannel()
@@ -42,11 +46,11 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)    // Ctrl+C
 	signal.Notify(stop, syscall.SIGTERM) // SIGTERM
+	defer close(stop)
 
 	// block until a stop signal is received
 	<-stop
 
-	// stop logger and server
-	app.Logger.Shutdown()
+	// stop server
 	server.Stop()
 }

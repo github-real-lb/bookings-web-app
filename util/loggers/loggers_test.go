@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ import (
 func TestNewAppLogger(t *testing.T) {
 	al := NewAppLogger()
 	require.NotNil(t, al)
-	assert.NotNil(t, al.ErrorChannel)
+	assert.Nil(t, al.ErrorChannel)
 	assert.NotNil(t, al.ErrorLog)
 	assert.NotNil(t, al.InfoLog)
 }
@@ -22,9 +23,16 @@ func TestAppLogger_ListenAndLogErrorsAndShutdown(t *testing.T) {
 	// bypass Stdout for test
 	originalStdout, r, w := bypassStdout()
 
-	// start ListenAndLogErrors
+	// create new AppLogger
 	appLogger := NewAppLogger()
-	appLogger.ListenAndLogErrors()
+
+	// start listenning for errors
+	done := make(chan struct{})
+	appLogger.ListenAndLogErrors(done)
+	defer func() {
+		appLogger.Shutdown(done)
+		close(done)
+	}()
 
 	// send error through channel
 	text := util.NewText().
@@ -33,8 +41,8 @@ func TestAppLogger_ListenAndLogErrorsAndShutdown(t *testing.T) {
 		AddLine("this is the second error data")
 	appLogger.ErrorChannel <- text
 
-	// shutdown ListenAndLogErrors
-	appLogger.Shutdown()
+	// wait for appLogger to log error
+	time.Sleep(1 * time.Second)
 
 	// restore Stdout after test
 	restoreStdout(originalStdout, w)
@@ -59,6 +67,9 @@ func TestAppLogger_LogError(t *testing.T) {
 			AddLine("this is the second error data").
 			AddLine("this is the second error data")
 		appLogger.LogError(text)
+
+		// wait for appLogger to log error
+		time.Sleep(1 * time.Second)
 
 		// restore Stdout after test
 		restoreStdout(originalStdout, w)
