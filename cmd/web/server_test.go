@@ -65,7 +65,6 @@ func TestServer_LogInternalServerError(t *testing.T) {
 	// check Status Code and redirect url
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	assert.Equal(t, expected, rr.Body.String())
-
 }
 
 func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
@@ -108,4 +107,15 @@ func TestServer_ResponseJSON(t *testing.T) {
 
 		require.Equal(t, jr, rr.Body.String())
 	})
+}
+
+func TestServerError_Error(t *testing.T) {
+	// create an error
+	err := ServerError{
+		Prompt: "test prompt",
+		URL:    "/test_url",
+		Err:    errors.New("test error"),
+	}
+
+	assert.Equal(t, "\ttest error\n\tPROMPT: test prompt\n\tURL: /test_url\n", err.Error())
 }

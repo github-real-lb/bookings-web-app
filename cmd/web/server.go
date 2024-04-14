@@ -69,22 +69,20 @@ func NewServer(store db.DatabaseStore) *Server {
 }
 
 // LogError logs err
-func (s *Server) LogError(err ServerError) {
+func (s *Server) LogError(err error) {
 	app.Logger.ErrorChannel <- err
 }
 
 // LogErrorAndRedirect logs err, puts err's prompt in session, and redirects to url
 func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, err ServerError, url string) {
 	app.Session.Put(r.Context(), "error", err.Prompt)
-
-	app.Logger.ErrorChannel <- err
-
+	s.LogError(err)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // LogInternalServerError logs err, and sends StatusInternalServerError response
-func (s *Server) LogInternalServerError(w http.ResponseWriter, err ServerError) {
-	app.Logger.ErrorChannel <- err
+func (s *Server) LogInternalServerError(w http.ResponseWriter, err error) {
+	s.LogError(err)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
@@ -97,26 +95,28 @@ func (s *Server) LogRenderErrorAndRedirect(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Session.Put(r.Context(), "error", e.Prompt)
-
-	app.Logger.ErrorChannel <- e
-
+	s.LogError(err)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // ResponseJSON write v to w as json response.
 // Errors are loggied by the server and also returned
-func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) *ServerError {
+func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	// set Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// marshal v to json
 	bs, err := json.Marshal(v)
 	if err != nil {
 		e := ServerError{
 			Prompt: "unable to marshal json response",
 			Err:    err,
 		}
-
-		app.Logger.ErrorChannel <- e
-		return &e
+		s.LogError(e)
+		return e
 	}
 
+	// write json data to the response body
 	_, err = w.Write(bs)
 	if err != nil {
 		e := ServerError{
@@ -124,8 +124,8 @@ func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) *Se
 			Err:    err,
 		}
 
-		app.Logger.ErrorChannel <- e
-		return &e
+		s.LogError(e)
+		return e
 	}
 
 	return nil
@@ -135,6 +135,7 @@ func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) *Se
 func (s *Server) Start() {
 	fmt.Printf("Starting http server on %s... \n", app.ServerAddress)
 	err := s.Router.ListenAndServe()
+
 	if err != nil && err.Error() != "http: Server closed" {
 		app.Logger.LogError(ServerError{
 			Prompt: "error starting http server",
@@ -149,9 +150,15 @@ func (s *Server) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// inform the server to stop accepting new requests
 	fmt.Print("Shutting down http server... ")
 	err := s.Router.Shutdown(ctx)
+
+	// wait for existing connections to finish processing before returning from this function
+	<-ctx.Done()
+
 	if err != nil {
+		fmt.Println("Error")
 		app.Logger.LogError(ServerError{
 			Prompt: "error shuting down http server",
 			Err:    err,

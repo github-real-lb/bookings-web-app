@@ -86,7 +86,7 @@ func LoadAppConfig(filename string, mode AppMode) (*AppConfig, error) {
 	app.StaticDirectoryName = strings.TrimSuffix(app.StaticDirectoryName, "/")
 
 	// initializing loggers
-	app.Logger = loggers.NewAppLogger()
+	app.Logger = loggers.NewAppLogger(os.Stdout)
 
 	// setting application mode
 	switch mode {

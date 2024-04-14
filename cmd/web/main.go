@@ -26,11 +26,9 @@ func main() {
 	defer dbStore.(*db.PostgresDBStore).DBConnPool.Close()
 
 	// start listenning for errors
-	done := make(chan struct{})
-	app.Logger.ListenAndLogErrors(done)
+	app.Logger.ListenAndLogErrors()
 	defer func() {
-		app.Logger.Shutdown(done)
-		close(done)
+		app.Logger.Shutdown()
 	}()
 
 	// create email channel and start listening for data

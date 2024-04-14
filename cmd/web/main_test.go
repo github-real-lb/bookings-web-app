@@ -16,11 +16,9 @@ func TestMain(m *testing.M) {
 	InitializeApp(config.TestingMode)
 
 	// start listenning for errors
-	done := make(chan struct{})
-	app.Logger.ListenAndLogErrors(done)
+	app.Logger.ListenAndLogErrors()
 	defer func() {
-		app.Logger.Shutdown(done)
-		close(done)
+		app.Logger.Shutdown()
 	}()
 
 	// run tests
