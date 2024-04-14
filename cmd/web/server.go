@@ -9,6 +9,8 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/loggers"
+	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -17,6 +19,8 @@ import (
 type Server struct {
 	Router        *http.Server
 	DatabaseStore db.DatabaseStore
+	ErrorLogger   *loggers.SmartLogger
+	Mailer        *mailers.SmartMailer
 }
 
 // NewServer returns a new Server with Router and Database Store
@@ -29,6 +33,8 @@ func NewServer(store db.DatabaseStore) *Server {
 			Handler: mux,
 		},
 		DatabaseStore: store,
+		ErrorLogger:   loggers.NewSmartLogger(nil, "ERROR\t"),
+		Mailer:        mailers.NewSmartMailer(),
 	}
 
 	// add middleware that recover from panics
@@ -68,9 +74,67 @@ func NewServer(store db.DatabaseStore) *Server {
 	return &server
 }
 
+// Start calls the http.Server ListenAndServer method
+func (s *Server) Start() {
+	fmt.Printf("Starting http server on %s ... \n", app.ServerAddress)
+
+	// start listening to errors
+	go s.ErrorLogger.ListenAndLog(100)
+
+	// start listening to mail data
+	go s.Mailer.ListenAndMail(s.ErrorLogger.LogChannel, 100)
+
+	// start listening to http requests
+	err := s.Router.ListenAndServe()
+
+	if err != nil && err.Error() != "http: Server closed" {
+		s.ErrorLogger.Log(ServerError{
+			Prompt: "error starting http server",
+			Err:    err,
+		})
+	}
+}
+
+// Stop calls the http.Server Shutdown method
+func (s *Server) Stop() {
+	// create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Print("Shutting down http server... ")
+
+	// inform the server to stop accepting new errors
+	s.ErrorLogger.Shutdown()
+
+	// inform the server to stop accepting new mail data
+	s.Mailer.Shutdown()
+
+	// inform the server to stop accepting new requests
+	err := s.Router.Shutdown(ctx)
+
+	// wait for existing connections to finish processing before returning from this function
+	<-ctx.Done()
+
+	if err != nil {
+		fmt.Println("Error")
+
+		s.ErrorLogger.Log(ServerError{
+			Prompt: "error shuting down http server",
+			Err:    err,
+		})
+	} else {
+		fmt.Println("Success")
+	}
+}
+
 // LogError logs err
 func (s *Server) LogError(err error) {
-	app.Logger.ErrorChannel <- err
+	if s.ErrorLogger.LogChannel == nil {
+		s.ErrorLogger.Log(err)
+		return
+	}
+
+	s.ErrorLogger.LogChannel <- err
 }
 
 // LogErrorAndRedirect logs err, puts err's prompt in session, and redirects to url
@@ -131,43 +195,6 @@ func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) err
 	return nil
 }
 
-// Start calls the http.Server ListenAndServer method
-func (s *Server) Start() {
-	fmt.Printf("Starting http server on %s... \n", app.ServerAddress)
-	err := s.Router.ListenAndServe()
-
-	if err != nil && err.Error() != "http: Server closed" {
-		app.Logger.LogError(ServerError{
-			Prompt: "error starting http server",
-			Err:    err,
-		})
-	}
-}
-
-// Stop calls the http.Server Shutdown method
-func (s *Server) Stop() {
-	// create a context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// inform the server to stop accepting new requests
-	fmt.Print("Shutting down http server... ")
-	err := s.Router.Shutdown(ctx)
-
-	// wait for existing connections to finish processing before returning from this function
-	<-ctx.Done()
-
-	if err != nil {
-		fmt.Println("Error")
-		app.Logger.LogError(ServerError{
-			Prompt: "error shuting down http server",
-			Err:    err,
-		})
-	} else {
-		fmt.Println("Success")
-	}
-}
-
 type ServerError struct {
 	Prompt string
 	URL    string
@@ -189,4 +216,16 @@ func (e ServerError) Error() string {
 	}
 
 	return text.String()
+}
+
+func (s *Server) Mail(data mailers.MailData) {
+	var err error
+	if s.Mailer.MailChannel == nil {
+		err = s.Mailer.SendMail(data)
+		if err != nil {
+			s.LogError(err)
+		}
+	}
+
+	s.Mailer.MailChannel <- data
 }

@@ -15,12 +15,6 @@ import (
 func TestMain(m *testing.M) {
 	InitializeApp(config.TestingMode)
 
-	// start listenning for errors
-	app.Logger.ListenAndLogErrors()
-	defer func() {
-		app.Logger.Shutdown()
-	}()
-
 	// run tests
 	code := m.Run()
 

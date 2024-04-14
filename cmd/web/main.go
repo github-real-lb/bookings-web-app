@@ -8,7 +8,6 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/config"
-	"github.com/github-real-lb/bookings-web-app/util/mailer"
 )
 
 func main() {
@@ -25,18 +24,7 @@ func main() {
 	}
 	defer dbStore.(*db.PostgresDBStore).DBConnPool.Close()
 
-	// start listenning for errors
-	app.Logger.ListenAndLogErrors()
-	defer func() {
-		app.Logger.Shutdown()
-	}()
-
-	// create email channel and start listening for data
-	app.MailerChan = mailer.GetMailerChannel()
-	defer close(app.MailerChan)
-	mailer.Listen(app.Logger.ErrorChannel)
-
-	// create a new server and starting it in a separate goroutine
+	// create a new server and start it in a separate goroutine
 	server := NewServer(dbStore)
 	go server.Start()
 

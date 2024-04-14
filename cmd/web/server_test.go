@@ -18,7 +18,11 @@ func TestNewServer(t *testing.T) {
 
 	server := NewServer(store)
 	require.IsType(t, (*Server)(nil), server)
+
+	//TODO: check loggers
 }
+
+//TODO: check server start and stop
 
 func TestServer_LogErrorAndRedirect(t *testing.T) {
 	// create new server, request and response recorder

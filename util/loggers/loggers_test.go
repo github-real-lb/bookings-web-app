@@ -1,6 +1,7 @@
 package loggers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -10,138 +11,145 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNewAppLogger(t *testing.T) {
-	al := NewAppLogger(os.Stdout)
-	assert.Nil(t, al.ErrorChannel)
-	assert.Nil(t, al.done)
-	assert.NotNil(t, al.ErrorLog)
-	assert.NotNil(t, al.InfoLog)
+func TestNewLogger(t *testing.T) {
+	t.Run("Test With os.Pipe", func(t *testing.T) {
+		var buf bytes.Buffer
+		sl := NewSmartLogger(&buf, "TEST")
 
-	al2 := NewAppLogger(nil)
-	assert.Nil(t, al2.ErrorChannel)
-	assert.Nil(t, al2.done)
-	assert.NotNil(t, al2.ErrorLog)
-	assert.NotNil(t, al2.InfoLog)
-}
+		// testify
+		assert.Nil(t, sl.LogChannel)
+		assert.Nil(t, sl.done)
+		require.NotNil(t, sl.Logger)
 
-func TestAppLogger_ListenAndLogErrorsAndShutdown(t *testing.T) {
-	// create a read and write pipes
-	r, w, _ := os.Pipe()
+		// log a message
+		sl.Logger.Print("this is a test message")
 
-	// create new AppLogger
-	appLogger := NewAppLogger(w)
+		// testify
+		assert.Contains(t, buf.String(), "TEST")
+		assert.Contains(t, buf.String(), "this is a test message")
+	})
 
-	// start listenning for errors
-	appLogger.ListenAndLogErrors()
-	defer func() {
-		appLogger.Shutdown()
-	}()
-
-	// create an error
-	text := util.NewText().
-		AddLine("this is the first error data").
-		AddLine("this is the second error data").
-		AddLine("this is the second error data")
-
-	// send error through channel
-	appLogger.ErrorChannel <- text
-
-	// wait for appLogger to log error
-	time.Sleep(1 * time.Second)
-
-	// close writer pipe
-	w.Close()
-
-	// read the output of our prompt() function from our read pipe
-	out, _ := io.ReadAll(r)
-
-	// check results
-	assert.Contains(t, string(out), text.String())
-}
-
-func TestAppLogger_ListenAndLogErrorsAndShutdown_Buffer(t *testing.T) {
-	//create a read and write pipes
-	r, w, _ := os.Pipe()
-
-	// create new AppLogger
-	appLogger := NewAppLogger(w)
-
-	// start listenning for errors
-	appLogger.ListenAndLogErrors()
-
-	// send N errors through channel
-	for i := 0; i < 100; i++ {
-		appLogger.ErrorChannel <- errors.New(fmt.Sprint(i))
-	}
-
-	// shutdown error listenning
-	appLogger.Shutdown()
-
-	// wait to log all errors in buffer
-	time.Sleep(3 * time.Second)
-
-	// close writer pipe
-	w.Close()
-
-	// read the output of our prompt() function from our read pipe
-	out, _ := io.ReadAll(r)
-
-	// testify
-	result := string(out)
-	assert.Len(t, result, 2890)
-
-	result = result[2861:]
-	assert.Equal(t, "ERROR", result[:5])
-	assert.Equal(t, "99\n", result[26:])
-}
-
-func TestAppLogger_LogError(t *testing.T) {
-	t.Run("LogDebugStack False", func(t *testing.T) {
-		// create a read and write pipes
+	t.Run("Test With os.Stdout", func(t *testing.T) {
+		//create a read and write pipes
 		r, w, _ := os.Pipe()
 
-		// run the test
-		appLogger := NewAppLogger(w)
+		//replace Stdout with writer pipe
+		originalStdout := os.Stdout
+		os.Stdout = w
+
+		// create new smart logger with default output (Stdout) and INFO prefix
+		sl := NewSmartLogger(nil, "TEST")
+
+		// testify
+		assert.Nil(t, sl.LogChannel)
+		assert.Nil(t, sl.done)
+		require.NotNil(t, sl.Logger)
+
+		// log a message
+		sl.Logger.Print("this is a test message")
+
+		// close writer pipe and restore Stdout
+		w.Close()
+		os.Stdout = originalStdout
+
+		// read the output of our prompt() function from our read pipe
+		out, _ := io.ReadAll(r)
+		result := string(out)
+
+		// testify
+		assert.Contains(t, result, "TEST")
+		assert.Contains(t, result, "this is a test message")
+	})
+}
+
+func TestAppLogger_Log(t *testing.T) {
+	t.Run("LogDebugStack False", func(t *testing.T) {
+		var buf bytes.Buffer
+		sl := NewSmartLogger(&buf, "TEST")
 
 		text := util.NewText().
 			AddLine("this is the first error data").
 			AddLine("this is the second error data").
 			AddLine("this is the second error data")
-		appLogger.LogError(text)
-
-		// close writer pipe
-		w.Close()
-
-		// read the output of our prompt() function from our read pipe
-		out, _ := io.ReadAll(r)
+		sl.Log(text)
 
 		// check results
-		assert.Contains(t, string(out), text.String())
+		assert.Contains(t, buf.String(), text.String())
 	})
 
 	t.Run("LogDebugStack True", func(t *testing.T) {
-		// create a read and write pipes
-		r, w, _ := os.Pipe()
+		var buf bytes.Buffer
+		sl := NewSmartLogger(&buf, "TEST")
 
-		// run the test
-		appLogger := NewAppLogger(w)
-		appLogger.LogDebugStack = true
+		sl.LogDebugStack = true
 
 		text := util.NewText().
 			AddLine("this is the first error data").
 			AddLine("this is the second error data").
 			AddLine("this is the second error data")
-		appLogger.LogError(text)
-
-		// close writer pipe
-		w.Close()
-
-		// read the output of our prompt() function from our read pipe
-		out, _ := io.ReadAll(r)
+		sl.Log(text)
 
 		// check results
-		assert.Contains(t, string(out), text.String())
+		assert.Contains(t, buf.String(), text.String())
 	})
+}
+
+func TestAppLogger_ListenAndLogAndShutdown(t *testing.T) {
+	var buf bytes.Buffer
+	sl := NewSmartLogger(&buf, "TEST")
+
+	// Start ListenAndLog in a goroutine with a buffer size of 100
+	go sl.ListenAndLog(100)
+
+	// wait to ensure ListenAndLog has started
+	time.Sleep(100 * time.Millisecond)
+
+	// Send a message to the logger
+	sl.LogChannel <- "Test message"
+
+	// Allow some time for the message to be processed
+	time.Sleep(1 * time.Second)
+
+	// Shutdown the logger
+	sl.Shutdown()
+
+	// Ensure all messages are processed before channel is closed
+	assert.Contains(t, buf.String(), "Test message")
+
+	// Make sure the channel is closed
+	_, ok := <-sl.LogChannel
+	assert.Falsef(t, ok, "LogChannel should be closed after Shutdown")
+}
+
+func TestAppLogger_ListenAndLogAndShutdown_Buffer(t *testing.T) {
+	var buf bytes.Buffer
+	sl := NewSmartLogger(&buf, "TEST")
+
+	// start listening for errors on a separate go routine
+	go sl.ListenAndLog(100)
+
+	// wait to ensure ListenAndLog has started
+	time.Sleep(100 * time.Millisecond)
+
+	// send N errors through channel
+	for i := 0; i < 100; i++ {
+		sl.LogChannel <- errors.New(fmt.Sprint(i))
+	}
+
+	// wait for smart logger to log all errors in buffer
+	time.Sleep(3 * time.Second)
+
+	// shutdown listening
+	sl.Shutdown()
+
+	// testify
+	result := buf.String()
+	require.Len(t, result, 2690)
+
+	result = result[2663:]
+	assert.Equal(t, "TEST", result[:4])
+	assert.Equal(t, "99\n", result[24:])
 }

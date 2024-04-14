@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/github-real-lb/bookings-web-app/util/loggers"
-	"github.com/github-real-lb/bookings-web-app/util/mailer"
 )
 
 // AppMode defines the application modes: Production = 0, Development = 1, Testing = 2
@@ -30,10 +28,10 @@ const DateLayout = "2006-01-02"
 type AppConfig struct {
 	Mode AppMode
 
-	Logger loggers.AppLogger
+	//Logger loggers.AppLogger
 
 	// MailChan is a channel used to send emails
-	MailerChan mailer.MailerChannel
+	//MailerChan mailer.MailerChannel
 
 	// Session is the session manager
 	Session *scs.SessionManager
@@ -86,7 +84,7 @@ func LoadAppConfig(filename string, mode AppMode) (*AppConfig, error) {
 	app.StaticDirectoryName = strings.TrimSuffix(app.StaticDirectoryName, "/")
 
 	// initializing loggers
-	app.Logger = loggers.NewAppLogger(os.Stdout)
+	//app.Logger = loggers.NewAppLogger(os.Stdout)
 
 	// setting application mode
 	switch mode {
