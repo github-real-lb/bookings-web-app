@@ -15,6 +15,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+const (
+	LoggerBufferSize = 100
+	MailerBufferSize = 100
+)
+
 // Server handles all routing and provides all database functions
 type Server struct {
 	Router        *http.Server
@@ -79,10 +84,10 @@ func (s *Server) Start() {
 	fmt.Printf("Starting http server on %s ... \n", app.ServerAddress)
 
 	// start listening to errors
-	go s.ErrorLogger.ListenAndLog(100)
+	go s.ErrorLogger.ListenAndLog(LoggerBufferSize)
 
 	// start listening to mail data
-	go s.Mailer.ListenAndMail(s.ErrorLogger.MyLogChannel(), 100)
+	go s.Mailer.ListenAndMail(s.ErrorLogger.MyLogChannel(), MailerBufferSize)
 
 	// start listening to http requests
 	err := s.Router.ListenAndServe()
@@ -127,16 +132,18 @@ func (s *Server) Stop() {
 	}
 }
 
-// LogError logs err
+// LogError logs err using the ErrorLogger
 func (s *Server) LogError(err error) {
+	var errChan = s.ErrorLogger.MyLogChannel()
+
 	// if log channel is nil logging directly with logger
-	if s.ErrorLogger.MyLogChannel() == nil {
+	if errChan == nil {
 		s.ErrorLogger.Log(err)
 		return
 	}
 
 	// logging through channel
-	s.ErrorLogger.MyLogChannel() <- err
+	errChan <- err
 }
 
 // LogErrorAndRedirect logs err, puts err's prompt in session, and redirects to url
@@ -220,14 +227,19 @@ func (e ServerError) Error() string {
 	return text.String()
 }
 
-func (s *Server) Mail(data mailers.MailData) {
+// SendMail sends email using the Mailer
+func (s *Server) SendMail(data mailers.MailData) {
 	var err error
-	if s.Mailer.MyMailChannel() == nil {
+	var mailChan = s.Mailer.MyMailChannel()
+
+	// if mail channel is nil sending email directly with Mailer
+	if mailChan == nil {
 		err = s.Mailer.SendMail(data)
 		if err != nil {
 			s.LogError(err)
 		}
+		return
 	}
-
-	s.Mailer.MyMailChannel() <- data
+	// sending email through the channel
+	mailChan <- data
 }
