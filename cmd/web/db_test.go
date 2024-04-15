@@ -84,7 +84,7 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 	// create random reservation with room data
 	reservation := randomReservation()
 
-	// create mockStore mehod arguments
+	// create ts.MockDBStore mehod arguments
 	arg := db.CheckRoomAvailabilityParams{
 		RoomID: reservation.Room.ID,
 		EndDate: pgtype.Date{
@@ -100,15 +100,15 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			// create a new server with mock database store
-			server, mockStore := NewTestServer(t)
+			ts := NewTestServer(t)
 
 			// build stub
-			mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+			ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
 				Return(test.Available, test.Error).
 				Once()
 
 			// execute method
-			ok, err := server.CheckRoomAvailability(reservation)
+			ok, err := ts.CheckRoomAvailability(reservation)
 
 			// testify
 			assert.Equal(t, test.Available, ok)
@@ -133,10 +133,10 @@ func TestServer_CreateReservation(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, arg).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
 			Return(dbReservation, nil).
 			Once()
 
@@ -144,7 +144,7 @@ func TestServer_CreateReservation(t *testing.T) {
 		copyReservation := reservation
 
 		// execute method
-		err = server.CreateReservation(&copyReservation)
+		err = ts.CreateReservation(&copyReservation)
 
 		// tesify
 		assert.NoError(t, err)
@@ -161,10 +161,10 @@ func TestServer_CreateReservation(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, arg).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
 			Return(db.Reservation{}, errors.New("any error")).
 			Once()
 
@@ -172,7 +172,7 @@ func TestServer_CreateReservation(t *testing.T) {
 		copyReservation := reservation
 
 		// execute method
-		err = server.CreateReservation(&copyReservation)
+		err = ts.CreateReservation(&copyReservation)
 
 		// tesify
 		assert.Error(t, err)
@@ -189,7 +189,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		const N = 5
 		rooms := randomRooms(N)
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListAvailableRoomsParams{
 			Limit:  N,
 			Offset: 0,
@@ -203,7 +203,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 			},
 		}
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		dbRooms := make([]db.Room, N)
 		for i, v := range rooms {
 			dbRooms[i] = db.Room{
@@ -223,15 +223,15 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return(dbRooms, nil).
 			Once()
 
 		// execute method
-		resultRooms, err := server.ListAvailableRooms(reservation, N, 0)
+		resultRooms, err := ts.ListAvailableRooms(reservation, N, 0)
 
 		// tesify
 		assert.NoError(t, err)
@@ -253,7 +253,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		// create random reservation with room data
 		reservation := randomReservation()
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListAvailableRoomsParams{
 			Limit:  5,
 			Offset: 0,
@@ -268,15 +268,15 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return([]db.Room{}, nil).
 			Once()
 
 		// execute method
-		resultRooms, err := server.ListAvailableRooms(reservation, 5, 0)
+		resultRooms, err := ts.ListAvailableRooms(reservation, 5, 0)
 
 		// tesify
 		assert.NoError(t, err)
@@ -287,7 +287,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		// create random reservation with room data
 		reservation := randomReservation()
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListAvailableRoomsParams{
 			Limit:  5,
 			Offset: 0,
@@ -302,15 +302,15 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return(nil, errors.New("any error")).
 			Once()
 
 		// execute method
-		rooms, err := server.ListAvailableRooms(reservation, 5, 0)
+		rooms, err := ts.ListAvailableRooms(reservation, 5, 0)
 
 		// tesify
 		assert.Error(t, err)
@@ -324,13 +324,13 @@ func TestServer_ListRooms(t *testing.T) {
 		const N = 5
 		rooms := randomRooms(N)
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListRoomsParams{
 			Limit:  int32(N),
 			Offset: 0,
 		}
 
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		dbRooms := make([]db.Room, N)
 		for i, v := range rooms {
 			dbRooms[i] = db.Room{
@@ -350,15 +350,15 @@ func TestServer_ListRooms(t *testing.T) {
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return(dbRooms, nil).
 			Once()
 
 		// execute method
-		returnedRooms, err := server.ListRooms(N, 0)
+		returnedRooms, err := ts.ListRooms(N, 0)
 
 		// tesify
 		assert.NoError(t, err)
@@ -377,22 +377,22 @@ func TestServer_ListRooms(t *testing.T) {
 	})
 
 	t.Run("Test No Rooms", func(t *testing.T) {
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListRoomsParams{
 			Limit:  5,
 			Offset: 0,
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return([]db.Room{}, nil).
 			Once()
 
 		// execute method
-		ResultRooms, err := server.ListRooms(5, 0)
+		ResultRooms, err := ts.ListRooms(5, 0)
 
 		// tesify
 		assert.NoError(t, err)
@@ -400,22 +400,22 @@ func TestServer_ListRooms(t *testing.T) {
 	})
 
 	t.Run("Test Error", func(t *testing.T) {
-		//create mockStore method return arguments
+		//create ts.MockDBStore method return arguments
 		arg := db.ListRoomsParams{
 			Limit:  5,
 			Offset: 0,
 		}
 
 		// create a new server with mock database store
-		server, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		// build stub
-		mockStore.On("ListRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return(nil, errors.New("any error")).
 			Once()
 
 		// execute method
-		rooms, err := server.ListRooms(int(arg.Limit), 0)
+		rooms, err := ts.ListRooms(int(arg.Limit), 0)
 
 		// tesify
 		assert.Error(t, err)

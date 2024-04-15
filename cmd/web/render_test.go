@@ -11,7 +11,7 @@ import (
 
 func TestAddDefaultData(t *testing.T) {
 	// create a new test server and a new request
-	ts, _ := NewTestServer(t)
+	ts := NewTestServer(t)
 	request := ts.NewRequestWithSession(t, http.MethodGet, "/", nil)
 
 	// add data into session
@@ -29,7 +29,7 @@ func TestAddDefaultData(t *testing.T) {
 
 func TestRenderTemplate(t *testing.T) {
 	// create a new test server, and a new request and recorder
-	ts, _ := NewTestServer(t)
+	ts := NewTestServer(t)
 	request := ts.NewRequestWithSession(t, http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 

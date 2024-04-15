@@ -38,7 +38,7 @@ func TestStaticPageHandlers(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// create a new test server and request
-			ts, _ := NewTestServer(t)
+			ts := NewTestServer(t)
 			req := ts.NewRequest(test.method, test.url, nil)
 
 			//  server the request
@@ -54,7 +54,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test displaying the GET /rooms/list
 	t.Run("OK List Rooms", func(t *testing.T) {
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/list", nil)
 
 		// create mehod arguments
@@ -83,7 +83,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		}
 
 		// build stub
-		mockStore.On("ListRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return(dbRooms, nil).
 			Once()
 
@@ -101,7 +101,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test handling the GET /rooms/{room index}
 	t.Run("OK Room Chosen", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/1", nil)
 
 		// create slice of Rooms to put in session
@@ -130,7 +130,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test database error while displaying the GET /rooms/list
 	t.Run("Error In DB", func(t *testing.T) {
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/list", nil)
 
 		// create mehod arguments
@@ -140,7 +140,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		}
 
 		// build stub
-		mockStore.On("ListRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return(nil, errors.New("any error")).
 			Once()
 
@@ -159,7 +159,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test handling the GET /rooms/{room index} with rooms missing from session
 	t.Run("Error Missing Rooms", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/1", nil)
 
 		// server the request
@@ -173,7 +173,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test handling the GET /rooms/{room index} with index not a number
 	t.Run("Error Index Not a Number", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/abc", nil)
 
 		// create slice of Rooms to put in session
@@ -197,7 +197,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	// test handling the GET /rooms/{room index} with index bigger than rooms lenght
 	t.Run("Error Index Out of Scope", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		url := fmt.Sprint("/rooms/", LimitRoomsPerPage+10)
 		req := ts.NewRequestWithSession(t, http.MethodGet, url, nil)
 
@@ -224,7 +224,7 @@ func TestServer_RoomHandler(t *testing.T) {
 	// test displaying the GET /rooms/room/{name}
 	t.Run("OK", func(t *testing.T) {
 		// create a new test server and a request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/room/test", nil)
 
 		// create room with random data to put in the session
@@ -246,7 +246,7 @@ func TestServer_RoomHandler(t *testing.T) {
 	// test missing room from session
 	t.Run("Missing Room from Session", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/room/test", nil)
 
 		//  server the request
@@ -276,7 +276,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// create mehod arguments
@@ -291,7 +291,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		//build stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
 			Return(true, nil).
 			Once()
 
@@ -338,7 +338,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// create mehod arguments
@@ -353,7 +353,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		//build stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
 			Return(false, nil).
 			Once()
 
@@ -380,11 +380,11 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 	// Test Error: room missing from session
 	t.Run("Missing Room from Session", func(t *testing.T) {
 		// create a new test server and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", nil)
 
 		// build stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
 			Return(mock.Anything, mock.Anything).
 			Times(0)
 
@@ -392,7 +392,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// remove uncalled stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 		// get the json response
 		resp := SearchRoomAvailabilityResponse{}
@@ -414,11 +414,11 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		body := strings.NewReader("%^")
 
 		// create a new test server and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// build stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
 			Return(mock.Anything, mock.Anything).
 			Times(0)
 
@@ -432,7 +432,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		app.Session.Remove(req.Context(), "room")
 
 		// remove uncalled stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 		// get the json response
 		resp := SearchRoomAvailabilityResponse{}
@@ -496,7 +496,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		}
 
 		// create a new test server and a mock database store
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		for _, v := range tests {
 			t.Run(v.Name, func(t *testing.T) {
@@ -511,7 +511,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 				// build stub
-				mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
+				ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
 					Return(mock.Anything, mock.Anything).
 					Times(0)
 
@@ -525,7 +525,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 				app.Session.Remove(req.Context(), "room")
 
 				// remove uncalled stub
-				mockStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
+				ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 				// get the json response
 				resp := SearchRoomAvailabilityResponse{}
@@ -557,7 +557,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// create mehod arguments
@@ -572,7 +572,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		//build stub
-		mockStore.On("CheckRoomAvailability", mock.Anything, arg).
+		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
 			Return(false, errors.New("any error")).
 			Once()
 
@@ -620,7 +620,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// create mehod arguments
@@ -637,7 +637,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		//build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return([]db.Room{}, nil).
 			Once()
 
@@ -663,7 +663,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// create mehod arguments
@@ -690,7 +690,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		}
 
 		//build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return(dbRooms, nil).
 			Once()
 
@@ -717,7 +717,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		body := strings.NewReader("%^")
 
 		// create a new test server and a request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		//  server the request
@@ -780,7 +780,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		}
 
 		// create a new test server and a mock database store
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		for _, v := range tests {
 			t.Run(v.Name, func(t *testing.T) {
@@ -795,7 +795,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 				// build stub
-				mockStore.On("ListAvailableRooms", mock.Anything, mock.Anything).
+				ts.MockDBStore.On("ListAvailableRooms", mock.Anything, mock.Anything).
 					Return(mock.Anything, mock.Anything).
 					Times(0)
 
@@ -803,7 +803,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 				rr := ts.ServeRequest(req)
 
 				// remove uncalled stub
-				mockStore.On("ListAvailableRooms", mock.Anything, mock.Anything).Unset()
+				ts.MockDBStore.On("ListAvailableRooms", mock.Anything, mock.Anything).Unset()
 
 				// testify
 				assert.Equal(t, http.StatusOK, rr.Code)
@@ -825,7 +825,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		body := strings.NewReader(values.Encode())
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// create mehod arguments
@@ -842,7 +842,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		//build stub
-		mockStore.On("ListAvailableRooms", mock.Anything, arg).
+		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
 			Return(nil, errors.New("any error")).
 			Once()
 
@@ -860,7 +860,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 	// Test Error: available rooms are missing from session
 	t.Run("Error Missing Available Rooms", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
 
 		//  server the request
@@ -882,7 +882,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		rooms := randomRooms(N)
 
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
 
 		// put rooms in session
@@ -905,7 +905,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		rooms := randomRooms(N)
 
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/abc", nil)
 
 		// put rooms in session
@@ -929,7 +929,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		rooms := randomRooms(N)
 
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/1", nil)
 
 		// put rooms in session
@@ -956,7 +956,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		reservation := randomReservation()
 
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/1", nil)
 
 		// put rooms and reservation in session
@@ -980,7 +980,7 @@ func TestServer_MakeReservationHandler(t *testing.T) {
 	// Test OK: reservation exists in session
 	t.Run("OK", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/make-reservation", nil)
 
 		// create reservation with random data to put in the session
@@ -1007,7 +1007,7 @@ func TestServer_MakeReservationHandler(t *testing.T) {
 	// Test Error: reservation missing from session
 	t.Run("Error", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/make-reservation", nil)
 
 		//  server the request
@@ -1056,7 +1056,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 		// create mehod arguments
@@ -1070,7 +1070,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, arg).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
 			Return(dbReservation, nil).
 			Once()
 
@@ -1100,11 +1100,11 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 	// Test Error: reservation missing from session
 	t.Run("Missing Reservation from Session", func(t *testing.T) {
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", nil)
 
 		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 			Return(mock.Anything, mock.Anything).
 			Times(0)
 
@@ -1112,7 +1112,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// remove uncalled stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
 
 		// get error message from session and removes it
 		errMsg := app.Session.PopString(req.Context(), "error")
@@ -1138,11 +1138,11 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		body := strings.NewReader("%^")
 
 		// create a new test server, a mock database store and a request
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 		// build stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 			Return(mock.Anything, mock.Anything).
 			Times(0)
 
@@ -1156,7 +1156,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		app.Session.Remove(req.Context(), "reservation")
 
 		// remove uncalled stub
-		mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
 
 		// get error message from session and removes it
 		errMsg := app.Session.PopString(req.Context(), "error")
@@ -1235,7 +1235,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		}
 
 		// create a new test server and a mock database store
-		ts, mockStore := NewTestServer(t)
+		ts := NewTestServer(t)
 
 		for _, v := range tests {
 			t.Run(v.Name, func(t *testing.T) {
@@ -1250,7 +1250,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 				// build stub
-				mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).
+				ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 					Return(mock.Anything, mock.Anything).
 					Times(0)
 
@@ -1264,7 +1264,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 				app.Session.Remove(req.Context(), "reservation")
 
 				// remove uncalled stub
-				mockStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
+				ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
 
 				// testify
 				assert.Equal(t, http.StatusOK, rr.Code)
@@ -1283,7 +1283,7 @@ func TestServer_ReservationSummaryHandler(t *testing.T) {
 	// Test Error: reservation data is missing from session
 	t.Run("Error Missing Reservation Data", func(t *testing.T) {
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/reservation-summary", nil)
 
 		//  server the request
@@ -1304,7 +1304,7 @@ func TestServer_ReservationSummaryHandler(t *testing.T) {
 		reservation := randomReservation()
 
 		// create a new test server, and a new request
-		ts, _ := NewTestServer(t)
+		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/reservation-summary", nil)
 
 		// put rooms and reservation in session
