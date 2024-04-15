@@ -19,12 +19,12 @@ import (
 type Server struct {
 	Router        *http.Server
 	DatabaseStore db.DatabaseStore
-	ErrorLogger   *loggers.SmartLogger
-	Mailer        *mailers.SmartMailer
+	ErrorLogger   loggers.Loggerer
+	Mailer        mailers.Mailerer
 }
 
 // NewServer returns a new Server with Router and Database Store
-func NewServer(store db.DatabaseStore) *Server {
+func NewServer(store db.DatabaseStore, logger loggers.Loggerer, mailer mailers.Mailerer) *Server {
 	mux := chi.NewRouter()
 
 	server := Server{
@@ -33,8 +33,8 @@ func NewServer(store db.DatabaseStore) *Server {
 			Handler: mux,
 		},
 		DatabaseStore: store,
-		ErrorLogger:   loggers.NewSmartLogger(nil, "ERROR\t"),
-		Mailer:        mailers.NewSmartMailer(),
+		ErrorLogger:   logger,
+		Mailer:        mailer,
 	}
 
 	// add middleware that recover from panics
@@ -82,7 +82,7 @@ func (s *Server) Start() {
 	go s.ErrorLogger.ListenAndLog(100)
 
 	// start listening to mail data
-	go s.Mailer.ListenAndMail(s.ErrorLogger.LogChannel, 100)
+	go s.Mailer.ListenAndMail(s.ErrorLogger.MyLogChannel(), 100)
 
 	// start listening to http requests
 	err := s.Router.ListenAndServe()
@@ -129,12 +129,14 @@ func (s *Server) Stop() {
 
 // LogError logs err
 func (s *Server) LogError(err error) {
-	if s.ErrorLogger.LogChannel == nil {
+	// if log channel is nil logging directly with logger
+	if s.ErrorLogger.MyLogChannel() == nil {
 		s.ErrorLogger.Log(err)
 		return
 	}
 
-	s.ErrorLogger.LogChannel <- err
+	// logging through channel
+	s.ErrorLogger.MyLogChannel() <- err
 }
 
 // LogErrorAndRedirect logs err, puts err's prompt in session, and redirects to url
@@ -220,12 +222,12 @@ func (e ServerError) Error() string {
 
 func (s *Server) Mail(data mailers.MailData) {
 	var err error
-	if s.Mailer.MailChannel == nil {
+	if s.Mailer.MyMailChannel() == nil {
 		err = s.Mailer.SendMail(data)
 		if err != nil {
 			s.LogError(err)
 		}
 	}
 
-	s.Mailer.MailChannel <- data
+	s.Mailer.MyMailChannel() <- data
 }

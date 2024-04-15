@@ -21,7 +21,6 @@ func TestNewLogger(t *testing.T) {
 
 		// testify
 		assert.Nil(t, sl.LogChannel)
-		assert.Nil(t, sl.done)
 		require.NotNil(t, sl.Logger)
 
 		// log a message
@@ -45,7 +44,6 @@ func TestNewLogger(t *testing.T) {
 
 		// testify
 		assert.Nil(t, sl.LogChannel)
-		assert.Nil(t, sl.done)
 		require.NotNil(t, sl.Logger)
 
 		// log a message
@@ -152,4 +150,8 @@ func TestAppLogger_ListenAndLogAndShutdown_Buffer(t *testing.T) {
 	result = result[2663:]
 	assert.Equal(t, "TEST", result[:4])
 	assert.Equal(t, "99\n", result[24:])
+
+	// Make sure the channel is closed
+	_, ok := <-sl.LogChannel
+	assert.Falsef(t, ok, "LogChannel should be closed after Shutdown")
 }

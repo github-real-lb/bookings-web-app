@@ -9,20 +9,73 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db/mocks"
 	"github.com/github-real-lb/bookings-web-app/util"
+	loggermocks "github.com/github-real-lb/bookings-web-app/util/loggers/mocks"
+	mailermocks "github.com/github-real-lb/bookings-web-app/util/mailers/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewServer(t *testing.T) {
-	store := mocks.NewMockStore(t)
+	mockDbStore := mocks.NewMockStore(t)
+	mockLogger := loggermocks.NewMockLogger(t)
+	mockMailer := mailermocks.NewMockMailer(t)
 
-	server := NewServer(store)
+	server := NewServer(mockDbStore, mockLogger, mockMailer)
 	require.IsType(t, (*Server)(nil), server)
-
-	//TODO: check loggers
 }
 
-//TODO: check server start and stop
+func TestServer_StartAndStop(t *testing.T) {
+	ts, _ := NewTestServer(t)
+
+	go ts.Start()
+
+	ts.Stop()
+}
+
+func TestServer_LogError(t *testing.T) {
+	t.Run("LogChannel nil", func(t *testing.T) {
+		// create new test server
+		ts, _ := NewTestServer(t)
+
+		// create test error
+		err := errors.New("this is a test error")
+
+		// build stubs
+		ts.MockLogger.On("MyLogChannel").Return(nil).Times(1)
+		ts.MockLogger.On("Log", err).Times(1)
+
+		// log error
+		ts.LogError(err)
+	})
+
+	t.Run("LogChannel active", func(t *testing.T) {
+		// create new test server
+		ts, _ := NewTestServer(t)
+
+		// create log channel
+		logChan := make(chan any)
+		defer close(logChan)
+
+		// build stubs
+		ts.MockLogger.On("MyLogChannel").Return(logChan).Times(2)
+		ts.MockLogger.On("Log", mock.Anything).Times(0)
+
+		// create test error
+		err := errors.New("this is a test error")
+
+		// log error
+		go ts.LogError(err)
+
+		// get err back from log channel
+		result := <-logChan
+
+		assert.Equal(t, err.Error(), result.(error).Error())
+
+		// remove unused stubs
+		ts.MockLogger.On("Log", mock.Anything).Unset()
+	})
+}
 
 func TestServer_LogErrorAndRedirect(t *testing.T) {
 	// create new server, request and response recorder

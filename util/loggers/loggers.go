@@ -6,10 +6,17 @@ import (
 	"os"
 	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util"
 )
+
+type Loggerer interface {
+	MyLogChannel() chan any
+	IsLogDebugStack() bool
+	Log(v any)
+	ListenAndLog(buffer int)
+	Shutdown()
+}
 
 // SmartLogger is a configurable logger
 type SmartLogger struct {
@@ -21,8 +28,7 @@ type SmartLogger struct {
 
 	LogDebugStack bool //determines if error logger logs the debug.stack() information
 
-	done     chan struct{} // used to stop the ListenAndLog() function
-	shutdown sync.Once     // ensures Shutdown() is only performed once
+	shutdown sync.Once // ensures Shutdown() is only performed once
 }
 
 // NewSmartLogger returns an initialized SmartLogger with configurable output and a prefix string to log.
@@ -37,6 +43,14 @@ func NewSmartLogger(output io.Writer, prefix string) *SmartLogger {
 		Logger:        log.New(output, prefix, log.Ldate|log.LstdFlags),
 		LogDebugStack: false,
 	}
+}
+
+func (sl *SmartLogger) MyLogChannel() chan any {
+	return sl.LogChannel
+}
+
+func (sl *SmartLogger) IsLogDebugStack() bool {
+	return sl.LogDebugStack
 }
 
 // LogError logs server side errors.
@@ -59,34 +73,26 @@ func (sl *SmartLogger) ListenAndLog(buffer int) {
 	// create error channel with buffer size of 100
 	sl.LogChannel = make(chan any, buffer)
 
-	// create the done channel to stop the listening
-	sl.done = make(chan struct{})
-
 	// start listening
 	for {
-		select {
-		case v := <-sl.LogChannel:
+		v, ok := <-sl.LogChannel
+		if !ok {
+			return
+		} else {
 			// logging data
 			sl.Log(v)
-		case <-sl.done:
-			// wait for ensure channel complete logging
-			time.Sleep(100 * time.Millisecond)
-
-			// close channel
-			close(sl.LogChannel)
-			return
 		}
 	}
 }
 
 // Shutdown stops ListenAndLog() and close channels
 func (sl *SmartLogger) Shutdown() {
-	if sl.done == nil {
+	if sl.LogChannel == nil {
 		return
 	}
 
 	// close done channel safely
 	sl.shutdown.Do(func() {
-		close(sl.done)
+		close(sl.LogChannel)
 	})
 }

@@ -3,10 +3,16 @@ package mailers
 import (
 	"html/template"
 	"sync"
-	"time"
 
 	mail "github.com/xhit/go-simple-mail/v2"
 )
+
+type Mailerer interface {
+	MyMailChannel() chan MailData
+	SendMail(data MailData) error
+	ListenAndMail(errChan chan any, buffer int)
+	Shutdown()
+}
 
 // MailData holds an email
 type MailData struct {
@@ -20,8 +26,7 @@ type SmartMailer struct {
 	*mail.SMTPServer               // SMTP Server
 	MailChannel      chan MailData //channel to pass emails data
 
-	done     chan struct{} // used to stop the ListenAndMail() function
-	shutdown sync.Once     // ensures Shutdown() is only performed once
+	shutdown sync.Once // ensures Shutdown() is only performed once
 }
 
 func NewSmartMailer() *SmartMailer {
@@ -36,7 +41,10 @@ func NewSmartMailer() *SmartMailer {
 	return &SmartMailer{
 		SMTPServer: server,
 	}
+}
 
+func (sm *SmartMailer) MyMailChannel() chan MailData {
+	return sm.MailChannel
 }
 
 func (sm *SmartMailer) SendMail(data MailData) error {
@@ -73,39 +81,31 @@ func (sm *SmartMailer) ListenAndMail(errChan chan any, buffer int) {
 	// create mail channel with buffer size of 100
 	sm.MailChannel = make(chan MailData, buffer)
 
-	// create the done channel to stop the listening
-	sm.done = make(chan struct{})
-
 	var err error
 
 	// start listening
 	for {
-		select {
-		case v := <-sm.MailChannel:
+		v, ok := <-sm.MailChannel
+		if !ok {
+			return
+		} else {
 			// sending mail
 			err = sm.SendMail(v)
 			if err != nil {
 				errChan <- err
 			}
-		case <-sm.done:
-			// wait for ensure channel complete sending mail
-			time.Sleep(100 * time.Millisecond)
-
-			// close channel
-			close(sm.MailChannel)
-			return
 		}
 	}
 }
 
 // Shutdown stops ListenAndMail() and close channels
 func (sm *SmartMailer) Shutdown() {
-	if sm.done == nil {
+	if sm.MailChannel == nil {
 		return
 	}
 
 	// close done channel safely
 	sm.shutdown.Do(func() {
-		close(sm.done)
+		close(sm.MailChannel)
 	})
 }

@@ -8,6 +8,8 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/config"
+	"github.com/github-real-lb/bookings-web-app/util/loggers"
+	"github.com/github-real-lb/bookings-web-app/util/mailers"
 )
 
 func main() {
@@ -17,15 +19,21 @@ func main() {
 		log.Fatal("Error initializing application:", err)
 	}
 
-	// connect to postgres database
+	// create a new database connection pool
 	dbStore, err := db.NewPostgresDBStore(app.DBConnectionString)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
 	defer dbStore.(*db.PostgresDBStore).DBConnPool.Close()
 
+	// create a new error logger
+	logger := loggers.NewSmartLogger(nil, "ERROR\t")
+
+	// create a new mailer
+	mailer := mailers.NewSmartMailer()
+
 	// create a new server and start it in a separate goroutine
-	server := NewServer(dbStore)
+	server := NewServer(dbStore, logger, mailer)
 	go server.Start()
 
 	// Listen for interrupt signal (Ctrl+C) or SIGTERM

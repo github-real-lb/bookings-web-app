@@ -9,6 +9,8 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/db/mocks"
 	"github.com/github-real-lb/bookings-web-app/util/config"
+	loggermocks "github.com/github-real-lb/bookings-web-app/util/loggers/mocks"
+	mailermocks "github.com/github-real-lb/bookings-web-app/util/mailers/mocks"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,13 +25,26 @@ func TestMain(m *testing.M) {
 
 type TestServer struct {
 	*Server
+	MockDBStore *mocks.MockStore
+	MockLogger  *loggermocks.MockLogger
+	MockMailer  *mailermocks.MockMailer
 }
 
 // NewTestServer creates and returns a test server connected to a mock database store
 func NewTestServer(t *testing.T) (*TestServer, *mocks.MockStore) {
-	mockStore := mocks.NewMockStore(t)
-	server := NewServer(mockStore)
-	return &TestServer{Server: server}, mockStore
+	// create mocks
+	mockDBStore := mocks.NewMockStore(t)
+	mockLogger := loggermocks.NewMockLogger(t)
+	mockMailer := mailermocks.NewMockMailer(t)
+
+	ts := TestServer{
+		Server:      NewServer(mockDBStore, mockLogger, mockMailer),
+		MockDBStore: mockDBStore,
+		MockLogger:  mockLogger,
+		MockMailer:  mockMailer,
+	}
+
+	return &ts, mockDBStore
 }
 
 // NewTestRequest creates a new get request for use in testing
