@@ -28,11 +28,6 @@ const DateLayout = "2006-01-02"
 type AppConfig struct {
 	Mode AppMode
 
-	//Logger loggers.AppLogger
-
-	// MailChan is a channel used to send emails
-	//MailerChan mailer.MailerChannel
-
 	// Session is the session manager
 	Session *scs.SessionManager
 

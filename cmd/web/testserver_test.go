@@ -16,23 +16,26 @@ import (
 
 type TestServer struct {
 	*Server
-	MockDBStore *dbmocks.MockDBStore
-	MockLogger  *loggermocks.MockLogger
-	MockMailer  *mailermocks.MockMailer
+	MockDBStore     *dbmocks.MockDBStore
+	MockErrorLogger *loggermocks.MockLogger
+	MockInfoLogger  *loggermocks.MockLogger
+	MockMailer      *mailermocks.MockMailer
 }
 
 // NewTestServer creates and returns a test server connected to a mock database store
 func NewTestServer(t *testing.T) *TestServer {
 	// create mocks
 	mockDBStore := dbmocks.NewMockDBStore(t)
-	mockLogger := loggermocks.NewMockLogger(t)
+	mockErrorLogger := loggermocks.NewMockLogger(t)
+	mockInfoLogger := loggermocks.NewMockLogger(t)
 	mockMailer := mailermocks.NewMockMailer(t)
 
 	ts := TestServer{
-		Server:      NewServer(mockDBStore, mockLogger, mockMailer),
-		MockDBStore: mockDBStore,
-		MockLogger:  mockLogger,
-		MockMailer:  mockMailer,
+		Server:          NewServer(mockDBStore, mockErrorLogger, mockInfoLogger, mockMailer),
+		MockDBStore:     mockDBStore,
+		MockErrorLogger: mockErrorLogger,
+		MockInfoLogger:  mockInfoLogger,
+		MockMailer:      mockMailer,
 	}
 
 	return &ts
@@ -40,14 +43,14 @@ func NewTestServer(t *testing.T) *TestServer {
 
 // BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error
 func (ts *TestServer) BuildLogErrorStub(err error) {
-	ts.MockLogger.On("MyLogChannel").Return(nil).Times(1)
-	ts.MockLogger.On("Log", err).Times(1)
+	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
+	ts.MockErrorLogger.On("Log", err).Times(1)
 }
 
 // BuildLogAnyErrorStub builds the MockLogger Log() stub for testing of any error
 func (ts *TestServer) BuildLogAnyErrorStub() {
-	ts.MockLogger.On("MyLogChannel").Return(nil).Times(1)
-	ts.MockLogger.On("Log", mock.Anything).Times(1)
+	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
+	ts.MockErrorLogger.On("Log", mock.Anything).Times(1)
 }
 
 // NewTestRequest creates a new get request for use in testing

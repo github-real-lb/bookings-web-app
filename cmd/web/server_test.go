@@ -19,10 +19,11 @@ import (
 
 func TestNewServer(t *testing.T) {
 	mockDbStore := dbmocks.NewMockDBStore(t)
-	mockLogger := loggermocks.NewMockLogger(t)
+	mockInfoLogger := loggermocks.NewMockLogger(t)
+	mockErrorLogger := loggermocks.NewMockLogger(t)
 	mockMailer := mailermocks.NewMockMailer(t)
 
-	server := NewServer(mockDbStore, mockLogger, mockMailer)
+	server := NewServer(mockDbStore, mockInfoLogger, mockErrorLogger, mockMailer)
 	require.IsType(t, (*Server)(nil), server)
 }
 
@@ -33,8 +34,8 @@ func TestServer_StartAndStop(t *testing.T) {
 	logChan := make(chan any, LoggerBufferSize)
 	defer close(logChan)
 
-	ts.MockLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
-	ts.MockLogger.On("MyLogChannel").Return(logChan).Times(1)
+	ts.MockErrorLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
+	ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Times(1)
 	ts.MockMailer.On("ListenAndMail", logChan, MailerBufferSize).Times(1)
 
 	// Use a goroutine to handle Start because it is blocking
@@ -55,7 +56,7 @@ func TestServer_StartAndStop(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// build stubs for Stop()
-	ts.MockLogger.On("Shutdown").Times(1)
+	ts.MockErrorLogger.On("Shutdown").Times(1)
 	ts.MockMailer.On("Shutdown").Times(1)
 
 	// stop the server
@@ -90,7 +91,7 @@ func TestServer_LogError(t *testing.T) {
 		defer close(logChan)
 
 		// build stubs
-		ts.MockLogger.On("MyLogChannel").Return(logChan).Times(1)
+		ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Times(1)
 
 		// create test error
 		err := errors.New("this is a test error")

@@ -24,20 +24,22 @@ type Server struct {
 	Router        *http.Server
 	DatabaseStore db.DatabaseStore
 	ErrorLogger   loggers.Loggerer
+	InfoLogger    loggers.Loggerer
 	Mailer        mailers.Mailerer
 }
 
 // NewServer returns a new Server with Router and Database Store
-func NewServer(store db.DatabaseStore, logger loggers.Loggerer, mailer mailers.Mailerer) *Server {
+func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger loggers.Loggerer, mailer mailers.Mailerer) *Server {
 	mux := chi.NewRouter()
 
-	server := Server{
+	s := Server{
 		Router: &http.Server{
 			Addr:    app.ServerAddress,
 			Handler: mux,
 		},
 		DatabaseStore: store,
-		ErrorLogger:   logger,
+		ErrorLogger:   errLogger,
+		InfoLogger:    infoLogger,
 		Mailer:        mailer,
 	}
 
@@ -52,30 +54,48 @@ func NewServer(store db.DatabaseStore, logger loggers.Loggerer, mailer mailers.M
 		mux.Use(NoSurf)
 	}
 
+	// add middleware that logs incoming requests and their responses
+	mux.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			s.LogInfo(fmt.Sprintf("%s %s received from %s", r.Method, r.URL.Path, r.RemoteAddr))
+
+			// Time the execution
+			start := time.Now()
+			next.ServeHTTP(w, r) // Pass control to the next handler
+			duration := time.Since(start)
+
+			// After request is handled
+			s.LogInfo(fmt.Sprintf("%s %s handled in %v", r.Method, r.URL.Path, duration))
+		})
+	})
+
 	// setting routes
-	mux.Get("/", server.HomeHandler)
-	mux.Get("/about", server.AboutHandler)
+	mux.Get("/", s.HomeHandler)
+	mux.Get("/about", s.AboutHandler)
 
-	mux.Get("/rooms/{index}", server.RoomsHandler)
-	mux.Get("/rooms/room/{name}", server.RoomHandler)
-	mux.Post("/search-room-availability", server.PostSearchRoomAvailabilityHandler)
+	mux.Get("/rooms/{index}", s.RoomsHandler)
+	mux.Get("/rooms/room/{name}", s.RoomHandler)
+	mux.Post("/search-room-availability", s.PostSearchRoomAvailabilityHandler)
 
-	mux.Get("/contact", server.ContactHandler)
+	mux.Get("/contact", s.ContactHandler)
 
-	mux.Get("/available-rooms-search", server.AvailableRoomsSearchHandler)
-	mux.Post("/available-rooms-search", server.PostAvailableRoomsSearchHandler)
-	mux.Get("/available-rooms/{index}", server.AvailableRoomsListHandler)
+	mux.Get("/available-rooms-search", s.AvailableRoomsSearchHandler)
+	mux.Post("/available-rooms-search", s.PostAvailableRoomsSearchHandler)
+	mux.Get("/available-rooms/{index}", s.AvailableRoomsListHandler)
 
-	mux.Get("/make-reservation", server.MakeReservationHandler)
-	mux.Post("/make-reservation", server.PostMakeReservationHandler)
+	mux.Get("/make-reservation", s.MakeReservationHandler)
+	mux.Post("/make-reservation", s.PostMakeReservationHandler)
 
-	mux.Get("/reservation-summary", server.ReservationSummaryHandler)
+	mux.Get("/reservation-summary", s.ReservationSummaryHandler)
+
+	mux.Get("/send-mail", s.SendMailHandler)
 
 	// setting file server
 	fileServer := http.FileServer(http.Dir(app.StaticPath))
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))
 
-	return &server
+	return &s
 }
 
 // Start calls the http.Server ListenAndServer method
@@ -84,6 +104,9 @@ func (s *Server) Start() {
 
 	// start listening to errors
 	go s.ErrorLogger.ListenAndLog(LoggerBufferSize)
+
+	// start listening to info
+	go s.InfoLogger.ListenAndLog(LoggerBufferSize)
 
 	// start listening to mail data
 	go s.Mailer.ListenAndMail(s.ErrorLogger.MyLogChannel(), MailerBufferSize)
@@ -107,6 +130,9 @@ func (s *Server) Stop() {
 
 	fmt.Print("Shutting down http server... ")
 
+	// inform the server to stop accepting new info
+	s.InfoLogger.Shutdown()
+
 	// inform the server to stop accepting new errors
 	s.ErrorLogger.Shutdown()
 
@@ -129,6 +155,20 @@ func (s *Server) Stop() {
 	} else {
 		fmt.Println("Success")
 	}
+}
+
+// LogError logs err using the ErrorLogger
+func (s *Server) LogInfo(info string) {
+	var infoChan = s.InfoLogger.MyLogChannel()
+
+	// if log channel is nil logging directly with logger
+	if infoChan == nil {
+		s.InfoLogger.Log(info)
+		return
+	}
+
+	// logging through channel
+	infoChan <- info
 }
 
 // LogError logs err using the ErrorLogger

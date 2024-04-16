@@ -1,0 +1,16 @@
+2024-04-16 12:02:32.251 EDT [3776] LOG:  redirecting log output to logging collector process
+2024-04-16 12:02:32.251 EDT [3776] HINT:  Future log output will appear in directory "log".
+2024-04-16 12:16:37.012 EDT [6164] LOG:  redirecting log output to logging collector process
+2024-04-16 12:16:37.012 EDT [6164] HINT:  Future log output will appear in directory "log".
+2024-04-16 12:27:24.076 EDT [8928] LOG:  redirecting log output to logging collector process
+2024-04-16 12:27:24.076 EDT [8928] HINT:  Future log output will appear in directory "log".
+2024-04-16 12:30:34.362 EDT [2676] LOG:  redirecting log output to logging collector process
+2024-04-16 12:30:34.362 EDT [2676] HINT:  Future log output will appear in directory "log".
+2024-04-16 12:32:32.031 EDT [11716] LOG:  redirecting log output to logging collector process
+2024-04-16 12:32:32.031 EDT [11716] HINT:  Future log output will appear in directory "log".
+2024-04-16 14:59:16.772 EDT [8516] LOG:  redirecting log output to logging collector process
+2024-04-16 14:59:16.772 EDT [8516] HINT:  Future log output will appear in directory "log".
+2024-04-16 15:00:41.839 EDT [21904] LOG:  redirecting log output to logging collector process
+2024-04-16 15:00:41.839 EDT [21904] HINT:  Future log output will appear in directory "log".
+2024-04-16 15:47:55.509 EDT [4304] LOG:  redirecting log output to logging collector process
+2024-04-16 15:47:55.509 EDT [4304] HINT:  Future log output will appear in directory "log".

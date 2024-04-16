@@ -9,6 +9,7 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
+	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -496,4 +497,21 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
+}
+
+func (s *Server) SendMailHandler(w http.ResponseWriter, r *http.Request) {
+	data := mailers.MailData{
+		To:      "john.do@here.com",
+		From:    "me@here.com",
+		Subject: "Any subject",
+		Content: "",
+	}
+
+	s.LogInfo(fmt.Sprintf("Sending email to %s", data.To))
+
+	err := s.Mailer.SendMail(data)
+	if err != nil {
+		s.LogError(err)
+	}
+	//s.SendMail(data)
 }

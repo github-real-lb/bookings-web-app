@@ -1,7 +1,6 @@
 package mailers
 
 import (
-	"html/template"
 	"sync"
 
 	mail "github.com/xhit/go-simple-mail/v2"
@@ -19,7 +18,7 @@ type MailData struct {
 	To      string
 	From    string
 	Subject string
-	Content template.HTML
+	Content string
 }
 
 type SmartMailer struct {
@@ -58,7 +57,7 @@ func (sm *SmartMailer) SendMail(data MailData) error {
 		AddTo(data.To).
 		SetSubject(data.Subject)
 
-	email.SetBody(mail.TextHTML, string(data.Content))
+	email.SetBody(mail.TextHTML, data.Content)
 
 	err = email.Send(client)
 

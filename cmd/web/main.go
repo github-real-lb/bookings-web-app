@@ -27,13 +27,16 @@ func main() {
 	defer dbStore.(*db.PostgresDBStore).DBConnPool.Close()
 
 	// create a new error logger
-	logger := loggers.NewSmartLogger(nil, "ERROR\t")
+	errLogger := loggers.NewSmartLogger(nil, "ERROR\t")
+
+	// create a new info logger
+	infoLogger := loggers.NewSmartLogger(nil, "INFO\t")
 
 	// create a new mailer
 	mailer := mailers.NewSmartMailer()
 
 	// create a new server and start it in a separate goroutine
-	server := NewServer(dbStore, logger, mailer)
+	server := NewServer(dbStore, errLogger, infoLogger, mailer)
 	go server.Start()
 
 	// Listen for interrupt signal (Ctrl+C) or SIGTERM
