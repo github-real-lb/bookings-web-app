@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -133,23 +132,32 @@ func TestServer_RoomsHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/list", nil)
 
-		// create mehod arguments
+		// create stubs arguments
 		arg := db.ListRoomsParams{
 			Limit:  LimitRoomsPerPage,
 			Offset: 0,
 		}
 
-		// build stub
+		err := errors.New("any error")
+
+		sErr := ServerError{
+			Prompt: "Unable to load rooms from database.",
+			URL:    req.URL.Path,
+			Err:    err,
+		}
+
+		// build stubs
 		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
-			Return(nil, errors.New("any error")).
+			Return(nil, err).
 			Once()
+		ts.BuildLogErrorStub(sErr)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
 
 		// get error message from session and remove it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "unable to load rooms from database", errMsg)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -384,15 +392,16 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", nil)
 
 		// build stub
-		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
-			Return(mock.Anything, mock.Anything).
-			Times(0)
+		sErr := ServerError{
+			Prompt: "Unable to get room from session.",
+			URL:    req.URL.Path,
+			Err:    errors.New("wrong routing"),
+		}
+
+		ts.BuildLogErrorStub(sErr)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
-
-		// remove uncalled stub
-		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 		// get the json response
 		resp := SearchRoomAvailabilityResponse{}
@@ -418,9 +427,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// build stub
-		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
-			Return(mock.Anything, mock.Anything).
-			Times(0)
+		ts.BuildLogAnyErrorStub()
 
 		// put room in session
 		app.Session.Put(req.Context(), "room", room)
@@ -430,9 +437,6 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 
 		// remove room from session
 		app.Session.Remove(req.Context(), "room")
-
-		// remove uncalled stub
-		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 		// get the json response
 		resp := SearchRoomAvailabilityResponse{}
@@ -510,11 +514,6 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
-				// build stub
-				ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).
-					Return(mock.Anything, mock.Anything).
-					Times(0)
-
 				// put room in session
 				app.Session.Put(req.Context(), "room", room)
 
@@ -523,9 +522,6 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 
 				// remove room from session
 				app.Session.Remove(req.Context(), "room")
-
-				// remove uncalled stub
-				ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, mock.Anything).Unset()
 
 				// get the json response
 				resp := SearchRoomAvailabilityResponse{}
@@ -571,10 +567,19 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
-		//build stub
+		err = errors.New("any error")
+
+		sErr := ServerError{
+			Prompt: "Unable to check room availability.",
+			URL:    req.URL.Path,
+			Err:    err,
+		}
+
+		//build stubs
 		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
-			Return(false, errors.New("any error")).
+			Return(false, err).
 			Once()
+		ts.BuildLogErrorStub(sErr)
 
 		// put room in session
 		app.Session.Put(req.Context(), "room", room)
@@ -720,12 +725,17 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
+		// build stub
+		ts.BuildLogAnyErrorStub()
+
 		//  server the request
 		rr := ts.ServeRequest(req)
 
 		// get error message from session and remove it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "unable to parse form", errMsg)
+
+		sErr := CreateServerError(ErrorParseForm, req.URL.Path, nil)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -794,16 +804,8 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
-				// build stub
-				ts.MockDBStore.On("ListAvailableRooms", mock.Anything, mock.Anything).
-					Return(mock.Anything, mock.Anything).
-					Times(0)
-
 				//  server the request
 				rr := ts.ServeRequest(req)
-
-				// remove uncalled stub
-				ts.MockDBStore.On("ListAvailableRooms", mock.Anything, mock.Anything).Unset()
 
 				// testify
 				assert.Equal(t, http.StatusOK, rr.Code)
@@ -841,13 +843,26 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
+		err = errors.New("any error")
+
+		sErr := ServerError{
+			Prompt: "Unable to load available rooms.",
+			URL:    req.URL.Path,
+			Err:    err,
+		}
+
 		//build stub
 		ts.MockDBStore.On("ListAvailableRooms", mock.Anything, arg).
-			Return(nil, errors.New("any error")).
+			Return(nil, err).
 			Once()
+		ts.BuildLogErrorStub(sErr)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -863,12 +878,16 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
 
+		// build stub
+		sErr := CreateServerError(ErrorMissingReservation, req.URL.Path, nil)
+		ts.BuildLogErrorStub(sErr)
+
 		//  server the request
 		rr := ts.ServeRequest(req)
 
 		// get error message from session and remove it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -908,6 +927,9 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/abc", nil)
 
+		// build stub
+		ts.BuildLogAnyErrorStub()
+
 		// put rooms in session
 		app.Session.Put(req.Context(), "rooms", rooms)
 
@@ -932,6 +954,10 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/1", nil)
 
+		// build stub
+		sErr := CreateServerError(ErrorMissingReservation, req.URL.Path, nil)
+		ts.BuildLogErrorStub(sErr)
+
 		// put rooms in session
 		app.Session.Put(req.Context(), "rooms", rooms)
 
@@ -940,6 +966,10 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 
 		// remove rooms from session
 		app.Session.Remove(req.Context(), "rooms")
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -1010,12 +1040,16 @@ func TestServer_MakeReservationHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/make-reservation", nil)
 
+		// build stub
+		sErr := CreateServerError(ErrorMissingReservation, req.URL.Path, nil)
+		ts.BuildLogErrorStub(sErr)
+
 		//  server the request
 		rr := ts.ServeRequest(req)
 
 		// get error message from session and remove it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -1104,19 +1138,15 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", nil)
 
 		// build stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
-			Return(mock.Anything, mock.Anything).
-			Times(0)
+		sErr := CreateServerError(ErrorMissingReservation, req.URL.Path, nil)
+		ts.BuildLogErrorStub(sErr)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
 
-		// remove uncalled stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
-
 		// get error message from session and removes it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "No reservation exists. Please make a reservation.", errMsg)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -1142,9 +1172,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 		// build stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
-			Return(mock.Anything, mock.Anything).
-			Times(0)
+		ts.BuildLogAnyErrorStub()
 
 		// put reservation in session
 		app.Session.Put(req.Context(), "reservation", initialReservation)
@@ -1155,12 +1183,10 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		// remove reservation from session
 		app.Session.Remove(req.Context(), "reservation")
 
-		// remove uncalled stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
-
 		// get error message from session and removes it
 		errMsg := app.Session.PopString(req.Context(), "error")
-		assert.Equal(t, "unable to parse form", errMsg)
+		sErr := CreateServerError(ErrorParseForm, req.URL.Path, nil)
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
@@ -1249,11 +1275,6 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
-				// build stub
-				ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
-					Return(mock.Anything, mock.Anything).
-					Times(0)
-
 				// put reservation in session
 				app.Session.Put(req.Context(), "reservation", initialReservation)
 
@@ -1263,9 +1284,6 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 				// remove reservation from session
 				app.Session.Remove(req.Context(), "reservation")
 
-				// remove uncalled stub
-				ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).Unset()
-
 				// testify
 				assert.Equal(t, http.StatusOK, rr.Code)
 			})
@@ -1273,9 +1291,77 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 	})
 
 	// Test Error: reservation exists and form it valid, but internal server error on CreateReservation
-	//TODO:
 	t.Run("Internal Server Error", func(t *testing.T) {
-		log.Println("*********   TODO   *********")
+		// create initial reservation with random data to put in the session
+		date := util.RandomDate()
+		initialReservation := Reservation{
+			StartDate: date,
+			EndDate:   date.Add(time.Hour * 24 * 7),
+			Room:      randomRoom(),
+		}
+
+		// create data for the body of the request
+		data := make(map[string]string)
+		data["first_name"] = util.RandomName()
+		data["last_name"] = util.RandomName()
+		data["email"] = util.RandomEmail()
+		data["phone"] = util.RandomPhone()
+		data["notes"] = util.RandomNote()
+
+		// create the body of the request
+		values := url.Values{}
+		for key, value := range data {
+			values.Set(key, value)
+		}
+		body := strings.NewReader(values.Encode())
+
+		// create the final reservation that we are expected to get from the session
+		finalReservation := initialReservation
+		finalReservation.Unmarshal(data)
+		err := finalReservation.GenerateReservationCode()
+		require.NoError(t, err)
+
+		// create a new test server, a mock database store and a request
+		ts := NewTestServer(t)
+		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
+
+		// create mehod arguments
+		arg := db.CreateReservationParams{}
+		err = arg.Unmarshal(finalReservation.Marshal())
+		require.NoError(t, err)
+
+		//create method return arguments
+		dbReservation := db.Reservation{}
+		err = dbReservation.Unmarshal(finalReservation.Marshal())
+		require.NoError(t, err)
+
+		err = errors.New("this is a test error")
+
+		sErr := ServerError{
+			Prompt: "Unable to create reservation.",
+			URL:    req.URL.Path,
+			Err:    err,
+		}
+
+		// build stub
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
+			Return(db.Reservation{}, err).
+			Once()
+		ts.BuildLogErrorStub(sErr)
+
+		// put reservation in session
+		app.Session.Put(req.Context(), "reservation", initialReservation)
+
+		//  server the request
+		rr := ts.ServeRequest(req)
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, sErr.Prompt, errMsg)
+
+		// testify
+		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
+		assert.Equal(t, "/make-reservation", rr.Header().Get("Location"))
 	})
 }
 
@@ -1286,8 +1372,16 @@ func TestServer_ReservationSummaryHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/reservation-summary", nil)
 
+		// build stub
+		sErr := CreateServerError(ErrorMissingReservation, req.URL.Path, nil)
+		ts.BuildLogErrorStub(sErr)
+
 		//  server the request
 		rr := ts.ServeRequest(req)
+
+		// get error message from session and remove it
+		errMsg := app.Session.PopString(req.Context(), "error")
+		assert.Equal(t, sErr.Prompt, errMsg)
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)

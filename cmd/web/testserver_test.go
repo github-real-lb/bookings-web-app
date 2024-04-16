@@ -10,6 +10,7 @@ import (
 	loggermocks "github.com/github-real-lb/bookings-web-app/util/loggers/mocks"
 	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	mailermocks "github.com/github-real-lb/bookings-web-app/util/mailers/mocks"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,11 +38,16 @@ func NewTestServer(t *testing.T) *TestServer {
 	return &ts
 }
 
-// BuildLogErrorStub builds the MockLogger Log() stub for testing
+// BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error
 func (ts *TestServer) BuildLogErrorStub(err error) {
-	// build stubs
 	ts.MockLogger.On("MyLogChannel").Return(nil).Times(1)
 	ts.MockLogger.On("Log", err).Times(1)
+}
+
+// BuildLogAnyErrorStub builds the MockLogger Log() stub for testing of any error
+func (ts *TestServer) BuildLogAnyErrorStub() {
+	ts.MockLogger.On("MyLogChannel").Return(nil).Times(1)
+	ts.MockLogger.On("Log", mock.Anything).Times(1)
 }
 
 // NewTestRequest creates a new get request for use in testing

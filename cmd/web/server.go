@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
-	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/loggers"
 	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	"github.com/go-chi/chi/v5"
@@ -159,19 +158,6 @@ func (s *Server) LogInternalServerError(w http.ResponseWriter, err error) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// LogRenderErrorAndRedirect logs err, puts error message with template name in session, and redirects to url
-func (s *Server) LogRenderErrorAndRedirect(w http.ResponseWriter, r *http.Request, template string, err error, url string) {
-	e := ServerError{
-		Prompt: fmt.Sprintf(`unable to render "%s" template`, template),
-		URL:    r.URL.Path,
-		Err:    err,
-	}
-
-	app.Session.Put(r.Context(), "error", e.Prompt)
-	s.LogError(err)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-}
-
 // ResponseJSON write v to w as json response.
 // Errors are loggied by the server and also returned
 func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) error {
@@ -202,29 +188,6 @@ func (s *Server) ResponseJSON(w http.ResponseWriter, r *http.Request, v any) err
 	}
 
 	return nil
-}
-
-type ServerError struct {
-	Prompt string
-	URL    string
-	Err    error
-}
-
-func (e ServerError) Error() string {
-	text := util.NewText()
-
-	if e.Err != nil {
-		text.AddLineIndent(e.Err.Error(), "\t")
-	}
-
-	if e.Prompt != "" {
-		text.AddLineIndent(fmt.Sprint("PROMPT: ", e.Prompt), "\t")
-	}
-	if e.URL != "" {
-		text.AddLineIndent(fmt.Sprint("URL: ", e.URL), "\t")
-	}
-
-	return text.String()
 }
 
 // SendMail sends email using the Mailer

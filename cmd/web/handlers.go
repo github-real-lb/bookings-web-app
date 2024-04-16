@@ -19,12 +19,7 @@ const LimitRoomsPerPage = 10
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
-		sErr := ServerError{
-			Prompt: `unable to render "home.page.gohtml" template`,
-			URL:    "/",
-			Err:    err,
-		}
-
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogInternalServerError(w, sErr)
 	}
 }
@@ -33,7 +28,8 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "about.page.gohtml", err, "/")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }
 
@@ -45,7 +41,7 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		rooms, err := s.ListRooms(LimitRoomsPerPage, 0)
 		if err != nil {
 			sErr := ServerError{
-				Prompt: "unable to load rooms from database",
+				Prompt: "Unable to load rooms from database.",
 				URL:    r.URL.Path,
 				Err:    err,
 			}
@@ -61,7 +57,8 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 		if err != nil {
-			s.LogRenderErrorAndRedirect(w, r, "rooms.page.gohtml", err, "/")
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
 		return
 	}
@@ -116,7 +113,8 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "room.page.gohtml", err, "/rooms/list")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/rooms/list")
 	}
 }
 
@@ -138,7 +136,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 		})
 
 		s.LogError(ServerError{
-			Prompt: "unable to get room from session",
+			Prompt: "Unable to get room from session.",
 			URL:    r.URL.Path,
 			Err:    errors.New("wrong routing"),
 		})
@@ -152,11 +150,8 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 			Error: "Internal Error. Please reload and try again.",
 		})
 
-		s.LogError(ServerError{
-			Prompt: "unable to parse form",
-			URL:    r.URL.Path,
-			Err:    err,
-		})
+		sErr := CreateServerError(ErrorParseForm, r.URL.Path, err)
+		s.LogError(sErr)
 		return
 	}
 
@@ -191,11 +186,8 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 			Error: "Internal Error. Please reload and try again.",
 		})
 
-		s.LogError(ServerError{
-			Prompt: "unable to unmarshal reservation",
-			URL:    r.URL.Path,
-			Err:    err,
-		})
+		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
+		s.LogError(sErr)
 		return
 	}
 
@@ -208,7 +200,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 		})
 
 		s.LogError(ServerError{
-			Prompt: "unable to check room availability",
+			Prompt: "Unable to check room availability.",
 			URL:    r.URL.Path,
 			Err:    err,
 		})
@@ -233,7 +225,8 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "contact.page.gohtml", err, "/")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }
 
@@ -243,7 +236,8 @@ func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Requ
 		Form: forms.New(nil),
 	})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "available-rooms-search.page.gohtml", err, "/")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }
 
@@ -251,11 +245,7 @@ func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Requ
 func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "unable to parse form",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
+		sErr := CreateServerError(ErrorParseForm, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
 		return
 	}
@@ -271,7 +261,8 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 			Form: form,
 		})
 		if err != nil {
-			s.LogRenderErrorAndRedirect(w, r, "available-rooms-search.page.gohtml", err, "/")
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
 		return
 	}
@@ -280,11 +271,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	var reservation Reservation
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "unable to parse form data for reservation",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
+		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
 		return
 	}
@@ -293,7 +280,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	rooms, err := s.ListAvailableRooms(reservation, LimitRoomsPerPage, 0)
 	if err != nil {
 		sErr := ServerError{
-			Prompt: "unable to load available rooms",
+			Prompt: "Unable to load available rooms.",
 			URL:    r.URL.Path,
 			Err:    err,
 		}
@@ -308,7 +295,8 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 			Form: form,
 		})
 		if err != nil {
-			s.LogRenderErrorAndRedirect(w, r, "available-rooms-search.page.gohtml", err, "/")
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
 		return
 	}
@@ -326,11 +314,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get available rooms data from session
 	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
 	if !ok {
-		sErr := ServerError{
-			Prompt: "No reservation exists. Please make a reservation.",
-			URL:    r.URL.Path,
-			Err:    errors.New("wrong routing"),
-		}
+		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
 		return
 	}
@@ -343,7 +327,8 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 			},
 		})
 		if err != nil {
-			s.LogRenderErrorAndRedirect(w, r, "available-rooms.page.gohtml", err, "/")
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
 		return
 	}
@@ -352,7 +337,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	index, err := strconv.Atoi(chi.URLParam(r, "index"))
 	if err != nil {
 		sErr := ServerError{
-			Prompt: "unable to convert index parameter to integer",
+			Prompt: "Unable to convert index parameter to integer.",
 			URL:    r.URL.Path,
 			Err:    err,
 		}
@@ -363,11 +348,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		sErr := ServerError{
-			Prompt: "No reservation exists. Please make a reservation.",
-			URL:    r.URL.Path,
-			Err:    errors.New("wrong routing"),
-		}
+		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
@@ -386,11 +367,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		sErr := ServerError{
-			Prompt: "No reservation exists. Please make a reservation.",
-			URL:    r.URL.Path,
-			Err:    errors.New("wrong routing"),
-		}
+		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
@@ -406,7 +383,8 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 		Form: forms.New(nil),
 	})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "make-reservation.page.gohtml", err, "/")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }
 
@@ -414,22 +392,14 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		sErr := ServerError{
-			Prompt: "No reservation exists. Please make a reservation.",
-			URL:    r.URL.Path,
-			Err:    errors.New("wrong routing"),
-		}
+		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "unable to parse form",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
+		sErr := CreateServerError(ErrorParseForm, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
 		return
 	}
@@ -454,7 +424,8 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 			Form: form,
 		})
 		if err != nil {
-			s.LogRenderErrorAndRedirect(w, r, "make-reservation.page.gohtml", err, "/make-reservation")
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
 		}
 		return
 	}
@@ -462,11 +433,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	// parse form's data to reservation
 	err = reservation.Unmarshal(form.Marshal())
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "unable to parse form data into reservation",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
+		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
 		return
 	}
@@ -475,7 +442,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	err = reservation.GenerateReservationCode()
 	if err != nil {
 		sErr := ServerError{
-			Prompt: "unable to generate reservation code",
+			Prompt: "Unable to generate reservation code.",
 			URL:    r.URL.Path,
 			Err:    err,
 		}
@@ -487,7 +454,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	err = s.CreateReservation(&reservation)
 	if err != nil {
 		sErr := ServerError{
-			Prompt: "unable to create reservation",
+			Prompt: "Unable to create reservation.",
 			URL:    r.URL.Path,
 			Err:    err,
 		}
@@ -507,11 +474,7 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	// get reservation data from session
 	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
-		sErr := ServerError{
-			Prompt: "No reservation exists. Please make a reservation.",
-			URL:    r.URL.Path,
-			Err:    errors.New("wrong routing"),
-		}
+		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
@@ -530,6 +493,7 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 		},
 	})
 	if err != nil {
-		s.LogRenderErrorAndRedirect(w, r, "reservation-summary.page.gohtml", err, "/")
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }

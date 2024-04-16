@@ -161,30 +161,6 @@ func TestServer_LogInternalServerError(t *testing.T) {
 	assert.Equal(t, expected, rr.Body.String())
 }
 
-func TestServer_LogRenderErrorAndRedirect(t *testing.T) {
-	// create new server, request and response recorder
-	ts := NewTestServer(t)
-	req := ts.NewRequestWithSession(t, http.MethodGet, "/test_url", nil)
-	rr := httptest.NewRecorder()
-
-	// create an error
-	err := errors.New("test error")
-
-	// build stub
-	ts.BuildLogErrorStub(err)
-
-	// call method
-	ts.LogRenderErrorAndRedirect(rr, req, "filename.page.gohtml", err, "/url")
-
-	// check Status Code and redirect url
-	assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-	assert.Equal(t, "/url", rr.Header().Get("Location"))
-
-	// check session error message
-	errMsg := app.Session.Pop(req.Context(), "error")
-	assert.Equal(t, `unable to render "filename.page.gohtml" template`, errMsg)
-}
-
 func TestServer_ResponseJSON(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		// create new server, request and response recorder
@@ -207,17 +183,6 @@ func TestServer_ResponseJSON(t *testing.T) {
 
 		require.Equal(t, jr, rr.Body.String())
 	})
-}
-
-func TestServerError_Error(t *testing.T) {
-	// create an error
-	err := ServerError{
-		Prompt: "test prompt",
-		URL:    "/test_url",
-		Err:    errors.New("test error"),
-	}
-
-	assert.Equal(t, "\ttest error\n\tPROMPT: test prompt\n\tURL: /test_url\n", err.Error())
 }
 
 func TestServer_SendMail(t *testing.T) {
