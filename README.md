@@ -22,6 +22,7 @@ Built Information:
 - Uses Chi [https://github.com/go-chi/chi] for router
 - Uses SCS [https://github.com/alexedwards/scs] for session management
 - Uses nosurf [https://github.com/justinas/nosurf] for CSRF protection
+- Uses go-simple-mail [github.com/xhit/go-simple-mail] for e-mails
 - Uses testify [https://github.com/stretchr/testify] for testing
 - Uses mockery [https://github.com/vektra/mockery] for mocks
 - Uses  vanillajs-datepicker [https://github.com/mymth/vanillajs-datepicker] for datepicker
