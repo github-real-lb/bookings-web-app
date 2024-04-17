@@ -34,11 +34,11 @@ func TestServer_StartAndStop(t *testing.T) {
 	logChan := make(chan any, LoggerBufferSize)
 	defer close(logChan)
 
-	ts.MockErrorLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
-	ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Times(1)
-	ts.MockInfoLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
-	ts.MockInfoLogger.On("MyLogChannel").Return(logChan).Times(1)
-	ts.MockMailer.On("ListenAndMail", logChan, MailerBufferSize).Times(1)
+	ts.MockErrorLogger.On("ListenAndLog", LoggerBufferSize).Once()
+	ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Once()
+	ts.MockInfoLogger.On("ListenAndLog", LoggerBufferSize).Once()
+	ts.MockInfoLogger.On("MyLogChannel").Return(logChan).Once()
+	ts.MockMailer.On("ListenAndMail", logChan, MailerBufferSize).Once()
 
 	// Use a goroutine to handle Start because it is blocking
 	go ts.Start()
@@ -58,9 +58,9 @@ func TestServer_StartAndStop(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// build stubs for Stop()
-	ts.MockErrorLogger.On("Shutdown").Times(1)
-	ts.MockInfoLogger.On("Shutdown").Times(1)
-	ts.MockMailer.On("Shutdown").Times(1)
+	ts.MockErrorLogger.On("Shutdown").Once()
+	ts.MockInfoLogger.On("Shutdown").Once()
+	ts.MockMailer.On("Shutdown").Once()
 
 	// stop the server
 	ts.Stop()
@@ -94,7 +94,7 @@ func TestServer_LogError(t *testing.T) {
 		defer close(logChan)
 
 		// build stubs
-		ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Times(1)
+		ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Once()
 
 		// create test error
 		err := errors.New("this is a test error")
@@ -214,8 +214,8 @@ func TestServer_SendMail(t *testing.T) {
 		err := errors.New("Test error")
 
 		// build stubs
-		ts.MockMailer.On("MyMailChannel").Return(nil).Times(1)
-		ts.MockMailer.On("SendMail", data).Return(err).Times(1)
+		ts.MockMailer.On("MyMailChannel").Return(nil).Once()
+		ts.MockMailer.On("SendMail", data).Return(err).Once()
 		ts.BuildLogErrorStub(err)
 
 		// log error
@@ -231,7 +231,7 @@ func TestServer_SendMail(t *testing.T) {
 		defer close(mailChan)
 
 		// build stubs
-		ts.MockMailer.On("MyMailChannel").Return(mailChan).Times(1)
+		ts.MockMailer.On("MyMailChannel").Return(mailChan).Once()
 
 		// create test mail data
 		data := mailers.MailData{

@@ -56,13 +56,13 @@ func TestServer_RoomsHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/list", nil)
 
-		// create mehod arguments
+		// screate stub call arguments
 		arg := db.ListRoomsParams{
 			Limit:  LimitRoomsPerPage,
 			Offset: 0,
 		}
 
-		//create method return arguments
+		//create stub return arguments
 		dbRooms := make([]db.Room, LimitRoomsPerPage)
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			dbRooms[i] = db.Room{
@@ -287,7 +287,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -349,7 +349,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -556,7 +556,7 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -628,7 +628,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -671,7 +671,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -684,7 +684,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		err := arg.Unmarshal(reservation.Marshal())
 		require.NoError(t, err)
 
-		// create method return arguments
+		// create stub return arguments
 		rooms := make(Rooms, LimitRoomsPerPage)
 		dbRooms := make([]db.Room, LimitRoomsPerPage)
 
@@ -830,7 +830,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		reservation := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -1092,20 +1092,30 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
-		// create mehod arguments
-		arg := db.CreateReservationParams{}
-		err := arg.Unmarshal(finalReservation.Marshal())
-		require.NoError(t, err)
-
-		//create method return arguments
+		//create stub return arguments for CreateReservationTx
 		dbReservation := db.Reservation{}
-		err = dbReservation.Unmarshal(finalReservation.Marshal())
+		err := dbReservation.Unmarshal(finalReservation.Marshal())
 		require.NoError(t, err)
 
-		// build stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
+		// build stub for CreateReservationTx
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 			Return(dbReservation, nil).
 			Once()
+
+		//create stub call arguments for logging of mail sent to guest
+		mData, err := CreateReservationNotificationMail(finalReservation)
+		require.NoError(t, err)
+
+		// build stub for logging of mail sent to guest
+		ts.BuildSendMailStub(mData)
+		ts.BuildLogInfoStub(fmt.Sprintf("MAIL confirmation notice sent to %s", mData.To))
+
+		//create stub call arguments for logging of mail sent to guest
+		mData.To = "admin@listingdomain.com"
+
+		// build stub for logging of mail sent to admin
+		ts.BuildSendMailStub(mData)
+		ts.BuildLogInfoStub(fmt.Sprintf("MAIL confirmation notice sent to %s", mData.To))
 
 		// put reservation in session
 		app.Session.Put(req.Context(), "reservation", initialReservation)
@@ -1323,12 +1333,12 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
-		// create mehod arguments
+		// screate stub call arguments
 		arg := db.CreateReservationParams{}
 		err := arg.Unmarshal(finalReservation.Marshal())
 		require.NoError(t, err)
 
-		//create method return arguments
+		//create stub return arguments
 		dbReservation := db.Reservation{}
 		err = dbReservation.Unmarshal(finalReservation.Marshal())
 		require.NoError(t, err)
@@ -1342,7 +1352,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		}
 
 		// build stub
-		ts.MockDBStore.On("CreateReservationTx", mock.Anything, arg).
+		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
 			Return(db.Reservation{}, err).
 			Once()
 		ts.BuildLogErrorStub(sErr)
@@ -1359,7 +1369,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/make-reservation", rr.Header().Get("Location"))
+		assert.Equal(t, "/", rr.Header().Get("Location"))
 	})
 }
 

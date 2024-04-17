@@ -9,7 +9,6 @@ import (
 
 	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
-	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -457,23 +456,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	// load reservation data into session
 	app.Session.Put(r.Context(), "reservation", reservation)
 
-	// create reservation notification email
-	data := mailers.MailData{
-		To:      reservation.Email,
-		From:    app.Listing.Email,
-		Subject: fmt.Sprintf("Confirmation Notice for Reservation %s", reservation.Code),
-	}
-
-	data.Content, err = RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{
-		StringMap: map[string]string{
-			"start_date": reservation.StartDate.Format(config.DateLayout),
-			"end_date":   reservation.EndDate.Format(config.DateLayout),
-		},
-		Data: map[string]any{
-			"reservation": reservation,
-		},
-	})
-
+	data, err := CreateReservationNotificationMail(reservation)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to render confirmation email.",

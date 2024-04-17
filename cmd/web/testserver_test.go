@@ -41,22 +41,28 @@ func NewTestServer(t *testing.T) *TestServer {
 	return &ts
 }
 
-// BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error logging
-func (ts *TestServer) BuildLogErrorStub(err error) {
-	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
-	ts.MockErrorLogger.On("Log", err).Times(1)
-}
-
 // BuildLogAnyErrorStub builds the MockLogger Log() stub for testing of any error logging
 func (ts *TestServer) BuildLogAnyErrorStub() {
-	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
-	ts.MockErrorLogger.On("Log", mock.Anything).Times(1)
+	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Once()
+	ts.MockErrorLogger.On("Log", mock.Anything).Once()
+}
+
+// BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error logging
+func (ts *TestServer) BuildLogErrorStub(err error) {
+	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Once()
+	ts.MockErrorLogger.On("Log", err).Once()
 }
 
 // BuildLogAnyInfoStub builds the MockLogger Log() stub for testing of any info logging
 func (ts *TestServer) BuildLogAnyInfoStub() {
-	ts.MockInfoLogger.On("MyLogChannel").Return(nil).Times(1)
-	ts.MockInfoLogger.On("Log", mock.Anything).Times(1)
+	ts.MockInfoLogger.On("MyLogChannel").Return(nil).Once()
+	ts.MockInfoLogger.On("Log", mock.Anything).Once()
+}
+
+// BuildLogAnyInfoStub builds the MockLogger Log() stub for testing of any info logging
+func (ts *TestServer) BuildLogInfoStub(info string) {
+	ts.MockInfoLogger.On("MyLogChannel").Return(nil).Once()
+	ts.MockInfoLogger.On("Log", info).Once()
 }
 
 // NewTestRequest creates a new get request for use in testing
@@ -97,6 +103,6 @@ func (ts *TestServer) ServeRequest(r *http.Request) *httptest.ResponseRecorder {
 
 // BuildSendMailStub builds the MockMailer SendMail() stub for testing
 func (ts *TestServer) BuildSendMailStub(data mailers.MailData) {
-	ts.MockMailer.On("MyMailChannel").Return(nil).Times(1)
-	ts.MockMailer.On("SendMail", data).Return(nil).Times(1)
+	ts.MockMailer.On("MyMailChannel").Return(nil).Once()
+	ts.MockMailer.On("SendMail", data).Return(nil).Once()
 }
