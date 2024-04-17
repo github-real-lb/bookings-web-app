@@ -22,6 +22,7 @@ const (
 type AppConfig struct {
 	*config.AppConfig
 	*config.DBConfig
+	Listing Listing
 }
 
 // app holds the configurations and templates of the app
@@ -43,15 +44,26 @@ func InitializeApp(appMode config.AppMode) error {
 		dbCfgFilename = DBConfigFilename
 	}
 
-	// load application default configurations
+	// load application configurations
 	app.AppConfig, err = config.LoadAppConfig(appCfgFilename, appMode)
 	if err != nil {
 		return err
 	}
 
+	// load database configurations
 	app.DBConfig, err = config.LoadDBConfig(dbCfgFilename)
 	if err != nil {
 		return err
+	}
+
+	// load listing information
+	// TODO: get this information of the database or configuration file.
+	// TODO: data from here should go to the gohtml templates
+	app.Listing = Listing{
+		Name:    "Booking & Reservations Demo",
+		Address: "Any street, Any City, Any Zip Code, Any Country",
+		Phone:   "+000 (000) 0000-0000 ",
+		Email:   "any.email@anydomain.com",
 	}
 
 	// load templates cache to AppConfig

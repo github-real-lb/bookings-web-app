@@ -440,16 +440,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// generate reservation code
-	err = reservation.GenerateReservationCode()
-	if err != nil {
-		sErr := ServerError{
-			Prompt: "Unable to generate reservation code.",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
-		s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
-		return
-	}
+	reservation.GenerateReservationCode()
 
 	// insert reservation into database
 	err = s.CreateReservation(&reservation)
@@ -459,12 +450,48 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 			URL:    r.URL.Path,
 			Err:    err,
 		}
-		s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
 
 	// load reservation data into session
 	app.Session.Put(r.Context(), "reservation", reservation)
+
+	// create reservation notification email
+	data := mailers.MailData{
+		To:      reservation.Email,
+		From:    app.Listing.Email,
+		Subject: fmt.Sprintf("Confirmation Notice for Reservation %s", reservation.Code),
+	}
+
+	data.Content, err = RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{
+		StringMap: map[string]string{
+			"start_date": reservation.StartDate.Format(config.DateLayout),
+			"end_date":   reservation.EndDate.Format(config.DateLayout),
+		},
+		Data: map[string]any{
+			"reservation": reservation,
+		},
+	})
+
+	if err != nil {
+		sErr := ServerError{
+			Prompt: "Unable to render confirmation email.",
+			URL:    r.URL.Path,
+			Err:    err,
+		}
+		s.LogErrorAndRedirect(w, r, sErr, "/reservation-summary")
+		return
+	}
+
+	// send reservation notification email to guest and log
+	s.SendMail(data)
+	s.LogInfo(fmt.Sprintf("MAIL confirmation notice sent to %s", data.To))
+
+	// send reservation notification email to admin and log
+	data.To = "admin@listingdomain.com" // TODO: this should be update based on app admin setting
+	s.SendMail(data)
+	s.LogInfo(fmt.Sprintf("MAIL confirmation notice sent to %s", data.To))
 
 	// redirecting to summery page
 	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
@@ -497,21 +524,4 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
-}
-
-func (s *Server) SendMailHandler(w http.ResponseWriter, r *http.Request) {
-	data := mailers.MailData{
-		To:      "john.do@here.com",
-		From:    "me@here.com",
-		Subject: "Any subject",
-		Content: "",
-	}
-
-	s.LogInfo(fmt.Sprintf("Sending email to %s", data.To))
-
-	err := s.Mailer.SendMail(data)
-	if err != nil {
-		s.LogError(err)
-	}
-	//s.SendMail(data)
 }

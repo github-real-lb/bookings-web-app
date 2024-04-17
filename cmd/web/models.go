@@ -5,13 +5,21 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
+	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
+
+// Listing holds the data of the property for which bookings are made
+type Listing struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Phone   string `json:"phone"`
+	Email   string `json:"email"`
+}
 
 // TemplateData holds data sent from handlers to templates
 type TemplateData struct {
@@ -45,26 +53,43 @@ type Reservation struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-const ReservationCodeLenght = 8
+const ReservationCodeLenght = 7
 
 // GenerateReservationCode generate the reservation code.
-func (r *Reservation) GenerateReservationCode() error {
+func (r *Reservation) GenerateReservationCode() {
 	// concatenating the current time with the reservation last name
-	code := fmt.Sprint(time.Now().Format(config.DateLayout), r.LastName)
+	s := fmt.Sprintf("%v %s %v %v", util.RandomDatetime().Format(time.RFC3339Nano), r.LastName, r.StartDate, r.EndDate)
 
 	// Generate SHA-256 hash of the concatenated string
 	hash := sha256.New()
-	_, err := hash.Write([]byte(code))
-	if err != nil {
-		return err
+	hash.Write([]byte(s))
+
+	// Generate the SHA256 checksum of the data written so far and convert to hexadecimal string
+	hashString := hex.EncodeToString(hash.Sum(nil))
+
+	// build code string
+	code := make([]byte, ReservationCodeLenght)
+	digitsFound := 0
+	digitsMax := ReservationCodeLenght / 2
+	lettersFound := 0
+	lettersMax := ReservationCodeLenght - digitsMax
+
+	for _, v := range []byte(hashString) {
+		if (digitsFound < digitsMax) && (v >= 49 && v <= 57) {
+			// adds digits to code if not enought digits were found and if v is a digit between 1-9
+			code[digitsFound*2+1] = v
+			digitsFound++
+		} else if (lettersFound < lettersMax) && ((v >= 97 && v <= 104) || (v >= 106 && v <= 110) || (v >= 112 && v <= 122)) {
+			// adds letters to code if not enought letters were found check if v is a letter except for 'i' or 'o'
+			code[lettersFound*2] = v - 32
+			lettersFound++
+		}
+
+		if digitsFound+lettersFound == ReservationCodeLenght {
+			r.Code = string(code)
+			return
+		}
 	}
-	hashedBytes := hash.Sum(nil)
-
-	// Convert the hashed bytes to hexadecimal string
-	code = hex.EncodeToString(hashedBytes)[:ReservationCodeLenght]
-	r.Code = strings.ToUpper(code)
-
-	return nil
 }
 
 // Marshal returns the data of r

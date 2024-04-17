@@ -1086,8 +1086,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		// create the final reservation that we are expected to get from the session
 		finalReservation := initialReservation
 		finalReservation.Unmarshal(data)
-		err := finalReservation.GenerateReservationCode()
-		require.NoError(t, err)
+		finalReservation.GenerateReservationCode()
 
 		// create a new test server, a mock database store and a request
 		ts := NewTestServer(t)
@@ -1095,7 +1094,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		// create mehod arguments
 		arg := db.CreateReservationParams{}
-		err = arg.Unmarshal(finalReservation.Marshal())
+		err := arg.Unmarshal(finalReservation.Marshal())
 		require.NoError(t, err)
 
 		//create method return arguments
@@ -1318,8 +1317,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		// create the final reservation that we are expected to get from the session
 		finalReservation := initialReservation
 		finalReservation.Unmarshal(data)
-		err := finalReservation.GenerateReservationCode()
-		require.NoError(t, err)
+		finalReservation.GenerateReservationCode()
 
 		// create a new test server, a mock database store and a request
 		ts := NewTestServer(t)
@@ -1327,7 +1325,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		// create mehod arguments
 		arg := db.CreateReservationParams{}
-		err = arg.Unmarshal(finalReservation.Marshal())
+		err := arg.Unmarshal(finalReservation.Marshal())
 		require.NoError(t, err)
 
 		//create method return arguments

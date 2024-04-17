@@ -89,8 +89,6 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 
 	mux.Get("/reservation-summary", s.ReservationSummaryHandler)
 
-	mux.Get("/send-mail", s.SendMailHandler)
-
 	// setting file server
 	fileServer := http.FileServer(http.Dir(app.StaticPath))
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))

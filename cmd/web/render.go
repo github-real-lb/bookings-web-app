@@ -18,8 +18,70 @@ func AddDefaultData(td *TemplateData, r *http.Request) {
 	td.CSRFToken = nosurf.Token(r)
 }
 
-// RenderTemplate execute a gohtml template from the template cache.
-// It requires to initally assign a template cache using the NewTemplatesCache function.
+// GetTemplatesCache returns a map of all *.gohtml templates from the directory
+// set in AppConfig.TemplatePath
+func GetTemplatesCache() (map[string]*template.Template, error) {
+	tc := map[string]*template.Template{}
+
+	pagePattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
+	mailPattern := fmt.Sprintf("%s/*.mail.gohtml", app.TemplatePath)
+	basePageFilename := fmt.Sprintf("%s/base-page.layout.gohtml", app.TemplatePath)
+	baseMailFilename := fmt.Sprintf("%s/base-mail.layout.gohtml", app.TemplatePath)
+
+	// get the names of all the files matching *.page.gohtml from ./templates
+	pages, err := filepath.Glob(pagePattern)
+	if err != nil {
+		return tc, err
+	}
+
+	// range thruogh all the *.page.html files
+	for _, page := range pages {
+		// extracting the filename itself from the full path
+		name := filepath.Base(page)
+
+		// creating a new template set with the page name, and parsing the gohtml page.
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return tc, err
+		}
+
+		ts, err = ts.ParseFiles(basePageFilename)
+		if err != nil {
+			return tc, err
+		}
+
+		tc[name] = ts
+	}
+
+	// get the names of all the files matching *.page.gohtml from ./templates
+	mailPages, err := filepath.Glob(mailPattern)
+	if err != nil {
+		return tc, err
+	}
+
+	// range thruogh all the *.mail.html files
+	for _, page := range mailPages {
+		// extracting the filename itself from the full path
+		name := filepath.Base(page)
+
+		// creating a new template set with the page name, and parsing the gohtml page.
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return tc, err
+		}
+
+		ts, err = ts.ParseFiles(baseMailFilename)
+		if err != nil {
+			return tc, err
+		}
+
+		tc[name] = ts
+	}
+
+	return tc, nil
+}
+
+// RenderTemplate execute a gohtml template
 func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
 	var tc map[string]*template.Template
 	var err error
@@ -59,38 +121,33 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *T
 	return nil
 }
 
-// GetTemplatesCache returns a map of all *.gohtml templates from the directory
-// set in AppConfig.TemplatePath
-func GetTemplatesCache() (map[string]*template.Template, error) {
-	tc := map[string]*template.Template{}
+// RenderMailTemplate execute an email gohtml template
+func RenderMailTemplate(gohtml string, td *TemplateData) (string, error) {
+	var tc map[string]*template.Template
+	var err error
 
-	pattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
-	baseFilename := fmt.Sprintf("%s/base.layout.gohtml", app.TemplatePath)
+	// UseCache is false in developement mode in order to allow changes of gohtml templates on runtime.
+	if app.UseTemplateCache {
+		tc = app.TemplateCache
+	} else {
+		tc, err = GetTemplatesCache()
+		if err != nil {
+			return "", err
+		}
+	}
 
-	// get the names of all the files matching *.page.gohtml from ./templates
-	pages, err := filepath.Glob(pattern)
+	// checks if gohtml template exist in cache
+	t, ok := tc[gohtml]
+	if !ok {
+		return "", fmt.Errorf("couldn't find %s in template cache", gohtml)
+	}
+
+	// check for error in template execution before passing it to w (http.ResponseWriter)
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, td)
 	if err != nil {
-		return tc, err
+		return "", err
 	}
 
-	// range thruogh all the *.page.html files
-	for _, page := range pages {
-		// extracting the filename itself from the full path
-		name := filepath.Base(page)
-
-		// creating a new template set with the page name, and parsing the gohtml page.
-		ts, err := template.New(name).ParseFiles(page)
-		if err != nil {
-			return tc, err
-		}
-
-		ts, err = ts.ParseFiles(baseFilename)
-		if err != nil {
-			return tc, err
-		}
-
-		tc[name] = ts
-	}
-
-	return tc, nil
+	return buf.String(), nil
 }
