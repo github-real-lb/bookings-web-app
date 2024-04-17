@@ -55,20 +55,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 	}
 
 	// add middleware that logs incoming requests and their responses
-	mux.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			s.LogInfo(fmt.Sprintf("%s %s received from %s", r.Method, r.URL.Path, r.RemoteAddr))
-
-			// Time the execution
-			start := time.Now()
-			next.ServeHTTP(w, r) // Pass control to the next handler
-			duration := time.Since(start)
-
-			// After request is handled
-			s.LogInfo(fmt.Sprintf("%s %s handled in %v", r.Method, r.URL.Path, duration))
-		})
-	})
+	mux.Use(s.LogRequestsAndResponse)
 
 	// setting routes
 	mux.Get("/", s.HomeHandler)

@@ -23,10 +23,10 @@ func AddDefaultData(td *TemplateData, r *http.Request) {
 func GetTemplatesCache() (map[string]*template.Template, error) {
 	tc := map[string]*template.Template{}
 
-	pagePattern := fmt.Sprintf("%s/*.page.gohtml", app.TemplatePath)
-	mailPattern := fmt.Sprintf("%s/*.mail.gohtml", app.TemplatePath)
-	basePageFilename := fmt.Sprintf("%s/base-page.layout.gohtml", app.TemplatePath)
-	baseMailFilename := fmt.Sprintf("%s/base-mail.layout.gohtml", app.TemplatePath)
+	pagePattern := fmt.Sprintf("%s/pages/*.page.gohtml", app.TemplatePath)
+	mailPattern := fmt.Sprintf("%s/mails/*.mail.gohtml", app.TemplatePath)
+	basePageFilename := fmt.Sprintf("%s/pages/base.layout.gohtml", app.TemplatePath)
+	baseMailFilename := fmt.Sprintf("%s/mails/base.layout.gohtml", app.TemplatePath)
 
 	// get the names of all the files matching *.page.gohtml from ./templates
 	pages, err := filepath.Glob(pagePattern)

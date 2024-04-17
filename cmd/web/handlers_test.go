@@ -81,7 +81,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 			}
 		}
 
-		// build stub
+		// build stubs
 		ts.MockDBStore.On("ListRooms", mock.Anything, arg).
 			Return(dbRooms, nil).
 			Once()

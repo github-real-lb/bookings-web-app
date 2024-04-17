@@ -36,6 +36,8 @@ func TestServer_StartAndStop(t *testing.T) {
 
 	ts.MockErrorLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
 	ts.MockErrorLogger.On("MyLogChannel").Return(logChan).Times(1)
+	ts.MockInfoLogger.On("ListenAndLog", LoggerBufferSize).Times(1)
+	ts.MockInfoLogger.On("MyLogChannel").Return(logChan).Times(1)
 	ts.MockMailer.On("ListenAndMail", logChan, MailerBufferSize).Times(1)
 
 	// Use a goroutine to handle Start because it is blocking
@@ -57,6 +59,7 @@ func TestServer_StartAndStop(t *testing.T) {
 
 	// build stubs for Stop()
 	ts.MockErrorLogger.On("Shutdown").Times(1)
+	ts.MockInfoLogger.On("Shutdown").Times(1)
 	ts.MockMailer.On("Shutdown").Times(1)
 
 	// stop the server

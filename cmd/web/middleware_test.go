@@ -16,3 +16,9 @@ func TestNoSurf(t *testing.T) {
 	h := NoSurf(&testHandler{})
 	assert.Implements(t, (*http.Handler)(nil), h)
 }
+
+func TestServer_LogRequestsAndResponse(t *testing.T) {
+	ts := NewTestServer(t)
+	h := ts.LogRequestsAndResponse(&testHandler{})
+	assert.Implements(t, (*http.Handler)(nil), h)
+}

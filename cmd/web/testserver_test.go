@@ -41,16 +41,22 @@ func NewTestServer(t *testing.T) *TestServer {
 	return &ts
 }
 
-// BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error
+// BuildLogErrorStub builds the MockLogger Log() stub for testing of specific error logging
 func (ts *TestServer) BuildLogErrorStub(err error) {
 	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
 	ts.MockErrorLogger.On("Log", err).Times(1)
 }
 
-// BuildLogAnyErrorStub builds the MockLogger Log() stub for testing of any error
+// BuildLogAnyErrorStub builds the MockLogger Log() stub for testing of any error logging
 func (ts *TestServer) BuildLogAnyErrorStub() {
 	ts.MockErrorLogger.On("MyLogChannel").Return(nil).Times(1)
 	ts.MockErrorLogger.On("Log", mock.Anything).Times(1)
+}
+
+// BuildLogAnyInfoStub builds the MockLogger Log() stub for testing of any info logging
+func (ts *TestServer) BuildLogAnyInfoStub() {
+	ts.MockInfoLogger.On("MyLogChannel").Return(nil).Times(1)
+	ts.MockInfoLogger.On("Log", mock.Anything).Times(1)
 }
 
 // NewTestRequest creates a new get request for use in testing
@@ -80,6 +86,9 @@ func (ts *TestServer) NewRequestWithSession(t *testing.T, method string, url str
 
 // ServeRequest execute a ServerHTTP method and return the response recorder
 func (ts *TestServer) ServeRequest(r *http.Request) *httptest.ResponseRecorder {
+	// build request logging stub
+	ts.BuildLogAnyInfoStub()
+
 	rr := httptest.NewRecorder()
 	ts.Router.Handler.ServeHTTP(rr, r)
 

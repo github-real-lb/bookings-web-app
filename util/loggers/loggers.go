@@ -1,13 +1,12 @@
 package loggers
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"runtime/debug"
 	"sync"
-
-	"github.com/github-real-lb/bookings-web-app/util"
 )
 
 type Loggerer interface {
@@ -56,8 +55,8 @@ func (sl *SmartLogger) IsLogDebugStack() bool {
 // LogError logs server side errors.
 func (sl *SmartLogger) Log(v any) {
 	if sl.LogDebugStack {
-		text := util.NewText().AddLine(v).AddLine(string(debug.Stack()))
-		sl.Logger.Println(text.String())
+		s := fmt.Sprintf("%v\n%s", v, string(debug.Stack()))
+		sl.Logger.Println(s)
 	} else {
 		sl.Logger.Println(v)
 	}
