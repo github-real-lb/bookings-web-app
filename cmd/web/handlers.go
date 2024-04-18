@@ -509,3 +509,17 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 	}
 }
+
+func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	err := RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
+		Form: &forms.Form{},
+	})
+	if err != nil {
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/")
+	}
+}
+
+func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
+
+}

@@ -76,6 +76,9 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 
 	mux.Get("/reservation-summary", s.ReservationSummaryHandler)
 
+	mux.Get("/user/login", s.LoginHandler)
+	mux.Post("/user/login", s.PostLoginHandler)
+
 	// setting file server
 	fileServer := http.FileServer(http.Dir(app.StaticPath))
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))

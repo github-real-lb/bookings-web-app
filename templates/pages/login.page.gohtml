@@ -1,0 +1,64 @@
+{{template "base" .}}
+
+{{define "content"}}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10 col-sm-12 col-xs-12">
+                <h1 class="mt-5">Admin Login</h1>
+                <hr>
+
+                <form class="" method="post" action="" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                  
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="email">Email Address</span>
+                        <input  type="email" class='form-control {{with .Form.Errors.Get "email"}} is-invalid {{end}}' 
+                                value='{{.Form.Get "email"}}' name="email" autocomplete="on" placeholder="name@example.com" required>
+                    </div>
+                    {{with .Form.Errors.Get "email"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}}                   
+
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="password">Password</span>
+                        <input  type="password" class='form-control {{with .Form.Errors.Get "password"}} is-invalid {{end}}' 
+                                value='{{.Form.Get "password"}}' name="password" autocomplete="on" required>
+                    </div>
+                    {{with .Form.Errors.Get "password"}}      
+                    <div class="form-text text-danger text-center fst-italic fw-semibold">{{.}}</div>
+                    {{end}} 
+                    
+                    <hr>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </div>
+                </form>                
+            </div>        
+        </div>                      
+    </div>
+{{end}}
+
+{{define "js"}}
+    <script>
+        // Disabling form submissions if there are invalid fields
+        (() => {
+            'use strict'
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll(".needs-validation");
+
+            // Loop over them and prevent submission
+            Array.from(forms).forEach(form => {
+            form.addEventListener("submit", event => {
+                if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                }
+
+                form.classList.add("was-validated")
+            }, false)
+            });
+        })()  
+    </script>
+{{end}}
+
