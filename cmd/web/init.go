@@ -60,7 +60,7 @@ func InitializeApp(appMode config.AppMode) error {
 	// TODO: get this information of the database or configuration file.
 	// TODO: data from here should go to the gohtml templates
 	app.Listing = Listing{
-		Name:    "Booking & Reservations Demo",
+		Name:    "Fort Smythe Booking & Reservations Demo",
 		Address: "Any street, Any City, Any Zip Code, Any Country",
 		Phone:   "+000 (000) 0000-0000 ",
 		Email:   "any.email@anydomain.com",

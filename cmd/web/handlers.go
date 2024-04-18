@@ -284,7 +284,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 			URL:    r.URL.Path,
 			Err:    err,
 		}
-		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
+		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
 
@@ -456,7 +456,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	// load reservation data into session
 	app.Session.Put(r.Context(), "reservation", reservation)
 
-	data, err := CreateReservationNotificationMail(reservation)
+	data, err := CreateReservationConfirmationMail(reservation)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to render confirmation email.",

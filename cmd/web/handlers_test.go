@@ -1102,20 +1102,11 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 			Return(dbReservation, nil).
 			Once()
 
-		//create stub call arguments for logging of mail sent to guest
-		mData, err := CreateReservationNotificationMail(finalReservation)
-		require.NoError(t, err)
-
-		// build stub for logging of mail sent to guest
-		ts.BuildSendMailStub(mData)
-		ts.BuildLogInfoStub(fmt.Sprintf("MAIL confirmation notice sent to %s", mData.To))
-
-		//create stub call arguments for logging of mail sent to guest
-		mData.To = "admin@listingdomain.com"
-
-		// build stub for logging of mail sent to admin
-		ts.BuildSendMailStub(mData)
-		ts.BuildLogInfoStub(fmt.Sprintf("MAIL confirmation notice sent to %s", mData.To))
+		// build stubs for mailing and logging of mail sent to guest and admin
+		ts.BuildSendAnyMailStub()
+		ts.BuildLogAnyInfoStub()
+		ts.BuildSendAnyMailStub()
+		ts.BuildLogAnyInfoStub()
 
 		// put reservation in session
 		app.Session.Put(req.Context(), "reservation", initialReservation)

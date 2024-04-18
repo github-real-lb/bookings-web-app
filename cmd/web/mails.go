@@ -8,10 +8,10 @@ import (
 )
 
 // CreateReservationNotificationMail creates reservation confirmation mail
-func CreateReservationNotificationMail(r Reservation) (mailers.MailData, error) {
+func CreateReservationConfirmationMail(r Reservation) (mailers.MailData, error) {
 	var err error
 
-	// create reservation notification email
+	// create reservation confirmation email
 	data := mailers.MailData{
 		To:      r.Email,
 		From:    app.Listing.Email,

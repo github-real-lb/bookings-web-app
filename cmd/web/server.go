@@ -85,7 +85,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 
 // Start calls the http.Server ListenAndServer method
 func (s *Server) Start() {
-	fmt.Printf("Starting http server on %s ... \n", app.ServerAddress)
+	fmt.Printf("Starting web server on %s ... \n", app.ServerAddress)
 
 	// start listening to errors
 	go s.ErrorLogger.ListenAndLog(LoggerBufferSize)
@@ -113,32 +113,36 @@ func (s *Server) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fmt.Print("Shutting down http server... ")
+	fmt.Print("Shutting down web server.")
 
 	// inform the server to stop accepting new info
 	s.InfoLogger.Shutdown()
+	fmt.Print(".")
 
 	// inform the server to stop accepting new errors
 	s.ErrorLogger.Shutdown()
+	fmt.Print(".")
 
 	// inform the server to stop accepting new mail data
 	s.Mailer.Shutdown()
+	fmt.Print(".")
 
 	// inform the server to stop accepting new requests
 	err := s.Router.Shutdown(ctx)
+	fmt.Print(".")
 
 	// wait for existing connections to finish processing before returning from this function
 	<-ctx.Done()
 
 	if err != nil {
-		fmt.Println("Error")
+		fmt.Println(" Error")
 
 		s.ErrorLogger.Log(ServerError{
 			Prompt: "error shuting down http server",
 			Err:    err,
 		})
 	} else {
-		fmt.Println("Success")
+		fmt.Println(" Success")
 	}
 }
 

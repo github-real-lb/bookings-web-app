@@ -59,10 +59,22 @@ func (ts *TestServer) BuildLogAnyInfoStub() {
 	ts.MockInfoLogger.On("Log", mock.Anything).Once()
 }
 
-// BuildLogAnyInfoStub builds the MockLogger Log() stub for testing of any info logging
+// BuildLogAnyInfoStub builds the MockLogger Log() stub for testing of specific info logging
 func (ts *TestServer) BuildLogInfoStub(info string) {
 	ts.MockInfoLogger.On("MyLogChannel").Return(nil).Once()
 	ts.MockInfoLogger.On("Log", info).Once()
+}
+
+// BuildSendAnyMailStub builds the MockMailer SendMail() stub for testing of any mail sending
+func (ts *TestServer) BuildSendAnyMailStub() {
+	ts.MockMailer.On("MyMailChannel").Return(nil).Once()
+	ts.MockMailer.On("SendMail", mock.Anything).Return(nil).Once()
+}
+
+// BuildSendMailStub builds the MockMailer SendMail() stub for testing of specific mail sending
+func (ts *TestServer) BuildSendMailStub(data mailers.MailData) {
+	ts.MockMailer.On("MyMailChannel").Return(nil).Once()
+	ts.MockMailer.On("SendMail", data).Return(nil).Once()
 }
 
 // NewTestRequest creates a new get request for use in testing
@@ -99,10 +111,4 @@ func (ts *TestServer) ServeRequest(r *http.Request) *httptest.ResponseRecorder {
 	ts.Router.Handler.ServeHTTP(rr, r)
 
 	return rr
-}
-
-// BuildSendMailStub builds the MockMailer SendMail() stub for testing
-func (ts *TestServer) BuildSendMailStub(data mailers.MailData) {
-	ts.MockMailer.On("MyMailChannel").Return(nil).Once()
-	ts.MockMailer.On("SendMail", data).Return(nil).Once()
 }

@@ -65,5 +65,4 @@ func TestCreateServerError(t *testing.T) {
 			assert.Equal(t, test.Err, err.Err)
 		})
 	}
-
 }
