@@ -140,31 +140,6 @@ func TestServer_LogErrorAndRedirect(t *testing.T) {
 	assert.Equal(t, "test prompt", errMsg)
 }
 
-func TestServer_LogInternalServerError(t *testing.T) {
-	// create new server and response recorder
-	ts := NewTestServer(t)
-	rr := httptest.NewRecorder()
-
-	// create an error
-	err := ServerError{
-		Prompt: "test prompt",
-		URL:    "/test_url",
-		Err:    errors.New("test error"),
-	}
-
-	// build stub
-	ts.BuildLogErrorStub(err)
-
-	// call method
-	ts.LogInternalServerError(rr, err)
-
-	expected := fmt.Sprint(http.StatusText(http.StatusInternalServerError), "\n")
-
-	// check Status Code and redirect url
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-	assert.Equal(t, expected, rr.Body.String())
-}
-
 func TestServer_ResponseJSON(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		// create new server, request and response recorder

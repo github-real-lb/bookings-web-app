@@ -20,7 +20,8 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogInternalServerError(w, sErr)
+		s.LogError(sErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 

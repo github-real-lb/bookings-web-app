@@ -8,7 +8,7 @@ import (
 	"github.com/justinas/nosurf"
 )
 
-// NoSurf adds CSRF protection to all POST requests
+// NoSurf is a middleware that adds CSRF protection to all POST requests
 func NoSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 	csrfHandler.SetBaseCookie(http.Cookie{
@@ -21,7 +21,7 @@ func NoSurf(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-// LogRequestsAndResponse is a middleware that is logging requests received and their response time
+// LogRequestsAndResponse is a middleware that logs requests received and their response time
 func (s *Server) LogRequestsAndResponse(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Time the execution

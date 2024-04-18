@@ -146,7 +146,7 @@ func (s *Server) Stop() {
 	}
 }
 
-// LogError logs err using the ErrorLogger
+// LogError logs err using the InfoLogger
 func (s *Server) LogInfo(info string) {
 	var infoChan = s.InfoLogger.MyLogChannel()
 
@@ -179,12 +179,6 @@ func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, err
 	app.Session.Put(r.Context(), "error", err.Prompt)
 	s.LogError(err)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-}
-
-// LogInternalServerError logs err, and sends StatusInternalServerError response
-func (s *Server) LogInternalServerError(w http.ResponseWriter, err error) {
-	s.LogError(err)
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 // ResponseJSON write v to w as json response.
