@@ -167,3 +167,17 @@ func (r *RoomRestriction) Marshal() map[string]string {
 	data["updated_at"] = r.UpdatedAt.Time.Format(config.DateTimeLayout)
 	return data
 }
+
+// Marshal returns data of r
+func (u *User) Marshal() map[string]string {
+	data := make(map[string]string)
+	data["id"] = fmt.Sprint(u.ID)
+	data["first_name"] = u.FirstName
+	data["last_name"] = u.LastName
+	data["email"] = u.Email
+	data["password"] = u.Password
+	data["access_level"] = fmt.Sprint(u.AccessLevel)
+	data["created_at"] = u.CreatedAt.Time.Format(config.DateTimeLayout)
+	data["updated_at"] = u.UpdatedAt.Time.Format(config.DateTimeLayout)
+	return data
+}

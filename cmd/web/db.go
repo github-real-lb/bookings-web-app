@@ -9,6 +9,26 @@ import (
 
 const ContextTimeout = 3 * time.Second
 
+// AuthenticateUser
+func (s *Server) AuthenticateUser(u *User) error {
+	// parse user email and password to query arguments
+	arg := db.AuthenticateUserParams{}
+	arg.Unmarshal(u.Marshal())
+
+	// create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cancel()
+
+	// authenticate user
+	dbUser, err := s.DatabaseStore.AuthenticateUser(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	// unmarhsal user data into User
+	return u.Unmarshal(dbUser.Marshal())
+}
+
 // CheckRoomAvailability checks if room in reservation is available
 func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
 	// parse form's data to query arguments
@@ -41,13 +61,13 @@ func (s *Server) CreateReservation(r *Reservation) error {
 	defer cancel()
 
 	// create new reservation
-	reservation, err := s.DatabaseStore.CreateReservationTx(ctx, arg)
+	dbReservation, err := s.DatabaseStore.CreateReservationTx(ctx, arg)
 	if err != nil {
 		return err
 	}
 
 	// update reservation with new data from database
-	err = r.Unmarshal(reservation.Marshal())
+	err = r.Unmarshal(dbReservation.Marshal())
 
 	return err
 }

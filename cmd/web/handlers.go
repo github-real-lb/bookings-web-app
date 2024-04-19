@@ -510,9 +510,10 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// LoginHandler is the GET "/user/login" page handler
 func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err := RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
-		Form: &forms.Form{},
+		Form: forms.New(nil),
 	})
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
@@ -520,6 +521,43 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PostLoginHandler is the POST "/user/login" page handler
 func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		sErr := CreateServerError(ErrorParseForm, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/user/login")
+		return
+	}
+
+	// create a new form with data and validate the form
+	form := forms.New(r.PostForm)
+	form.TrimSpaces()
+	form.Required("email", "password")
+	form.CheckEmail("email")
+	form.CheckMinLenght("password", 3)
+
+	if !form.Valid() {
+		err = RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
+			Form: form,
+		})
+		if err != nil {
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/user/login")
+		}
+		return
+	}
+
+	// parse form's data to user
+	user := User{}
+	err = user.Unmarshal(form.Marshal())
+	if err != nil {
+		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/user/login")
+		return
+	}
+
+	// authenticate the user
+	err = s.AuthenticateUser(&user)
 
 }

@@ -6,9 +6,17 @@ INSERT INTO users (
 )
 RETURNING *;
 
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE id = $1;
+
 -- name: GetUser :one
 SELECT * FROM users
 WHERE id = $1 LIMIT 1;
+
+-- name: GetUserByEmail :one
+SELECT * FROM users
+WHERE email = $1 LIMIT 1;
 
 -- name: ListUsers :many
 SELECT * FROM users
@@ -24,8 +32,4 @@ UPDATE users
         password = $5, 
         access_level =  $6,
         updated_at = $7
-WHERE id = $1;
-
--- name: DeleteUser :exec
-DELETE FROM users
 WHERE id = $1;

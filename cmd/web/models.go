@@ -383,3 +383,68 @@ type User struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+// Marshal returns the data of r
+func (u *User) Marshal() map[string]string {
+	data := make(map[string]string)
+	data["id"] = fmt.Sprint(u.ID)
+	data["first_name"] = u.FirstName
+	data["last_name"] = u.LastName
+	data["email"] = u.Email
+	data["password"] = u.Password
+	data["access_level"] = fmt.Sprint(u.AccessLevel)
+	data["created_at"] = u.CreatedAt.Format(config.DateTimeLayout)
+	data["updated_at"] = u.UpdatedAt.Format(config.DateTimeLayout)
+	return data
+}
+
+// Unmarshal parse data into u
+func (u *User) Unmarshal(data map[string]string) error {
+	var err error = nil
+
+	if v, ok := data["id"]; ok {
+		u.ID, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["first_name"]; ok {
+		u.FirstName = v
+	}
+
+	if v, ok := data["last_name"]; ok {
+		u.LastName = v
+	}
+
+	if v, ok := data["email"]; ok {
+		u.Email = v
+	}
+
+	if v, ok := data["password"]; ok {
+		u.Password = v
+	}
+
+	if v, ok := data["access_level"]; ok {
+		u.AccessLevel, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["created_at"]; ok {
+		u.CreatedAt, err = time.Parse(config.DateTimeLayout, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	if v, ok := data["updated_at"]; ok {
+		u.UpdatedAt, err = time.Parse(config.DateTimeLayout, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}

@@ -28,6 +28,7 @@ type Querier interface {
 	GetRoom(ctx context.Context, id int64) (Room, error)
 	GetRoomRestriction(ctx context.Context, id int64) (RoomRestriction, error)
 	GetUser(ctx context.Context, id int64) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListAvailableRooms(ctx context.Context, arg ListAvailableRoomsParams) ([]Room, error)
 	ListReservations(ctx context.Context, arg ListReservationsParams) ([]Reservation, error)
 	ListReservationsByRoom(ctx context.Context, arg ListReservationsByRoomParams) ([]Reservation, error)

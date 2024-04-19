@@ -12,6 +12,7 @@ import (
 // DatabaseStore defines all functions to execute sql queries and transactions.
 type DatabaseStore interface {
 	Querier
+	AuthenticateUser(ctx context.Context, arg AuthenticateUserParams) (User, error)
 	CreateReservationTx(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 }
 
