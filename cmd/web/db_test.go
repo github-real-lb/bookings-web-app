@@ -58,6 +58,56 @@ func randomReservation() Reservation {
 	}
 }
 
+// randomUser returns a User struct with random data
+func randomUser() User {
+	randomTime := util.RandomDatetime()
+
+	return User{
+		ID:          util.RandomID(),
+		FirstName:   util.RandomName(),
+		LastName:    util.RandomName(),
+		Email:       util.RandomEmail(),
+		Password:    util.RandomPassword(),
+		AccessLevel: util.RandomInt64(1, 10),
+		CreatedAt:   randomTime,
+		UpdatedAt:   randomTime,
+	}
+}
+
+func TestServer_AuthenticateUser(t *testing.T) {
+	ts := NewTestServer(t)
+
+	// create random user with room data
+	user := randomUser()
+
+	// create stub call arguments
+	arg := db.AuthenticateUserParams{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	// create stub return arguments
+	dbUser := db.User{}
+	err := CopyStructData(user, &dbUser)
+	require.NoError(t, err)
+
+	// build stub
+	ts.MockDBStore.On("AuthenticateUser", mock.Anything, arg).
+		Return(dbUser, nil).
+		Once()
+
+	result, err := ts.AuthenticateUser(user.Email, user.Password)
+	require.NoError(t, err)
+	assert.Equal(t, user.ID, result.ID)
+	assert.Equal(t, user.FirstName, result.FirstName)
+	assert.Equal(t, user.LastName, result.LastName)
+	assert.Equal(t, user.Email, result.Email)
+	assert.Equal(t, user.Password, result.Password)
+	assert.Equal(t, user.AccessLevel, result.AccessLevel)
+	assert.WithinDuration(t, user.CreatedAt, result.CreatedAt, time.Second)
+	assert.WithinDuration(t, user.UpdatedAt, result.UpdatedAt, time.Second)
+}
+
 func TestServer_CheckRoomAvailability(t *testing.T) {
 	tests := []struct {
 		Name      string
@@ -85,17 +135,10 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 	reservation := randomReservation()
 
 	// create ts.MockDBStore mehod arguments
-	arg := db.CheckRoomAvailabilityParams{
-		RoomID: reservation.Room.ID,
-		EndDate: pgtype.Date{
-			Time:  reservation.EndDate,
-			Valid: true,
-		},
-		StartDate: pgtype.Date{
-			Time:  reservation.StartDate,
-			Valid: true,
-		},
-	}
+	arg := db.CheckRoomAvailabilityParams{}
+	arg.RoomID = reservation.Room.ID
+	arg.StartDate.Scan(reservation.StartDate)
+	arg.EndDate.Scan(reservation.EndDate)
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -108,7 +151,7 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 				Once()
 
 			// execute method
-			ok, err := ts.CheckRoomAvailability(reservation)
+			ok, err := ts.CheckRoomAvailability(reservation.Room.ID, reservation.StartDate, reservation.EndDate)
 
 			// testify
 			assert.Equal(t, test.Available, ok)

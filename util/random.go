@@ -82,6 +82,11 @@ func RandomEmail() string {
 	return fmt.Sprint(RandomString(10), "@gmail.com")
 }
 
+// RandomPassword generates a random password of 12 characters long
+func RandomPassword() string {
+	return RandomString(12)
+}
+
 // RandomPhoneNumber generates a random phone number in the format +000 0000-0000
 func RandomPhone() string {
 	return fmt.Sprintf("+%d %d-%d",

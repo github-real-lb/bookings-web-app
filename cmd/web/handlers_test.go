@@ -690,7 +690,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			rooms[i] = randomRoom()
-			err = dbRooms[i].Unmarshal(rooms[i].Marshal())
+			err = CopyStructData(rooms[i], &dbRooms[i])
 			require.NoError(t, err)
 		}
 
@@ -866,7 +866,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		// testify
 		assert.Equal(t, http.StatusTemporaryRedirect, rr.Code)
-		assert.Equal(t, "/available-rooms-search", rr.Header().Get("Location"))
+		assert.Equal(t, "/", rr.Header().Get("Location"))
 	})
 }
 

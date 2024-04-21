@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util"
+	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,25 +53,6 @@ func TestForm_Has(t *testing.T) {
 	assert.True(t, form.Has("WhiteSpaces"))
 }
 
-func TestForm_GetValue(t *testing.T) {
-	tests := []struct {
-		key    string
-		value  string
-		result string
-	}{
-		{"key1", "  Value  ", "Value"},
-		{"key2", "  Value 2  ", "Value 2"},
-		{"key3", "    ", ""},
-		{"key4", "", ""},
-	}
-
-	form := createRandomForm(t)
-	for _, test := range tests {
-		form.Set(test.key, test.value)
-		assert.Equal(t, test.result, form.GetValue(test.key))
-	}
-}
-
 func TestForm_IsEmailValid(t *testing.T) {
 	tests := []struct {
 		key    string
@@ -92,16 +75,56 @@ func TestForm_IsEmailValid(t *testing.T) {
 	}
 }
 
-func TestForm_Marshal(t *testing.T) {
-	form := createRandomForm(t)
+func TestForm_GetValue(t *testing.T) {
+	sString := util.RandomString(12)
+	sInt64 := fmt.Sprint(util.RandomInt64(1, 1000))
+	sTime := util.RandomDate().Format(config.DateTimeLayout)
+	sDate := util.RandomDate().Format(config.DateLayout)
 
-	data := form.Marshal()
-	require.NotEmpty(t, data)
-	assert.Len(t, data, len(form.Values))
+	data := url.Values{}
+	data.Add("key1", sString)
+	data.Add("key2", sInt64)
+	data.Add("key3", sTime)
+	data.Add("key4", sDate)
 
-	for key, value := range data {
-		assert.Equal(t, form.Get(key), value)
-	}
+	f := New(data)
+
+	var err error
+	var s string
+	var i int64
+	var dt time.Time
+
+	// test string
+	err = f.GetValue("key1", &s)
+	require.NoError(t, err)
+	assert.Equal(t, sString, s)
+
+	err = f.GetValue("key1", &i)
+	require.Error(t, err)
+
+	// test int64
+	err = f.GetValue("key2", &i)
+	require.NoError(t, err)
+	assert.Equal(t, sInt64, fmt.Sprint(i))
+
+	err = f.GetValue("key2", &dt)
+	require.Error(t, err)
+
+	// test time
+	err = f.GetValue("key3", &dt)
+	require.NoError(t, err)
+	assert.Equal(t, sTime, dt.Format(config.DateTimeLayout))
+
+	err = f.GetValue("key3", &i)
+	require.Error(t, err)
+
+	// test date
+	err = f.GetValue("key4", &dt)
+	require.NoError(t, err)
+	assert.Equal(t, sDate, dt.Format(config.DateLayout))
+
+	err = f.GetValue("key4", &i)
+	require.Error(t, err)
 }
 
 func TestForm_MinLenght(t *testing.T) {

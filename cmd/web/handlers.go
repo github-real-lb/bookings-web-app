@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -178,22 +179,13 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	}
 
 	// parse form's data to reservation
-	var reservation Reservation
-	reservation.Room = room
-	err = reservation.Unmarshal(form.Marshal())
-	if err != nil {
-		s.ResponseJSON(w, r, SearchRoomAvailabilityResponse{
-			OK:    false,
-			Error: "Internal Error. Please reload and try again.",
-		})
-
-		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
-		s.LogError(sErr)
-		return
-	}
+	rsv := Reservation{}
+	form.GetValue("start_date", &rsv.StartDate)
+	form.GetValue("end_date", &rsv.EndDate)
+	rsv.Room = room
 
 	// check if room is available
-	ok, err = s.CheckRoomAvailability(reservation)
+	ok, err = s.CheckRoomAvailability(rsv.Room.ID, rsv.StartDate, rsv.EndDate)
 	if err != nil {
 		s.ResponseJSON(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
@@ -210,7 +202,7 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 
 	if ok {
 		// load reservation to session data
-		app.Session.Put(r.Context(), "reservation", reservation)
+		app.Session.Put(r.Context(), "reservation", rsv)
 
 		// write the json response
 		s.ResponseJSON(w, r, SearchRoomAvailabilityResponse{OK: true})
@@ -269,16 +261,12 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	}
 
 	// parse form's data to reservation
-	var reservation Reservation
-	err = reservation.Unmarshal(form.Marshal())
-	if err != nil {
-		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
-		return
-	}
+	rsv := Reservation{}
+	form.GetValue("start_date", &rsv.StartDate)
+	form.GetValue("end_date", &rsv.EndDate)
 
 	// get list of available rooms
-	rooms, err := s.ListAvailableRooms(reservation, LimitRoomsPerPage, 0)
+	rooms, err := s.ListAvailableRooms(rsv, LimitRoomsPerPage, 0)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to load available rooms.",
@@ -303,7 +291,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	}
 
 	// load reservation to session data
-	app.Session.Put(r.Context(), "reservation", reservation)
+	app.Session.Put(r.Context(), "reservation", rsv)
 	app.Session.Put(r.Context(), "rooms", rooms)
 
 	// redirecting to choose-room page
@@ -391,7 +379,7 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 
 // PostReservationHandler is the POST "/make-reservation" page handler
 func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Request) {
-	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
+	rsv, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
 		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
@@ -413,14 +401,16 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	form.CheckMinLenght("last_name", 3)
 	form.CheckEmail("email")
 
+	log.Println("TODO: validate phone and notes even if not required")
+
 	if !form.Valid() {
 		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
 			StringMap: map[string]string{
-				"start_date": reservation.StartDate.Format(config.DateLayout),
-				"end_date":   reservation.StartDate.Format(config.DateLayout),
+				"start_date": rsv.StartDate.Format(config.DateLayout),
+				"end_date":   rsv.StartDate.Format(config.DateLayout),
 			},
 			Data: map[string]any{
-				"reservation": reservation,
+				"reservation": rsv,
 			},
 			Form: form,
 		})
@@ -432,18 +422,17 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// parse form's data to reservation
-	err = reservation.Unmarshal(form.Marshal())
-	if err != nil {
-		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
-		return
-	}
+	form.GetValue("first_name", &rsv.FirstName)
+	form.GetValue("last_name", &rsv.LastName)
+	form.GetValue("email", &rsv.Email)
+	form.GetValue("phone", &rsv.Phone)
+	form.GetValue("notes", &rsv.Notes)
 
 	// generate reservation code
-	reservation.GenerateReservationCode()
+	rsv.GenerateReservationCode()
 
 	// insert reservation into database
-	err = s.CreateReservation(&reservation)
+	err = s.CreateReservation(&rsv)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to create reservation.",
@@ -455,9 +444,9 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	// load reservation data into session
-	app.Session.Put(r.Context(), "reservation", reservation)
+	app.Session.Put(r.Context(), "reservation", rsv)
 
-	data, err := CreateReservationConfirmationMail(reservation)
+	data, err := CreateReservationConfirmationMail(rsv)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to render confirmation email.",
@@ -548,16 +537,17 @@ func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// parse form's data to user
-	user := User{}
-	err = user.Unmarshal(form.Marshal())
+	// authenticate the user
+	u, err := s.AuthenticateUser(form.Get("email"), form.Get("password"))
 	if err != nil {
-		sErr := CreateServerError(ErrorUnmarshalForm, r.URL.Path, err)
+		sErr := ServerError{
+			Prompt: "Unable to authenticate user.",
+			URL:    r.URL.Path,
+			Err:    err,
+		}
 		s.LogErrorAndRedirect(w, r, sErr, "/user/login")
-		return
 	}
 
-	// authenticate the user
-	err = s.AuthenticateUser(&user)
+	fmt.Println("User:", u)
 
 }

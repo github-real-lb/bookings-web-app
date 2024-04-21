@@ -91,36 +91,36 @@ func TestReservation_MarshalAndUnmarshal(t *testing.T) {
 	require.WithinDuration(t, r.UpdatedAt, r2.UpdatedAt, time.Second)
 }
 
-func TestRoom_MarshalAndUnmarshal(t *testing.T) {
-	r := Room{
-		ID:            util.RandomID(),
-		Name:          util.RandomName(),
-		Description:   util.RandomNote(),
-		ImageFilename: fmt.Sprint(util.RandomName(), ".png"),
-		CreatedAt:     util.RandomDatetime(),
-		UpdatedAt:     util.RandomDatetime(),
-	}
+// func TestRoom_MarshalAndUnmarshal(t *testing.T) {
+// 	r := Room{
+// 		ID:            util.RandomID(),
+// 		Name:          util.RandomName(),
+// 		Description:   util.RandomNote(),
+// 		ImageFilename: fmt.Sprint(util.RandomName(), ".png"),
+// 		CreatedAt:     util.RandomDatetime(),
+// 		UpdatedAt:     util.RandomDatetime(),
+// 	}
 
-	data := r.Marshal()
-	require.Len(t, data, 6)
-	require.Equal(t, fmt.Sprint(r.ID), data["id"])
-	require.Equal(t, r.Name, data["name"])
-	require.Equal(t, r.Description, data["description"])
-	require.Equal(t, r.ImageFilename, data["image_filename"])
+// 	data := r.Marshal()
+// 	require.Len(t, data, 6)
+// 	require.Equal(t, fmt.Sprint(r.ID), data["id"])
+// 	require.Equal(t, r.Name, data["name"])
+// 	require.Equal(t, r.Description, data["description"])
+// 	require.Equal(t, r.ImageFilename, data["image_filename"])
 
-	require.Equal(t, r.CreatedAt.Format(config.DateTimeLayout), data["created_at"])
-	require.Equal(t, r.UpdatedAt.Format(config.DateTimeLayout), data["updated_at"])
+// 	require.Equal(t, r.CreatedAt.Format(config.DateTimeLayout), data["created_at"])
+// 	require.Equal(t, r.UpdatedAt.Format(config.DateTimeLayout), data["updated_at"])
 
-	r2 := Room{}
-	err := r2.Unmarshal(data)
-	require.NoError(t, err)
-	require.Equal(t, r.ID, r2.ID)
-	require.Equal(t, r.Name, r2.Name)
-	require.Equal(t, r.Description, r2.Description)
-	require.Equal(t, r.ImageFilename, r2.ImageFilename)
-	require.WithinDuration(t, r.CreatedAt, r2.CreatedAt, time.Second)
-	require.WithinDuration(t, r.UpdatedAt, r2.UpdatedAt, time.Second)
-}
+// 	r2 := Room{}
+// 	err := r2.Unmarshal(data)
+// 	require.NoError(t, err)
+// 	require.Equal(t, r.ID, r2.ID)
+// 	require.Equal(t, r.Name, r2.Name)
+// 	require.Equal(t, r.Description, r2.Description)
+// 	require.Equal(t, r.ImageFilename, r2.ImageFilename)
+// 	require.WithinDuration(t, r.CreatedAt, r2.CreatedAt, time.Second)
+// 	require.WithinDuration(t, r.UpdatedAt, r2.UpdatedAt, time.Second)
+// }
 
 func TestRestriction_Scan(t *testing.T) {
 	var r Restriction = RestrictionReservation
@@ -135,48 +135,4 @@ func TestRestriction_Scan(t *testing.T) {
 
 	err = r.Scan(Reservation{})
 	require.ErrorContains(t, err, "unsupported scan type for Restriction:")
-}
-
-func TestRoomRestriction_MarshalAndUnmarshal(t *testing.T) {
-	r := RoomRestriction{
-		ID:            util.RandomID(),
-		StartDate:     util.RandomDate(),
-		EndDate:       util.RandomDate(),
-		RoomID:        util.RandomID(),
-		ReservationID: util.RandomID(),
-		Restriction:   RestrictionOwnerBlock,
-		CreatedAt:     util.RandomDatetime(),
-		UpdatedAt:     util.RandomDatetime(),
-	}
-
-	data := r.Marshal()
-	require.Len(t, data, 8)
-	require.Equal(t, fmt.Sprint(r.ID), data["id"])
-
-	require.Equal(t, r.StartDate.Format(config.DateLayout), data["start_date"])
-	require.Equal(t, r.EndDate.Format(config.DateLayout), data["end_date"])
-
-	require.Equal(t, fmt.Sprint(r.RoomID), data["room_id"])
-	require.Equal(t, fmt.Sprint(r.ReservationID), data["reservation_id"])
-
-	require.Equal(t, r.Restriction, RestrictionOwnerBlock)
-
-	require.Equal(t, r.CreatedAt.Format(config.DateTimeLayout), data["created_at"])
-	require.Equal(t, r.UpdatedAt.Format(config.DateTimeLayout), data["updated_at"])
-
-	r2 := RoomRestriction{}
-	err := r2.Unmarshal(data)
-	require.NoError(t, err)
-	require.Equal(t, r.ID, r2.ID)
-
-	require.Equal(t, r.StartDate, r2.StartDate)
-	require.Equal(t, r.EndDate, r2.EndDate)
-
-	require.Equal(t, r.RoomID, r2.RoomID)
-	require.Equal(t, r.ReservationID, r2.ReservationID)
-
-	require.Equal(t, r.Restriction, r2.Restriction)
-
-	require.WithinDuration(t, r.CreatedAt, r2.CreatedAt, time.Second)
-	require.WithinDuration(t, r.UpdatedAt, r2.UpdatedAt, time.Second)
 }

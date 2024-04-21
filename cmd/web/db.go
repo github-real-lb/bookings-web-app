@@ -10,33 +10,34 @@ import (
 const ContextTimeout = 3 * time.Second
 
 // AuthenticateUser
-func (s *Server) AuthenticateUser(u *User) error {
-	// parse user email and password to query arguments
-	arg := db.AuthenticateUserParams{}
-	arg.Unmarshal(u.Marshal())
+func (s *Server) AuthenticateUser(email, password string) (User, error) {
+	var user = User{}
 
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
 	defer cancel()
 
 	// authenticate user
-	dbUser, err := s.DatabaseStore.AuthenticateUser(ctx, arg)
+	dbUser, err := s.DatabaseStore.AuthenticateUser(ctx, db.AuthenticateUserParams{
+		Email:    email,
+		Password: password,
+	})
 	if err != nil {
-		return err
+		return user, err
 	}
 
-	// unmarhsal user data into User
-	return u.Unmarshal(dbUser.Marshal())
+	err = CopyStructData(dbUser, &user)
+
+	return user, err
 }
 
-// CheckRoomAvailability checks if room in reservation is available
-func (s *Server) CheckRoomAvailability(r Reservation) (bool, error) {
+// CheckRoomAvailability checks if room is available
+func (s *Server) CheckRoomAvailability(roomID int64, startDate, endData time.Time) (bool, error) {
 	// parse form's data to query arguments
-	var arg db.CheckRoomAvailabilityParams
-	err := arg.Unmarshal(r.Marshal())
-	if err != nil {
-		return false, err
-	}
+	arg := db.CheckRoomAvailabilityParams{}
+	arg.RoomID = roomID
+	arg.StartDate.Scan(startDate)
+	arg.EndDate.Scan(endData)
 
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
@@ -94,12 +95,14 @@ func (s *Server) ListAvailableRooms(r Reservation, limit int, offset int) (Rooms
 		return nil, err
 	}
 
-	// unmarhsal list of availabe rooms into Rooms
-	var rooms Rooms
-	for i, v := range dbRooms {
-		rooms = append(rooms, Room{})
+	l := len(dbRooms)
+	if l == 0 {
+		return Rooms{}, nil
+	}
 
-		err = rooms[i].Unmarshal(v.Marshal())
+	rooms := make(Rooms, l)
+	for i := 0; i < l; i++ {
+		err = CopyStructData(dbRooms[i], &rooms[i])
 		if err != nil {
 			return nil, err
 		}
@@ -124,12 +127,14 @@ func (s *Server) ListRooms(limit, offset int) (Rooms, error) {
 		return nil, err
 	}
 
-	// unmarhsal list of availabe rooms into Rooms
-	var rooms Rooms
-	for i, v := range dbRooms {
-		rooms = append(rooms, Room{})
+	l := len(dbRooms)
+	if l == 0 {
+		return Rooms{}, nil
+	}
 
-		err = rooms[i].Unmarshal(v.Marshal())
+	rooms := make(Rooms, l)
+	for i := 0; i < l; i++ {
+		err = CopyStructData(dbRooms[i], &rooms[i])
 		if err != nil {
 			return nil, err
 		}
