@@ -523,7 +523,7 @@ func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
 	form.TrimSpaces()
 	form.Required("email", "password")
 	form.CheckEmail("email")
-	form.CheckMinLenght("password", 3)
+	form.CheckPassword("password")
 
 	if !form.Valid() {
 		err = RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
@@ -531,7 +531,7 @@ func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/user/login")
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
 		return
 	}
@@ -539,14 +539,22 @@ func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// authenticate the user
 	u, err := s.AuthenticateUser(form.Get("email"), form.Get("password"))
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "Unable to authenticate user.",
-			URL:    r.URL.Path,
-			Err:    err,
+		form.Del("password")
+		form.Errors.Add("email", "Wrong Email or Password. Please try again.")
+
+		s.LogInfo(fmt.Sprintf("Unsuccessful login by %s", form.Get("email")))
+
+		err = RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
+			Form: form,
+		})
+		if err != nil {
+			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+			s.LogErrorAndRedirect(w, r, sErr, "/")
 		}
-		s.LogErrorAndRedirect(w, r, sErr, "/user/login")
+
+		return
 	}
 
-	fmt.Println("User:", u)
-
+	s.LogInfo(fmt.Sprintf("Successful login by %s", u.Email))
+	w.Write([]byte("Logged In"))
 }

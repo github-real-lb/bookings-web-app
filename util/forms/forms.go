@@ -64,6 +64,56 @@ func (f *Form) CheckEmail(field string) bool {
 	return true
 }
 
+// CheckPassword checks if the field passed has a valid password, and returns the result.
+// Error message is added to f.Errors.
+func (f *Form) CheckPassword(field string) bool {
+	// set password complexity requirements
+	const (
+		MinLenght    = 8
+		MinDigits    = 2
+		MinLowerCase = 2
+		MinUpperCase = 2
+	)
+
+	pwd := f.Get(field)
+
+	if len(pwd) < MinLenght {
+		f.Errors.Add(field, fmt.Sprintf("Password requires at least %d charachters.", MinLenght))
+		return false
+	}
+
+	digitsFound := 0
+	lowerCaseFound := 0
+	upperCaseFound := 0
+
+	for _, v := range []byte(pwd) {
+		if v >= 48 && v <= 57 { // found a digit between 0-9
+			digitsFound++
+		} else if v >= 65 && v <= 90 { // found a uppercase letter
+			upperCaseFound++
+		} else if v >= 97 && v <= 122 { // found a lowercase letter
+			lowerCaseFound++
+		}
+	}
+
+	if digitsFound < MinDigits {
+		f.Errors.Add(field, fmt.Sprintf("Password requires at least %d digits (0-9).", MinDigits))
+		return false
+	}
+
+	if lowerCaseFound < MinLowerCase {
+		f.Errors.Add(field, fmt.Sprintf("Password requires at least %d lowercase charachters (a-z).", MinLowerCase))
+		return false
+	}
+
+	if upperCaseFound < MinUpperCase {
+		f.Errors.Add(field, fmt.Sprintf("Password requires at least %d uppercase charachters (A-Z).", MinUpperCase))
+		return false
+	}
+
+	return true
+}
+
 // CheckMinLenght checks if the first value of the field passed has minimum characters, and returns the result.
 // Run TrimSpaces before to remove leading and trailing white spaces if needed.
 // Error message is added to f.Errors.

@@ -36,7 +36,6 @@ const (
 	ErrorMissingReservation ErrorType = "MissingReservation"
 	ErrorParseForm          ErrorType = "ParseForm"
 	ErrorRenderTemplate     ErrorType = "RenderTemplate"
-	ErrorUnmarshalForm      ErrorType = "UnmarshalForm"
 )
 
 func CreateServerError(errType ErrorType, url string, err error) ServerError {
@@ -56,12 +55,6 @@ func CreateServerError(errType ErrorType, url string, err error) ServerError {
 	case ErrorRenderTemplate:
 		return ServerError{
 			Prompt: "Unable to render template.",
-			URL:    url,
-			Err:    err,
-		}
-	case ErrorUnmarshalForm:
-		return ServerError{
-			Prompt: "Unable to unmarshal form data.",
 			URL:    url,
 			Err:    err,
 		}

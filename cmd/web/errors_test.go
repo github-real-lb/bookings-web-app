@@ -44,12 +44,6 @@ func TestCreateServerError(t *testing.T) {
 			errors.New("This is a test error"),
 		},
 		{
-			ErrorUnmarshalForm,
-			"Unable to unmarshal form data.",
-			"/test",
-			errors.New("This is a test error"),
-		},
-		{
 			"BadErrorType",
 			"",
 			"",
