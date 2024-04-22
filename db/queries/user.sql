@@ -29,7 +29,12 @@ UPDATE users
   set   first_name = $2,
         last_name = $3, 
         email = $4,
-        password = $5, 
-        access_level =  $6,
-        updated_at = $7
+        access_level =  $5,
+        updated_at = $6
+WHERE id = $1;
+
+-- name: UpdateUserPassword :exec
+UPDATE users
+  set   password = $2,
+        updated_at = $3
 WHERE id = $1;

@@ -39,6 +39,7 @@ type Querier interface {
 	UpdateRoom(ctx context.Context, arg UpdateRoomParams) error
 	UpdateRoomRestriction(ctx context.Context, arg UpdateRoomRestrictionParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)

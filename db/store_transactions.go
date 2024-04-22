@@ -2,39 +2,9 @@ package db
 
 import (
 	"context"
-	"errors"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"golang.org/x/crypto/bcrypt"
 )
-
-type AuthenticateUserParams struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// AuthenticateUser validates the email and password of a user.
-// Returns nil on success, or an error on failure.
-func (store *PostgresDBStore) AuthenticateUser(ctx context.Context, arg AuthenticateUserParams) (User, error) {
-
-	user, err := store.GetUserByEmail(ctx, arg.Email)
-	if err != nil {
-		return user, err
-	}
-
-	if user.ID == 0 {
-		return User{}, errors.New("could not authenticate user")
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(arg.Password))
-	if err == bcrypt.ErrMismatchedHashAndPassword {
-		return User{}, errors.New("could not authenticate user")
-	} else if err != nil {
-		return User{}, err
-	}
-
-	return user, nil
-}
 
 func (store *PostgresDBStore) CreateReservationTx(ctx context.Context, arg CreateReservationParams) (Reservation, error) {
 	var reservation Reservation

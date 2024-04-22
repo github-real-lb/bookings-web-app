@@ -148,9 +148,8 @@ UPDATE users
   set   first_name = $2,
         last_name = $3, 
         email = $4,
-        password = $5, 
-        access_level =  $6,
-        updated_at = $7
+        access_level =  $5,
+        updated_at = $6
 WHERE id = $1
 `
 
@@ -159,7 +158,6 @@ type UpdateUserParams struct {
 	FirstName   string             `json:"first_name"`
 	LastName    string             `json:"last_name"`
 	Email       string             `json:"email"`
-	Password    string             `json:"password"`
 	AccessLevel int64              `json:"access_level"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
@@ -170,9 +168,26 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
-		arg.Password,
 		arg.AccessLevel,
 		arg.UpdatedAt,
 	)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+  set   password = $2,
+        updated_at = $3
+WHERE id = $1
+`
+
+type UpdateUserPasswordParams struct {
+	ID        int64              `json:"id"`
+	Password  string             `json:"password"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.Password, arg.UpdatedAt)
 	return err
 }

@@ -70,6 +70,34 @@ func (_m *MockDBStore) CheckRoomAvailability(ctx context.Context, arg db.CheckRo
 	return r0, r1
 }
 
+// CreateNewUser provides a mock function with given fields: ctx, arg
+func (_m *MockDBStore) CreateNewUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateNewUser")
+	}
+
+	var r0 db.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateUserParams) (db.User, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, db.CreateUserParams) db.User); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(db.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, db.CreateUserParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateReservation provides a mock function with given fields: ctx, arg
 func (_m *MockDBStore) CreateReservation(ctx context.Context, arg db.CreateReservationParams) (db.Reservation, error) {
 	ret := _m.Called(ctx, arg)
@@ -804,6 +832,24 @@ func (_m *MockDBStore) UpdateUser(ctx context.Context, arg db.UpdateUserParams) 
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, db.UpdateUserParams) error); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateUserPassword provides a mock function with given fields: ctx, arg
+func (_m *MockDBStore) UpdateUserPassword(ctx context.Context, arg db.UpdateUserPasswordParams) error {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUserPassword")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, db.UpdateUserPasswordParams) error); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Error(0)

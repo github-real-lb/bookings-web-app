@@ -13,6 +13,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// randomReservation returns a Reservation struct with random data
+func randomReservation() Reservation {
+	rDate := util.RandomDate()
+	rRoom := randomRoom()
+
+	return Reservation{
+		ID:        util.RandomID(),
+		Code:      util.RandomString(ReservationCodeLenght),
+		FirstName: util.RandomName(),
+		LastName:  util.RandomName(),
+		Email:     util.RandomEmail(),
+		Phone:     util.RandomPhone(),
+		StartDate: rDate.Add(time.Hour * 24 * 30),
+		EndDate:   rDate.Add(time.Hour * 24 * 37),
+		RoomID:    rRoom.ID,
+		Notes:     util.RandomNote(),
+		CreatedAt: rDate.Add(time.Hour * 3),
+		UpdatedAt: rDate.Add(time.Hour * 3),
+		Room:      rRoom,
+	}
+}
+
 // randomRoom returns a Room struct with random data
 func randomRoom() Room {
 	randomTime := util.RandomDatetime()
@@ -37,28 +59,6 @@ func randomRooms(n int) Rooms {
 	return rooms
 }
 
-// randomReservation returns a Reservation struct with random data
-func randomReservation() Reservation {
-	rDate := util.RandomDate()
-	rRoom := randomRoom()
-
-	return Reservation{
-		ID:        util.RandomID(),
-		Code:      util.RandomString(ReservationCodeLenght),
-		FirstName: util.RandomName(),
-		LastName:  util.RandomName(),
-		Email:     util.RandomEmail(),
-		Phone:     util.RandomPhone(),
-		StartDate: rDate.Add(time.Hour * 24 * 30),
-		EndDate:   rDate.Add(time.Hour * 24 * 37),
-		RoomID:    rRoom.ID,
-		Notes:     util.RandomNote(),
-		CreatedAt: rDate.Add(time.Hour * 3),
-		UpdatedAt: rDate.Add(time.Hour * 3),
-		Room:      rRoom,
-	}
-}
-
 // randomUser returns a User struct with random data
 func randomUser() User {
 	randomTime := util.RandomDatetime()
@@ -76,6 +76,7 @@ func randomUser() User {
 }
 
 func TestServer_AuthenticateUser(t *testing.T) {
+	// create new test server
 	ts := NewTestServer(t)
 
 	// create random user with room data
@@ -87,26 +88,41 @@ func TestServer_AuthenticateUser(t *testing.T) {
 		Password: user.Password,
 	}
 
-	// create stub return arguments
-	dbUser := db.User{}
-	err := util.CopyDataUsingJSON(user, &dbUser)
-	require.NoError(t, err)
+	t.Run("OK", func(t *testing.T) {
+		// create stub return arguments
+		dbUser := db.User{}
+		err := util.CopyDataUsingJSON(user, &dbUser)
+		require.NoError(t, err)
 
-	// build stub
-	ts.MockDBStore.On("AuthenticateUser", mock.Anything, arg).
-		Return(dbUser, nil).
-		Once()
+		// build stub
+		ts.MockDBStore.On("AuthenticateUser", mock.Anything, arg).
+			Return(dbUser, nil).
+			Once()
 
-	result, err := ts.AuthenticateUser(user.Email, user.Password)
-	require.NoError(t, err)
-	assert.Equal(t, user.ID, result.ID)
-	assert.Equal(t, user.FirstName, result.FirstName)
-	assert.Equal(t, user.LastName, result.LastName)
-	assert.Equal(t, user.Email, result.Email)
-	assert.Equal(t, user.Password, result.Password)
-	assert.Equal(t, user.AccessLevel, result.AccessLevel)
-	assert.WithinDuration(t, user.CreatedAt, result.CreatedAt, time.Second)
-	assert.WithinDuration(t, user.UpdatedAt, result.UpdatedAt, time.Second)
+		result, err := ts.AuthenticateUser(user.Email, user.Password)
+		require.NoError(t, err)
+		assert.Equal(t, user.ID, result.ID)
+		assert.Equal(t, user.FirstName, result.FirstName)
+		assert.Equal(t, user.LastName, result.LastName)
+		assert.Equal(t, user.Email, result.Email)
+		assert.Equal(t, user.Password, result.Password)
+		assert.Equal(t, user.AccessLevel, result.AccessLevel)
+		assert.WithinDuration(t, user.CreatedAt, result.CreatedAt, time.Second)
+		assert.WithinDuration(t, user.UpdatedAt, result.UpdatedAt, time.Second)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		// build stub
+		ts.MockDBStore.On("AuthenticateUser", mock.Anything, arg).
+			Return(db.User{}, errors.New("any error")).
+			Once()
+
+		result, err := ts.AuthenticateUser(user.Email, user.Password)
+		require.Error(t, err)
+		require.Empty(t, result)
+
+	})
+
 }
 
 func TestServer_CheckRoomAvailability(t *testing.T) {

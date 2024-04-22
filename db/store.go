@@ -13,6 +13,7 @@ import (
 type DatabaseStore interface {
 	Querier
 	AuthenticateUser(ctx context.Context, arg AuthenticateUserParams) (User, error)
+	CreateNewUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateReservationTx(ctx context.Context, arg CreateReservationParams) (Reservation, error)
 }
 
