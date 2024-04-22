@@ -10,8 +10,8 @@ import (
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util/loggers"
 	"github.com/github-real-lb/bookings-web-app/util/mailers"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -30,8 +30,10 @@ type Server struct {
 
 // NewServer returns a new Server with Router and Database Store
 func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger loggers.Loggerer, mailer mailers.Mailerer) *Server {
+	// create new router
 	mux := chi.NewRouter()
 
+	// create new server
 	s := Server{
 		Router: &http.Server{
 			Addr:    app.ServerAddress,
@@ -43,7 +45,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 		Mailer:        mailer,
 	}
 
-	// add middleware that recover from panics
+	//add middleware that recover from panics
 	mux.Use(middleware.Recoverer)
 
 	// add middleware that loads and saves and session on every request
@@ -57,7 +59,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 	// add middleware that logs incoming requests and their responses
 	mux.Use(s.LogRequestsAndResponse)
 
-	// setting routes
+	// set up routes
 	mux.Get("/", s.HomeHandler)
 	mux.Get("/about", s.AboutHandler)
 
@@ -78,10 +80,18 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 
 	mux.Get("/user/login", s.LoginHandler)
 	mux.Post("/user/login", s.PostLoginHandler)
+	mux.Get("/user/logout", s.LogoutHandler)
 
-	// setting file server
+	// set up file server
 	fileServer := http.FileServer(http.Dir(app.StaticPath))
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))
+
+	// set up admin routes
+	// mux.Route("/admin", func(mux chi.Router) {
+	// 	mux.Use(Auth)
+
+	// 	mux.Get("/dashboard", s.AdminDashboardHandler)
+	// })
 
 	return &s
 }
@@ -182,6 +192,15 @@ func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, err
 	app.Session.Put(r.Context(), "error", err.Prompt)
 	s.LogError(err)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+// Render executes gohtml template and redirect in case of rendering error
+func (s *Server) Render(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData, redirectURL string) {
+	err := RenderGoTemplate(w, r, gohtml, td)
+	if err != nil {
+		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, redirectURL)
+	}
 }
 
 // ResponseJSON write v to w as json response.

@@ -32,3 +32,16 @@ func (s *Server) LogRequestsAndResponse(next http.Handler) http.Handler {
 		s.LogInfo(fmt.Sprintf("%s %s received from %s and handled in %v", r.Method, r.URL.Path, r.RemoteAddr, duration))
 	})
 }
+
+// Auth is a middleware that restrict access to authenticated users
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !IsAuthenticated(r) {
+			app.Session.Put(r.Context(), "error", "Pleasae log first!")
+			http.Redirect(w, r, "/user/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

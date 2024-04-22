@@ -11,10 +11,9 @@ import (
 
 const ContextTimeout = 3 * time.Second
 
-// AuthenticateUser
-func (s *Server) AuthenticateUser(email, password string) (User, error) {
-	var user = User{}
-
+// AuthenticateUser authenticate the user email and password.
+// If successful, it returns the id of the user and nil, otherwise a 0 and error
+func (s *Server) AuthenticateUser(email, password string) (int64, error) {
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), ContextTimeout)
 	defer cancel()
@@ -25,12 +24,10 @@ func (s *Server) AuthenticateUser(email, password string) (User, error) {
 		Password: password,
 	})
 	if err != nil {
-		return user, err
+		return 0, err
 	}
 
-	err = util.CopyDataUsingJSON(dbUser, &user)
-
-	return user, err
+	return dbUser.ID, err
 }
 
 // CheckRoomAvailability checks if room is available

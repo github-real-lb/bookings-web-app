@@ -101,14 +101,7 @@ func TestServer_AuthenticateUser(t *testing.T) {
 
 		result, err := ts.AuthenticateUser(user.Email, user.Password)
 		require.NoError(t, err)
-		assert.Equal(t, user.ID, result.ID)
-		assert.Equal(t, user.FirstName, result.FirstName)
-		assert.Equal(t, user.LastName, result.LastName)
-		assert.Equal(t, user.Email, result.Email)
-		assert.Equal(t, user.Password, result.Password)
-		assert.Equal(t, user.AccessLevel, result.AccessLevel)
-		assert.WithinDuration(t, user.CreatedAt, result.CreatedAt, time.Second)
-		assert.WithinDuration(t, user.UpdatedAt, result.UpdatedAt, time.Second)
+		assert.Equal(t, user.ID, result)
 	})
 
 	t.Run("Error", func(t *testing.T) {
@@ -119,7 +112,7 @@ func TestServer_AuthenticateUser(t *testing.T) {
 
 		result, err := ts.AuthenticateUser(user.Email, user.Password)
 		require.Error(t, err)
-		require.Empty(t, result)
+		require.Equal(t, int64(0), result)
 
 	})
 

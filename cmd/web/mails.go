@@ -19,11 +19,9 @@ func CreateReservationConfirmationMail(r Reservation) (mailers.MailData, error) 
 	}
 
 	data.Content, err = RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{
-		StringMap: map[string]string{
-			"start_date": r.StartDate.Format(config.DateLayout),
-			"end_date":   r.EndDate.Format(config.DateLayout),
-		},
 		Data: map[string]any{
+			"start_date":  r.StartDate.Format(config.DateLayout),
+			"end_date":    r.EndDate.Format(config.DateLayout),
 			"reservation": r,
 		},
 	})

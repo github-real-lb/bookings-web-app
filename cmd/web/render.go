@@ -12,15 +12,26 @@ import (
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
 func AddDefaultData(td *TemplateData, r *http.Request) {
-	td.Flash = app.Session.PopString(r.Context(), "flash")
-	td.Warning = app.Session.PopString(r.Context(), "warning")
-	td.Error = app.Session.PopString(r.Context(), "error")
+	if app.Session.Exists(r.Context(), "flash") {
+		td.Flash = app.Session.PopString(r.Context(), "flash")
+	}
+
+	if app.Session.Exists(r.Context(), "warning") {
+		td.Warning = app.Session.PopString(r.Context(), "warning")
+	}
+
+	if app.Session.Exists(r.Context(), "error") {
+		td.Error = app.Session.PopString(r.Context(), "error")
+	}
+
+	td.IsAuthenticated = IsAuthenticated(r)
+
 	td.CSRFToken = nosurf.Token(r)
 }
 
 // GetTemplatesCache returns a map of all *.gohtml templates from the directory
 // set in AppConfig.TemplatePath
-func GetTemplatesCache() (map[string]*template.Template, error) {
+func GetGoTemplatesCache() (map[string]*template.Template, error) {
 	tc := map[string]*template.Template{}
 
 	pagePattern := fmt.Sprintf("%s/pages/*.page.gohtml", app.TemplatePath)
@@ -81,8 +92,8 @@ func GetTemplatesCache() (map[string]*template.Template, error) {
 	return tc, nil
 }
 
-// RenderTemplate execute a gohtml template
-func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
+// RenderGoTemplate execute a gohtml template
+func RenderGoTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
 	var tc map[string]*template.Template
 	var err error
 
@@ -90,7 +101,7 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *T
 	if app.UseTemplateCache {
 		tc = app.TemplateCache
 	} else {
-		tc, err = GetTemplatesCache()
+		tc, err = GetGoTemplatesCache()
 		if err != nil {
 			return err
 		}
@@ -130,7 +141,7 @@ func RenderMailTemplate(gohtml string, td *TemplateData) (string, error) {
 	if app.UseTemplateCache {
 		tc = app.TemplateCache
 	} else {
-		tc, err = GetTemplatesCache()
+		tc, err = GetGoTemplatesCache()
 		if err != nil {
 			return "", err
 		}

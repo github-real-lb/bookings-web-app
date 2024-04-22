@@ -18,7 +18,7 @@ const LimitRoomsPerPage = 10
 
 // HomeHandler is the GET "/" home page handler
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "home.page.gohtml", &TemplateData{})
+	err := RenderGoTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogError(sErr)
@@ -28,11 +28,7 @@ func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 // AboutHandler is the GET "/about" page handler
 func (s *Server) AboutHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "about.page.gohtml", &TemplateData{})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "about.page.gohtml", &TemplateData{}, "/")
 }
 
 // RoomsHandler is the GET "/rooms/{index}" page handler
@@ -53,15 +49,10 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 
 		app.Session.Put(r.Context(), "rooms", rooms)
 
-		err = RenderTemplate(w, r, "rooms.page.gohtml", &TemplateData{
-			Data: map[string]any{
-				"rooms": rooms,
-			},
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "rooms.page.gohtml",
+			&TemplateData{
+				Data: map[string]any{"rooms": rooms},
+			}, "/")
 		return
 	}
 
@@ -109,15 +100,10 @@ func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := RenderTemplate(w, r, "room.page.gohtml", &TemplateData{
-		Data: map[string]any{
-			"room": room,
-		},
-	})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/rooms/list")
-	}
+	s.Render(w, r, "room.page.gohtml",
+		&TemplateData{
+			Data: map[string]any{"room": room},
+		}, "/rooms/list")
 }
 
 // define the type of json response
@@ -217,22 +203,13 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 
 // ContactHandler is the GET "/contact" page handler
 func (s *Server) ContactHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "contact.page.gohtml", &TemplateData{})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "contact.page.gohtml", &TemplateData{}, "/")
 }
 
 // AvailabilityHandler is the GET "/available-rooms-search" page handler
 func (s *Server) AvailableRoomsSearchHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
-		Form: forms.New(nil),
-	})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "available-rooms-search.page.gohtml",
+		&TemplateData{Form: forms.New(nil)}, "/")
 }
 
 // PostAvailability is the POST "/available-rooms-search" page handler
@@ -251,13 +228,8 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	form.CheckDateRange("start_date", "end_date")
 
 	if !form.Valid() {
-		err = RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
-			Form: form,
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "available-rooms-search.page.gohtml",
+			&TemplateData{Form: form}, "/")
 		return
 	}
 
@@ -281,13 +253,8 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	// check if there are rooms available
 	if len(rooms) == 0 {
 		app.Session.Put(r.Context(), "warning", "No rooms are available. Please try different dates.")
-		err = RenderTemplate(w, r, "available-rooms-search.page.gohtml", &TemplateData{
-			Form: form,
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "available-rooms-search.page.gohtml",
+			&TemplateData{Form: form}, "/")
 		return
 	}
 
@@ -311,15 +278,10 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 
 	// if no id paramater exists in URL render a new page
 	if chi.URLParam(r, "index") == "available" {
-		err := RenderTemplate(w, r, "available-rooms.page.gohtml", &TemplateData{
-			Data: map[string]any{
-				"rooms": rooms,
-			},
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "available-rooms.page.gohtml",
+			&TemplateData{
+				Data: map[string]any{"rooms": rooms},
+			}, "/")
 		return
 	}
 
@@ -360,20 +322,15 @@ func (s *Server) MakeReservationHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
-		StringMap: map[string]string{
-			"start_date": reservation.StartDate.Format(config.DateLayout),
-			"end_date":   reservation.EndDate.Format(config.DateLayout),
-		},
-		Data: map[string]any{
-			"reservation": reservation,
-		},
-		Form: forms.New(nil),
-	})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "make-reservation.page.gohtml",
+		&TemplateData{
+			Data: map[string]any{
+				"start_date":  reservation.StartDate.Format(config.DateLayout),
+				"end_date":    reservation.EndDate.Format(config.DateLayout),
+				"reservation": reservation,
+			},
+			Form: forms.New(nil),
+		}, "/")
 }
 
 // PostReservationHandler is the POST "/make-reservation" page handler
@@ -403,20 +360,15 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	log.Println("TODO: validate phone and notes even if not required")
 
 	if !form.Valid() {
-		err = RenderTemplate(w, r, "make-reservation.page.gohtml", &TemplateData{
-			StringMap: map[string]string{
-				"start_date": rsv.StartDate.Format(config.DateLayout),
-				"end_date":   rsv.StartDate.Format(config.DateLayout),
-			},
-			Data: map[string]any{
-				"reservation": rsv,
-			},
-			Form: form,
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/make-reservation")
-		}
+		s.Render(w, r, "make-reservation.page.gohtml",
+			&TemplateData{
+				Data: map[string]any{
+					"start_date":  rsv.StartDate.Format(config.DateLayout),
+					"end_date":    rsv.StartDate.Format(config.DateLayout),
+					"reservation": rsv,
+				},
+				Form: form,
+			}, "/make-reservation")
 		return
 	}
 
@@ -483,34 +435,26 @@ func (s *Server) ReservationSummaryHandler(w http.ResponseWriter, r *http.Reques
 	app.Session.Remove(r.Context(), "reservation")
 	app.Session.Remove(r.Context(), "rooms")
 
-	err := RenderTemplate(w, r, "reservation-summary.page.gohtml", &TemplateData{
-		StringMap: map[string]string{
-			"start_date": reservation.StartDate.Format(config.DateLayout),
-			"end_date":   reservation.EndDate.Format(config.DateLayout),
-		},
-		Data: map[string]any{
-			"reservation": reservation,
-		},
-	})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "reservation-summary.page.gohtml",
+		&TemplateData{
+			Data: map[string]any{
+				"start_date":  reservation.StartDate.Format(config.DateLayout),
+				"end_date":    reservation.EndDate.Format(config.DateLayout),
+				"reservation": reservation,
+			},
+		}, "/")
 }
 
 // LoginHandler is the GET "/user/login" page handler
 func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
-		Form: forms.New(nil),
-	})
-	if err != nil {
-		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-		s.LogErrorAndRedirect(w, r, sErr, "/")
-	}
+	s.Render(w, r, "login.page.gohtml",
+		&TemplateData{Form: forms.New(nil)}, "/")
 }
 
 // PostLoginHandler is the POST "/user/login" page handler
 func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
+	app.Session.RenewToken(r.Context())
+
 	err := r.ParseForm()
 	if err != nil {
 		sErr := CreateServerError(ErrorParseForm, r.URL.Path, err)
@@ -526,35 +470,46 @@ func (s *Server) PostLoginHandler(w http.ResponseWriter, r *http.Request) {
 	form.CheckPassword("password")
 
 	if !form.Valid() {
-		err = RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
-			Form: form,
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "login.page.gohtml",
+			&TemplateData{Form: form}, "/")
 		return
 	}
 
 	// authenticate the user
-	u, err := s.AuthenticateUser(form.Get("email"), form.Get("password"))
+	userID, err := s.AuthenticateUser(form.Get("email"), form.Get("password"))
 	if err != nil {
 		form.Del("password")
-		form.Errors.Add("email", "Wrong Email or Password. Please try again.")
 
-		s.LogInfo(fmt.Sprintf("Unsuccessful login by %s", form.Get("email")))
+		s.LogInfo(fmt.Sprintf("Unsuccessful login with email %s", form.Get("email")))
 
-		err = RenderTemplate(w, r, "login.page.gohtml", &TemplateData{
-			Form: form,
-		})
-		if err != nil {
-			sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
-			s.LogErrorAndRedirect(w, r, sErr, "/")
-		}
+		s.Render(w, r, "login.page.gohtml",
+			&TemplateData{
+				Form:  forms.New(nil),
+				Error: "Invalid Email and/or Password. Please try again.",
+			}, "/")
 
 		return
 	}
 
-	s.LogInfo(fmt.Sprintf("Successful login by %s", u.Email))
-	w.Write([]byte("Logged In"))
+	app.Session.Put(r.Context(), "user_id", userID)
+	app.Session.Put(r.Context(), "flash", "Successfully logged in!")
+	s.LogInfo(fmt.Sprintf("Successful login by user %d", userID))
+
+	// redirecting to home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// LogoutHandler is the GET "/user/logout" page handler
+func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	app.Session.Destroy(r.Context())
+	app.Session.RenewToken(r.Context())
+	app.Session.Put(r.Context(), "flash", "Successfully logged out!")
+
+	// redirecting to login page
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+}
+
+// AdminDashboardHandler is the GET "/user/admin" page handler
+func (s *Server) AdminDashboardHandler(w http.ResponseWriter, r *http.Request) {
+	s.Render(w, r, "admin-dashboard.page.gohtml", &TemplateData{}, "/")
 }

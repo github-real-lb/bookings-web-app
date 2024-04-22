@@ -67,7 +67,7 @@ func InitializeApp(appMode config.AppMode) error {
 	}
 
 	// load templates cache to AppConfig
-	app.TemplateCache, err = GetTemplatesCache()
+	app.TemplateCache, err = GetGoTemplatesCache()
 	if err != nil {
 		return errors.New(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
 	}

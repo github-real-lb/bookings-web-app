@@ -22,17 +22,15 @@ type Listing struct {
 // TemplateData holds data sent from handlers to templates
 type TemplateData struct {
 	CSRFToken string // Security Token to prevent Cross Site Request Forgery (CSRF)
-
 	Data      map[string]any
-	FloatMap  map[string]float32
-	IntMap    map[string]int
-	StringMap map[string]string
 
 	Form *forms.Form
 
-	Flash   string // Flash message
-	Warning string // Warning message
+	IsAuthenticated bool // Determines if a user is logged in
+
 	Error   string // Error message
+	Flash   string // Success message
+	Warning string // Warning message
 }
 
 // Reservation holds reservation data
