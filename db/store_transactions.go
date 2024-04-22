@@ -13,12 +13,6 @@ type AuthenticateUserParams struct {
 	Password string `json:"password"`
 }
 
-// Unmarshal parse data into p
-func (p *AuthenticateUserParams) Unmarshal(data map[string]string) {
-	p.Email = data["email"]
-	p.Password = data["password"]
-}
-
 // AuthenticateUser validates the email and password of a user.
 // Returns nil on success, or an error on failure.
 func (store *PostgresDBStore) AuthenticateUser(ctx context.Context, arg AuthenticateUserParams) (User, error) {

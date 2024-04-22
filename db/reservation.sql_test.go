@@ -2,63 +2,30 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/util"
-	"github.com/github-real-lb/bookings-web-app/util/config"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const ReservationCodeLenght = 14
 
-func randomReservationData(t *testing.T) map[string]string {
-
-	startDate := util.RandomDatetime()
-	room := createRandomRoom(t)
-
-	data := make(map[string]string)
-	data["code"] = util.RandomString(ReservationCodeLenght)
-	data["first_name"] = util.RandomName()
-	data["last_name"] = util.RandomName()
-	data["email"] = util.RandomEmail()
-	data["phone"] = util.RandomPhone()
-	data["start_date"] = startDate.Format(config.DateLayout)
-	data["end_date"] = startDate.Add(time.Hour * 24 * 7).Format(config.DateLayout)
-	data["room_id"] = fmt.Sprint(room.ID)
-	data["notes"] = util.RandomNote()
-	return data
-}
-
 func createRandomReservation(t *testing.T, room Room) Reservation {
-	startDate := util.RandomDate()
+	rDate := util.RandomDate()
 
 	arg := CreateReservationParams{
 		Code:      util.RandomString(ReservationCodeLenght),
 		FirstName: util.RandomName(),
 		LastName:  util.RandomName(),
 		Email:     util.RandomEmail(),
-		Phone: pgtype.Text{
-			String: util.RandomPhone(),
-			Valid:  true,
-		},
-		StartDate: pgtype.Date{
-			Time:  startDate,
-			Valid: true,
-		},
-		EndDate: pgtype.Date{
-			Time:  startDate.Add(time.Hour * 24 * 7),
-			Valid: true,
-		},
-		RoomID: room.ID,
-		Notes: pgtype.Text{
-			String: util.RandomNote(),
-			Valid:  true,
-		},
+		RoomID:    room.ID,
 	}
+	arg.Phone.Scan(util.RandomPhone())
+	arg.StartDate.Scan(rDate)
+	arg.EndDate.Scan(rDate.Add(time.Hour * 24 * 7))
+	arg.Notes.Scan(util.RandomNote())
 
 	r, err := testStore.CreateReservation(context.Background(), arg)
 	require.NoError(t, err)
@@ -78,30 +45,17 @@ func createRandomReservation(t *testing.T, room Room) Reservation {
 }
 
 func createRandomWeekReservation(t *testing.T, room Room, startDate time.Time) Reservation {
-
 	arg := CreateReservationParams{
 		Code:      util.RandomString(ReservationCodeLenght),
 		FirstName: util.RandomName(),
 		LastName:  util.RandomName(),
 		Email:     util.RandomEmail(),
-		Phone: pgtype.Text{
-			String: util.RandomPhone(),
-			Valid:  true,
-		},
-		StartDate: pgtype.Date{
-			Time:  startDate,
-			Valid: true,
-		},
-		EndDate: pgtype.Date{
-			Time:  startDate.Add(time.Hour * 24 * 7),
-			Valid: true,
-		},
-		RoomID: room.ID,
-		Notes: pgtype.Text{
-			String: util.RandomNote(),
-			Valid:  true,
-		},
+		RoomID:    room.ID,
 	}
+	arg.Phone.Scan(util.RandomPhone())
+	arg.StartDate.Scan(startDate)
+	arg.EndDate.Scan(startDate.Add(time.Hour * 24 * 7))
+	arg.Notes.Scan(util.RandomNote())
 
 	r, err := testStore.CreateReservation(context.Background(), arg)
 	require.NoError(t, err)

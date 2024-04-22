@@ -182,10 +182,11 @@ func (s *Server) PostSearchRoomAvailabilityHandler(w http.ResponseWriter, r *htt
 	rsv := Reservation{}
 	form.GetValue("start_date", &rsv.StartDate)
 	form.GetValue("end_date", &rsv.EndDate)
+	rsv.RoomID = room.ID
 	rsv.Room = room
 
 	// check if room is available
-	ok, err = s.CheckRoomAvailability(rsv.Room.ID, rsv.StartDate, rsv.EndDate)
+	ok, err = s.CheckRoomAvailability(rsv.RoomID, rsv.StartDate, rsv.EndDate)
 	if err != nil {
 		s.ResponseJSON(w, r, SearchRoomAvailabilityResponse{
 			OK:    false,
@@ -266,7 +267,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 	form.GetValue("end_date", &rsv.EndDate)
 
 	// get list of available rooms
-	rooms, err := s.ListAvailableRooms(rsv, LimitRoomsPerPage, 0)
+	rooms, err := s.ListAvailableRooms(LimitRoomsPerPage, 0, rsv.StartDate, rsv.EndDate)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to load available rooms.",
@@ -335,18 +336,16 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// get reservation data from session
-	reservation, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
+	rsv, ok := app.Session.Get(r.Context(), "reservation").(Reservation)
 	if !ok {
 		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/")
 		return
 	}
 
-	reservation.Room.ID = rooms[index].ID
-	reservation.Room.Name = rooms[index].Name
-	reservation.Room.Description = rooms[index].Description
-	reservation.Room.ImageFilename = rooms[index].ImageFilename
-	app.Session.Put(r.Context(), "reservation", reservation)
+	rsv.RoomID = rooms[index].ID
+	rsv.Room = rooms[index]
+	app.Session.Put(r.Context(), "reservation", rsv)
 
 	// redirecting to make-reservation page
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
@@ -432,7 +431,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	rsv.GenerateReservationCode()
 
 	// insert reservation into database
-	err = s.CreateReservation(&rsv)
+	err = s.CreateReservation(rsv)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to create reservation.",

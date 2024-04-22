@@ -19,6 +19,10 @@ type Form struct {
 
 // New initialized a form struct
 func New(data url.Values) *Form {
+	if data == nil {
+		data = make(url.Values)
+	}
+
 	return &Form{
 		Values: data,
 		Errors: make(Errors),

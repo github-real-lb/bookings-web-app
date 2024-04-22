@@ -14,6 +14,7 @@ import (
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/config"
+	"github.com/github-real-lb/bookings-web-app/util/forms"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -288,14 +289,15 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
+			RoomID:    room.ID,
 			Room:      room,
 		}
 
 		arg := db.CheckRoomAvailabilityParams{}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := CopyStructDataToDBStruct(rsv, &arg)
 		require.NoError(t, err)
 
 		//build stub
@@ -317,10 +319,11 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		jsonResponseUnmarshal(t, rr, &resp)
 
 		// check reservation is in session and removes it
-		sessionReservation := app.Session.Pop(req.Context(), "reservation").(Reservation)
-		require.WithinDuration(t, reservation.StartDate, sessionReservation.StartDate, time.Second)
-		require.WithinDuration(t, reservation.EndDate, sessionReservation.EndDate, time.Second)
-		require.Equal(t, reservation.Room, sessionReservation.Room)
+		scsRsv := app.Session.Pop(req.Context(), "reservation").(Reservation)
+		require.WithinDuration(t, rsv.StartDate, scsRsv.StartDate, time.Second)
+		require.WithinDuration(t, rsv.EndDate, scsRsv.EndDate, time.Second)
+		require.Equal(t, rsv.RoomID, scsRsv.RoomID)
+		require.Equal(t, rsv.Room, scsRsv.Room)
 
 		// testify
 		assert.Equal(t, http.StatusOK, rr.Code)
@@ -350,14 +353,15 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
+			RoomID:    room.ID,
 			Room:      room,
 		}
 
 		arg := db.CheckRoomAvailabilityParams{}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := CopyStructDataToDBStruct(rsv, &arg)
 		require.NoError(t, err)
 
 		//build stub
@@ -461,40 +465,40 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 
 		// create test cases for the form validation
 		tests := []struct {
-			Name string
-			Data map[string]string
+			Name   string
+			Values url.Values
 		}{
 			{
 				Name: "Missing Start Date",
-				Data: map[string]string{
-					"end_date": endDate,
+				Values: url.Values{
+					"end_date": {endDate},
 				},
 			},
 			{
 				Name: "Missing End Date",
-				Data: map[string]string{
-					"start_date": startDate,
+				Values: url.Values{
+					"start_date": {startDate},
 				},
 			},
 			{
 				Name: "End Date Prior to Start Date",
-				Data: map[string]string{
-					"start_date": startDate,
-					"end_date":   endDate,
+				Values: url.Values{
+					"start_date": {startDate},
+					"end_date":   {endDate},
 				},
 			},
 			{
 				Name: "Invalid Start Date",
-				Data: map[string]string{
-					"start_date": util.RandomName(),
-					"end_date":   endDate,
+				Values: url.Values{
+					"start_date": {util.RandomName()},
+					"end_date":   {endDate},
 				},
 			},
 			{
 				Name: "Invalid End Date",
-				Data: map[string]string{
-					"start_date": startDate,
-					"end_date":   util.RandomName(),
+				Values: url.Values{
+					"start_date": {startDate},
+					"end_date":   {util.RandomName()},
 				},
 			},
 		}
@@ -502,14 +506,10 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		// create a new test server and a mock database store
 		ts := NewTestServer(t)
 
-		for _, v := range tests {
-			t.Run(v.Name, func(t *testing.T) {
+		for _, test := range tests {
+			t.Run(test.Name, func(t *testing.T) {
 				// create the body of the request
-				values := url.Values{}
-				for key, value := range v.Data {
-					values.Set(key, value)
-				}
-				body := strings.NewReader(values.Encode())
+				body := strings.NewReader(test.Values.Encode())
 
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
@@ -557,14 +557,15 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/search-room-availability", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
+			RoomID:    room.ID,
 			Room:      room,
 		}
 
 		arg := db.CheckRoomAvailabilityParams{}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := CopyStructDataToDBStruct(rsv, &arg)
 		require.NoError(t, err)
 
 		err = errors.New("any error")
@@ -629,7 +630,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
 		}
@@ -638,7 +639,9 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			Limit:  LimitRoomsPerPage,
 			Offset: 0,
 		}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := arg.StartDate.Scan(rsv.StartDate)
+		require.NoError(t, err)
+		err = arg.EndDate.Scan(rsv.EndDate)
 		require.NoError(t, err)
 
 		//build stub
@@ -672,7 +675,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
 		}
@@ -681,7 +684,9 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			Limit:  LimitRoomsPerPage,
 			Offset: 0,
 		}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := arg.StartDate.Scan(rsv.StartDate)
+		require.NoError(t, err)
+		err = arg.EndDate.Scan(rsv.EndDate)
 		require.NoError(t, err)
 
 		// create stub return arguments
@@ -690,7 +695,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			rooms[i] = randomRoom()
-			err = CopyStructData(rooms[i], &dbRooms[i])
+			err = CopyStructDataToDBStruct(rooms[i], &dbRooms[i])
 			require.NoError(t, err)
 		}
 
@@ -703,9 +708,9 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// get reservation from session and remove it
-		sessionReservation := app.Session.Pop(req.Context(), "reservation").(Reservation)
-		assert.WithinDuration(t, reservation.StartDate, sessionReservation.StartDate, time.Second)
-		assert.WithinDuration(t, reservation.EndDate, sessionReservation.EndDate, time.Second)
+		sessionRsv := app.Session.Pop(req.Context(), "reservation").(Reservation)
+		assert.WithinDuration(t, rsv.StartDate, sessionRsv.StartDate, time.Second)
+		assert.WithinDuration(t, rsv.EndDate, sessionRsv.EndDate, time.Second)
 
 		// get rooms from session and remove it
 		sessionRooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
@@ -751,40 +756,40 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		// create test cases for the form validation
 		tests := []struct {
-			Name string
-			Data map[string]string
+			Name   string
+			Values url.Values
 		}{
 			{
 				Name: "Missing Start Date",
-				Data: map[string]string{
-					"end_date": endDate,
+				Values: url.Values{
+					"end_date": {endDate},
 				},
 			},
 			{
 				Name: "Missing End Date",
-				Data: map[string]string{
-					"start_date": startDate,
+				Values: url.Values{
+					"start_date": {startDate},
 				},
 			},
 			{
 				Name: "End Date Prior to Start Date",
-				Data: map[string]string{
-					"start_date": startDate,
-					"end_date":   endDate,
+				Values: url.Values{
+					"start_date": {startDate},
+					"end_date":   {endDate},
 				},
 			},
 			{
 				Name: "Invalid Start Date",
-				Data: map[string]string{
-					"start_date": util.RandomName(),
-					"end_date":   endDate,
+				Values: url.Values{
+					"start_date": {util.RandomName()},
+					"end_date":   {endDate},
 				},
 			},
 			{
 				Name: "Invalid End Date",
-				Data: map[string]string{
-					"start_date": startDate,
-					"end_date":   util.RandomName(),
+				Values: url.Values{
+					"start_date": {startDate},
+					"end_date":   {util.RandomName()},
 				},
 			},
 		}
@@ -792,14 +797,10 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		// create a new test server and a mock database store
 		ts := NewTestServer(t)
 
-		for _, v := range tests {
-			t.Run(v.Name, func(t *testing.T) {
+		for _, test := range tests {
+			t.Run(test.Name, func(t *testing.T) {
 				// create the body of the request
-				values := url.Values{}
-				for key, value := range v.Data {
-					values.Set(key, value)
-				}
-				body := strings.NewReader(values.Encode())
+				body := strings.NewReader(test.Values.Encode())
 
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
@@ -831,7 +832,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/available-rooms-search", body)
 
 		// screate stub call arguments
-		reservation := Reservation{
+		rsv := Reservation{
 			StartDate: startDate,
 			EndDate:   endDate,
 		}
@@ -840,7 +841,9 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 			Limit:  LimitRoomsPerPage,
 			Offset: 0,
 		}
-		err := arg.Unmarshal(reservation.Marshal())
+		err := arg.StartDate.Scan(rsv.StartDate)
+		require.NoError(t, err)
+		err = arg.EndDate.Scan(rsv.EndDate)
 		require.NoError(t, err)
 
 		err = errors.New("any error")
@@ -983,7 +986,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 		rooms := randomRooms(N)
 
 		// create random reservation
-		reservation := randomReservation()
+		rsv := randomReservation()
 
 		// create a new test server, and a new request
 		ts := NewTestServer(t)
@@ -991,7 +994,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 
 		// put rooms and reservation in session
 		app.Session.Put(req.Context(), "rooms", rooms)
-		app.Session.Put(req.Context(), "reservation", reservation)
+		app.Session.Put(req.Context(), "reservation", rsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
@@ -1014,15 +1017,18 @@ func TestServer_MakeReservationHandler(t *testing.T) {
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/make-reservation", nil)
 
 		// create reservation with random data to put in the session
-		date := util.RandomDate()
-		reservation := Reservation{
-			StartDate: date,
-			EndDate:   date.Add(time.Hour * 24 * 7),
-			Room:      randomRoom(),
+		rDate := util.RandomDate()
+		rRoom := randomRoom()
+
+		rsv := Reservation{
+			StartDate: rDate,
+			EndDate:   rDate.Add(time.Hour * 24 * 7),
+			RoomID:    rRoom.ID,
+			Room:      rRoom,
 		}
 
 		// put reservation in session
-		app.Session.Put(req.Context(), "reservation", reservation)
+		app.Session.Put(req.Context(), "reservation", rsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
@@ -1058,48 +1064,51 @@ func TestServer_MakeReservationHandler(t *testing.T) {
 }
 
 func TestServer_PostMakeReservationHandler(t *testing.T) {
+	// create initial reservation with random data to put in the session
+	rDate := util.RandomDate()
+	rRoom := randomRoom()
+
+	initRsv := Reservation{
+		StartDate: rDate,
+		EndDate:   rDate.Add(time.Hour * 24 * 7),
+		RoomID:    rRoom.ID,
+		Room:      rRoom,
+	}
+
 	// Test OK: reservation exists in session and form is valid
 	t.Run("OK", func(t *testing.T) {
-		// create initial reservation with random data to put in the session
-		date := util.RandomDate()
-		initialReservation := Reservation{
-			StartDate: date,
-			EndDate:   date.Add(time.Hour * 24 * 7),
-			Room:      randomRoom(),
-		}
+		// create the final reservation that we are expected to get from the session
+		finalRsv := initRsv
+		finalRsv.FirstName = util.RandomName()
+		finalRsv.LastName = util.RandomName()
+		finalRsv.Email = util.RandomEmail()
+		finalRsv.Phone = util.RandomPhone()
+		finalRsv.Notes = util.RandomNote()
+		finalRsv.GenerateReservationCode()
 
-		// create data for the body of the request
-		data := make(map[string]string)
-		data["first_name"] = util.RandomName()
-		data["last_name"] = util.RandomName()
-		data["email"] = util.RandomEmail()
-		data["phone"] = util.RandomPhone()
-		data["notes"] = util.RandomNote()
+		// create form data for the body of the request
+		f := forms.New(nil)
+		f.Add("first_name", finalRsv.FirstName)
+		f.Add("last_name", finalRsv.LastName)
+		f.Add("email", finalRsv.Email)
+		f.Add("phone", finalRsv.Phone)
+		f.Add("notes", finalRsv.Notes)
 
 		// create the body of the request
-		values := url.Values{}
-		for key, value := range data {
-			values.Set(key, value)
-		}
-		body := strings.NewReader(values.Encode())
-
-		// create the final reservation that we are expected to get from the session
-		finalReservation := initialReservation
-		finalReservation.Unmarshal(data)
-		finalReservation.GenerateReservationCode()
+		body := strings.NewReader(f.Encode())
 
 		// create a new test server, a mock database store and a request
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 		//create stub return arguments for CreateReservationTx
-		dbReservation := db.Reservation{}
-		err := dbReservation.Unmarshal(finalReservation.Marshal())
+		dbRsv := db.Reservation{}
+		err := CopyStructDataToDBStruct(finalRsv, &dbRsv)
 		require.NoError(t, err)
 
 		// build stub for CreateReservationTx
 		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).
-			Return(dbReservation, nil).
+			Return(dbRsv, nil).
 			Once()
 
 		// build stubs for mailing and logging of mail sent to guest and admin
@@ -1109,22 +1118,23 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		ts.BuildLogAnyInfoStub()
 
 		// put reservation in session
-		app.Session.Put(req.Context(), "reservation", initialReservation)
+		app.Session.Put(req.Context(), "reservation", initRsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
 
 		// check reservation is in session and removes it
-		sessionReservation := app.Session.Pop(req.Context(), "reservation").(Reservation)
-		require.NotEmpty(t, sessionReservation.Code)
-		require.Equal(t, finalReservation.FirstName, sessionReservation.FirstName)
-		require.Equal(t, finalReservation.LastName, sessionReservation.LastName)
-		require.Equal(t, finalReservation.Email, sessionReservation.Email)
-		require.Equal(t, finalReservation.Phone, sessionReservation.Phone)
-		require.WithinDuration(t, finalReservation.StartDate, sessionReservation.StartDate, time.Second)
-		require.WithinDuration(t, finalReservation.EndDate, sessionReservation.EndDate, time.Second)
-		require.Equal(t, finalReservation.Room, sessionReservation.Room)
-		require.Equal(t, finalReservation.Notes, sessionReservation.Notes)
+		scsRsv := app.Session.Pop(req.Context(), "reservation").(Reservation)
+		require.NotEmpty(t, scsRsv.Code)
+		require.Equal(t, finalRsv.FirstName, scsRsv.FirstName)
+		require.Equal(t, finalRsv.LastName, scsRsv.LastName)
+		require.Equal(t, finalRsv.Email, scsRsv.Email)
+		require.Equal(t, finalRsv.Phone, scsRsv.Phone)
+		require.WithinDuration(t, finalRsv.StartDate, scsRsv.StartDate, time.Second)
+		require.WithinDuration(t, finalRsv.EndDate, scsRsv.EndDate, time.Second)
+		require.Equal(t, finalRsv.RoomID, scsRsv.RoomID)
+		require.Equal(t, finalRsv.Notes, scsRsv.Notes)
+		require.Equal(t, finalRsv.Room, scsRsv.Room)
 
 		// testify
 		assert.Equal(t, http.StatusSeeOther, rr.Code)
@@ -1156,14 +1166,6 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 	// Test Error: invalid body data cause error in ParseForm()
 	t.Run("Invalid Body Data", func(t *testing.T) {
-		// create initial reservation with random data to put in the session
-		date := util.RandomDate()
-		initialReservation := Reservation{
-			StartDate: date,
-			EndDate:   date.Add(time.Hour * 24 * 7),
-			Room:      randomRoom(),
-		}
-
 		// creating invalid body
 		body := strings.NewReader("%^")
 
@@ -1175,7 +1177,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		ts.BuildLogAnyErrorStub()
 
 		// put reservation in session
-		app.Session.Put(req.Context(), "reservation", initialReservation)
+		app.Session.Put(req.Context(), "reservation", initRsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
@@ -1196,66 +1198,58 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 	// Test Error: reservation exists in session but form is invalid
 	t.Run("Invalid Form", func(t *testing.T) {
-		// create initial reservation with random data to put in the session
-		date := util.RandomDate()
-		initialReservation := Reservation{
-			StartDate: date,
-			EndDate:   date.Add(time.Hour * 24 * 7),
-			Room:      randomRoom(),
-		}
-
 		firstName := util.RandomName()
 		lastName := util.RandomName()
 		email := util.RandomEmail()
 
 		// create test cases for the form validation
 		tests := []struct {
-			Name string
-			Data map[string]string
+			Name   string
+			Values url.Values
 		}{
 			{
 				Name: "Missing First Name",
-				Data: map[string]string{
-					"last_name": lastName,
-					"email":     email,
+				Values: url.Values{
+					"last_name": {lastName},
+					"email":     {email},
 				},
 			},
 			{
 				Name: "Missing Last Name",
-				Data: map[string]string{
-					"first_name": firstName,
-					"email":      email,
+				Values: url.Values{
+					"first_name": {firstName},
+					"email":      {email},
 				},
 			},
 			{
 				Name: "Missing Email",
-				Data: map[string]string{
-					"first_name": firstName,
-					"last_name":  lastName,
+				Values: url.Values{
+					"first_name": {firstName},
+					"last_name":  {lastName},
 				},
 			},
 			{
 				Name: "Invalid First Name",
-				Data: map[string]string{
-					"first_name": "x",
-					"last_name":  lastName,
-					"email":      email,
+				Values: url.Values{
+					"first_name": {"x"},
+					"last_name":  {lastName},
+					"email":      {email},
 				},
 			},
 			{
 				Name: "Invalid Last Name",
-				Data: map[string]string{
-					"first_name": firstName,
-					"last_name":  "x",
-					"email":      email,
+				Values: url.Values{
+					"first_name": {firstName},
+					"last_name":  {"x"},
+					"email":      {email},
 				},
 			},
 			{
 				Name: "Invalid Email",
-				Data: map[string]string{
-					"first_name": firstName,
-					"last_name":  lastName,
-					"email":      "x",
+				Values: url.Values{
+					"first_name": {firstName},
+					"last_name":  {lastName},
+					"email":      {"x"},
 				},
 			},
 		}
@@ -1263,20 +1257,16 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		// create a new test server and a mock database store
 		ts := NewTestServer(t)
 
-		for _, v := range tests {
-			t.Run(v.Name, func(t *testing.T) {
+		for _, test := range tests {
+			t.Run(test.Name, func(t *testing.T) {
 				// create the body of the request
-				values := url.Values{}
-				for key, value := range v.Data {
-					values.Set(key, value)
-				}
-				body := strings.NewReader(values.Encode())
+				body := strings.NewReader(test.Values.Encode())
 
 				// create a new request
 				req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
 				// put reservation in session
-				app.Session.Put(req.Context(), "reservation", initialReservation)
+				app.Session.Put(req.Context(), "reservation", initRsv)
 
 				//  server the request
 				rr := ts.ServeRequest(req)
@@ -1292,49 +1282,32 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 	// Test Error: reservation exists and form it valid, but internal server error on CreateReservation
 	t.Run("Internal Server Error", func(t *testing.T) {
-		// create initial reservation with random data to put in the session
-		date := util.RandomDate()
-		initialReservation := Reservation{
-			StartDate: date,
-			EndDate:   date.Add(time.Hour * 24 * 7),
-			Room:      randomRoom(),
-		}
+		// create the final reservation that we are expected to get from the session
+		finalRsv := initRsv
+		finalRsv.FirstName = util.RandomName()
+		finalRsv.LastName = util.RandomName()
+		finalRsv.Email = util.RandomEmail()
+		finalRsv.Phone = util.RandomPhone()
+		finalRsv.Notes = util.RandomNote()
+		finalRsv.GenerateReservationCode()
 
-		// create data for the body of the request
-		data := make(map[string]string)
-		data["first_name"] = util.RandomName()
-		data["last_name"] = util.RandomName()
-		data["email"] = util.RandomEmail()
-		data["phone"] = util.RandomPhone()
-		data["notes"] = util.RandomNote()
+		// create form data for the body of the request
+		f := forms.New(nil)
+		f.Add("first_name", finalRsv.FirstName)
+		f.Add("last_name", finalRsv.LastName)
+		f.Add("email", finalRsv.Email)
+		f.Add("phone", finalRsv.Phone)
+		f.Add("notes", finalRsv.Notes)
 
 		// create the body of the request
-		values := url.Values{}
-		for key, value := range data {
-			values.Set(key, value)
-		}
-		body := strings.NewReader(values.Encode())
-
-		// create the final reservation that we are expected to get from the session
-		finalReservation := initialReservation
-		finalReservation.Unmarshal(data)
-		finalReservation.GenerateReservationCode()
+		body := strings.NewReader(f.Encode())
 
 		// create a new test server, a mock database store and a request
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodPost, "/make-reservation", body)
 
-		// screate stub call arguments
-		arg := db.CreateReservationParams{}
-		err := arg.Unmarshal(finalReservation.Marshal())
-		require.NoError(t, err)
-
-		//create stub return arguments
-		dbReservation := db.Reservation{}
-		err = dbReservation.Unmarshal(finalReservation.Marshal())
-		require.NoError(t, err)
-
-		err = errors.New("this is a test error")
+		// create stub return arguments
+		err := errors.New("this is a test error")
 
 		sErr := ServerError{
 			Prompt: "Unable to create reservation.",
@@ -1349,7 +1322,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 		ts.BuildLogErrorStub(sErr)
 
 		// put reservation in session
-		app.Session.Put(req.Context(), "reservation", initialReservation)
+		app.Session.Put(req.Context(), "reservation", initRsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)
@@ -1394,7 +1367,7 @@ func TestServer_ReservationSummaryHandler(t *testing.T) {
 		rooms := randomRooms(N)
 
 		// create random reservation
-		reservation := randomReservation()
+		rsv := randomReservation()
 
 		// create a new test server, and a new request
 		ts := NewTestServer(t)
@@ -1402,7 +1375,7 @@ func TestServer_ReservationSummaryHandler(t *testing.T) {
 
 		// put rooms and reservation in session
 		app.Session.Put(req.Context(), "rooms", rooms)
-		app.Session.Put(req.Context(), "reservation", reservation)
+		app.Session.Put(req.Context(), "reservation", rsv)
 
 		//  server the request
 		rr := ts.ServeRequest(req)

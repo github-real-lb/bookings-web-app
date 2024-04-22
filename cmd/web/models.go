@@ -4,12 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
 	"github.com/github-real-lb/bookings-web-app/util"
-	"github.com/github-real-lb/bookings-web-app/util/config"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
 
@@ -47,10 +45,11 @@ type Reservation struct {
 	Phone     string    `json:"phone"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
-	Room      Room      `json:"room"`
+	RoomID    int64     `json:"room_id"`
 	Notes     string    `json:"notes"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Room      Room      `json:"room"`
 }
 
 const ReservationCodeLenght = 7
@@ -90,112 +89,6 @@ func (r *Reservation) GenerateReservationCode() {
 			return
 		}
 	}
-}
-
-// Marshal returns the data of r
-func (r *Reservation) Marshal() map[string]string {
-	data := make(map[string]string)
-	data["id"] = fmt.Sprint(r.ID)
-	data["code"] = r.Code
-	data["first_name"] = r.FirstName
-	data["last_name"] = r.LastName
-	data["email"] = r.Email
-	data["phone"] = r.Phone
-	data["start_date"] = r.StartDate.Format(config.DateLayout)
-	data["end_date"] = r.EndDate.Format(config.DateLayout)
-	data["room_id"] = fmt.Sprint(r.Room.ID)
-	data["room_name"] = fmt.Sprint(r.Room.Name)
-	data["room_description"] = fmt.Sprint(r.Room.Description)
-	data["room_image_filename"] = fmt.Sprint(r.Room.ImageFilename)
-	data["notes"] = r.Notes
-	data["created_at"] = r.CreatedAt.Format(config.DateTimeLayout)
-	data["updated_at"] = r.UpdatedAt.Format(config.DateTimeLayout)
-	return data
-}
-
-// Unmarshal parse data into r
-func (r *Reservation) Unmarshal(data map[string]string) error {
-	var err error = nil
-
-	if v, ok := data["id"]; ok {
-		r.ID, err = strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return err
-		}
-	}
-
-	if v, ok := data["code"]; ok {
-		r.Code = v
-	}
-
-	if v, ok := data["first_name"]; ok {
-		r.FirstName = v
-	}
-
-	if v, ok := data["last_name"]; ok {
-		r.LastName = v
-	}
-
-	if v, ok := data["email"]; ok {
-		r.Email = v
-	}
-
-	if v, ok := data["phone"]; ok {
-		r.Phone = v
-	}
-
-	if v, ok := data["start_date"]; ok {
-		r.StartDate, err = time.Parse(config.DateLayout, v[:10])
-		if err != nil {
-			return err
-		}
-	}
-
-	if v, ok := data["end_date"]; ok {
-		r.EndDate, err = time.Parse(config.DateLayout, v[:10])
-		if err != nil {
-			return err
-		}
-	}
-
-	if v, ok := data["room_id"]; ok {
-		r.Room.ID, err = strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return err
-		}
-	}
-
-	if v, ok := data["room_name"]; ok {
-		r.Room.Name = v
-	}
-
-	if v, ok := data["room_description"]; ok {
-		r.Room.Description = v
-	}
-
-	if v, ok := data["room_image_filename"]; ok {
-		r.Room.ImageFilename = v
-	}
-
-	if v, ok := data["notes"]; ok {
-		r.Notes = v
-	}
-
-	if v, ok := data["created_at"]; ok {
-		r.CreatedAt, err = time.Parse(config.DateTimeLayout, v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if v, ok := data["updated_at"]; ok {
-		r.UpdatedAt, err = time.Parse(config.DateTimeLayout, v)
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
 }
 
 // Room holds hotel room data

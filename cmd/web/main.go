@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -51,16 +50,4 @@ func main() {
 
 	// stop server
 	server.Stop()
-}
-
-// CopyStructData uses json package to marshal src to json, and unmarshal json to target.
-// target needs to be a pointer to a struct
-func CopyStructData(src any, target any) error {
-	data, err := json.Marshal(src)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(data, target)
-	return err
 }

@@ -34,7 +34,15 @@ func createRandomForm(t *testing.T) *Form {
 }
 
 func TestNew(t *testing.T) {
-	createRandomForm(t)
+	t.Run("OK Values", func(t *testing.T) {
+		createRandomForm(t)
+	})
+
+	t.Run("OK Nil", func(t *testing.T) {
+		f := New(nil)
+		require.Empty(t, f.Values)
+		require.Empty(t, f.Errors)
+	})
 }
 
 func TestForm_Has(t *testing.T) {
