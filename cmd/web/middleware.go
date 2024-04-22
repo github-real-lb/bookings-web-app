@@ -37,7 +37,7 @@ func (s *Server) LogRequestsAndResponse(next http.Handler) http.Handler {
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !IsAuthenticated(r) {
-			app.Session.Put(r.Context(), "error", "Pleasae log first!")
+			app.Session.Put(r.Context(), "error", "Access denied. Pleasae log in first!")
 			http.Redirect(w, r, "/user/login", http.StatusTemporaryRedirect)
 			return
 		}

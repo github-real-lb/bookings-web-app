@@ -87,11 +87,11 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 	mux.Handle("/"+app.StaticDirectoryName+"/*", http.StripPrefix("/"+app.StaticDirectoryName, fileServer))
 
 	// set up admin routes
-	// mux.Route("/admin", func(mux chi.Router) {
-	// 	mux.Use(Auth)
+	mux.Route("/admin", func(mux chi.Router) {
+		mux.Use(Auth)
 
-	// 	mux.Get("/dashboard", s.AdminDashboardHandler)
-	// })
+		mux.Get("/dashboard", s.AdminDashboardHandler)
+	})
 
 	return &s
 }
