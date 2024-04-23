@@ -12,20 +12,28 @@ import (
 
 // AddDefaultData is used to add default data relevant to all gohtml templates
 func AddDefaultData(td *TemplateData, r *http.Request) {
+	// add green success messages
 	if app.Session.Exists(r.Context(), "flash") {
 		td.Flash = app.Session.PopString(r.Context(), "flash")
 	}
 
+	// add yellow warning messages
 	if app.Session.Exists(r.Context(), "warning") {
 		td.Warning = app.Session.PopString(r.Context(), "warning")
 	}
 
+	// add red error messages
 	if app.Session.Exists(r.Context(), "error") {
 		td.Error = app.Session.PopString(r.Context(), "error")
 	}
 
+	// set login status
 	td.IsAuthenticated = IsAuthenticated(r)
 
+	// add listing information
+	td.Listing = app.Listing
+
+	// add CSRF Token
 	td.CSRFToken = nosurf.Token(r)
 }
 

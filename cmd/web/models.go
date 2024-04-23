@@ -13,6 +13,7 @@ import (
 
 // Listing holds the data of the property for which bookings are made
 type Listing struct {
+	Title   string `json:"title"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Phone   string `json:"phone"`
@@ -27,6 +28,8 @@ type TemplateData struct {
 	Form *forms.Form
 
 	IsAuthenticated bool // Determines if a user is logged in
+
+	Listing Listing // Data of the property
 
 	Error   string // Error message
 	Flash   string // Success message
