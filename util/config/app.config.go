@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"os"
 	"strings"
 
@@ -43,18 +42,11 @@ type AppConfig struct {
 	// StaticPath is the full path of the static folder.
 	StaticPath string
 
-	// TemplateCache is a memory cache for all gohtml pages.
-	TemplateCache map[string]*template.Template
-
 	// TemplateDirectoryName is the name of the templates folder.
 	TemplateDirectoryName string `json:"template_directory_name"`
 
 	// TemplatePath is the full path of the templates folder.
 	TemplatePath string
-
-	// UseTemplateCache determines if gohtml pages load from cache (true) or disk (false).
-	// use false in developement mode.
-	UseTemplateCache bool
 }
 
 // LoadConfig returns the Application Configuration.
@@ -78,9 +70,6 @@ func LoadAppConfig(filename string, mode AppMode) (*AppConfig, error) {
 	app.TemplateDirectoryName = strings.TrimSuffix(app.TemplateDirectoryName, "/")
 	app.StaticDirectoryName = strings.TrimSuffix(app.StaticDirectoryName, "/")
 
-	// initializing loggers
-	//app.Logger = loggers.NewAppLogger(os.Stdout)
-
 	// setting application mode
 	switch mode {
 	case ProductionMode:
@@ -103,7 +92,6 @@ func (app *AppConfig) SetProductionMode() {
 	app.Mode = ProductionMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathProduction, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathProduction, app.StaticDirectoryName)
-	app.UseTemplateCache = true
 }
 
 // SetDevelopementMode sets the Application Configuration for development.
@@ -111,7 +99,6 @@ func (app *AppConfig) SetDevelopementMode() {
 	app.Mode = DevelopmentMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathProduction, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathProduction, app.StaticDirectoryName)
-	app.UseTemplateCache = false
 }
 
 // SetTestingMode sets the Application Configuration for testing.
@@ -119,7 +106,6 @@ func (app *AppConfig) SetTestingMode() {
 	app.Mode = TestingMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathTesting, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathTesting, app.StaticDirectoryName)
-	app.UseTemplateCache = false
 }
 
 // SetDebuggingMode sets the Application Configuration for debugging with the IDE debugger.
@@ -127,7 +113,6 @@ func (app *AppConfig) SetDebuggingMode() {
 	app.Mode = DebuggingMode
 	app.TemplatePath = fmt.Sprint(app.StartingPathTesting, app.TemplateDirectoryName)
 	app.StaticPath = fmt.Sprint(app.StartingPathTesting, app.StaticDirectoryName)
-	app.UseTemplateCache = false
 }
 
 // InProductionMode returns true if the Application Configuration is set for production.

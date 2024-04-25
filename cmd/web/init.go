@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/gob"
-	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -65,12 +63,6 @@ func InitializeApp(appMode config.AppMode) error {
 		Address: "Any street, Any City, Any Zip Code, Any Country",
 		Phone:   "+000 (000) 0000-0000 ",
 		Email:   "any.email@anydomain.com",
-	}
-
-	// load templates cache to AppConfig
-	app.TemplateCache, err = GetGoTemplatesCache()
-	if err != nil {
-		return errors.New(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
 	}
 
 	// setting up session manager

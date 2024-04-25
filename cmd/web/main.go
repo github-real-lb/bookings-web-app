@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -35,8 +36,17 @@ func main() {
 	// create a new mailer
 	mailer := mailers.NewSmartMailer()
 
-	// create a new server and start it in a separate goroutine
+	// create a new server
 	server := NewServer(dbStore, errLogger, infoLogger, mailer)
+
+	// load templates cache
+	server.Renderer.UseTemplateCache = !app.InDevelopmentMode()
+	err = server.Renderer.LoadGoTemplates()
+	if err != nil {
+		log.Fatal(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
+	}
+
+	// start server in a separate goroutine
 	go server.Start()
 
 	// Listen for interrupt signal (Ctrl+C) or SIGTERM

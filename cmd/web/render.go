@@ -6,12 +6,142 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strings"
 
+	"github.com/github-real-lb/bookings-web-app/util/config"
+	"github.com/github-real-lb/bookings-web-app/util/mailers"
 	"github.com/justinas/nosurf"
 )
 
+type TemplateRenderer struct {
+	Templates        map[string]*template.Template
+	TemplatesPath    string // Path for templates main folder
+	UseTemplateCache bool   // Use the loaded templates if true or reload from disk if false
+}
+
+// NewTemplateRenderer creates a new empty instance of TemplateRenderer.
+// path is the templates directory path
+func NewTemplateRenderer(path string) *TemplateRenderer {
+	path = strings.TrimSuffix(path, "/")
+	return &TemplateRenderer{
+		Templates:        make(map[string]*template.Template),
+		TemplatesPath:    path,
+		UseTemplateCache: false,
+	}
+}
+
+// LoadGoTemplates loads all templates from TemplateCache.Path
+func (tr *TemplateRenderer) LoadGoTemplates() error {
+	if tr.TemplatesPath == "" || tr.Templates == nil {
+		return fmt.Errorf("templateCache needs to be initiated with NewTemplateCache function")
+	}
+
+	// Load site pages gohtml templates
+	dir := "pages"
+	pattern := "*.page.gohtml"
+
+	err := tr.loadGoTemplatesFromDirectory(dir, pattern)
+	if err != nil {
+		return err
+	}
+
+	// Load admin pages gohtml templates
+	dir = "admin"
+	pattern = "*.panel.gohtml"
+
+	err = tr.loadGoTemplatesFromDirectory(dir, pattern)
+	if err != nil {
+		return err
+	}
+
+	// Load mail gohtml templates
+	dir = "mails"
+	pattern = "*.mail.gohtml"
+
+	err = tr.loadGoTemplatesFromDirectory(dir, pattern)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loadGoTemplatesFromDirectory loads specific templates from specific sub-directory in TemplateCache.Path
+func (tr *TemplateRenderer) loadGoTemplatesFromDirectory(dir string, pattern string) error {
+	pattern = fmt.Sprintf("%s/%s/%s", tr.TemplatesPath, dir, pattern)
+	baseFilename := fmt.Sprintf("%s/%s/base.layout.gohtml", tr.TemplatesPath, dir)
+
+	// get the names of all the files matching pagePattern
+	pages, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+
+	// range thruogh all the pagePattern files
+	for _, page := range pages {
+		// extracting the filename itself from the full path
+		name := filepath.Base(page)
+
+		// creating a new template set with the page name, and parsing the gohtml page.
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return err
+		}
+
+		ts, err = ts.ParseFiles(baseFilename)
+		if err != nil {
+			return err
+		}
+
+		tr.Templates[name] = ts
+	}
+
+	return nil
+}
+
+// RenderGoTemplate execute a gohtml template
+func (tr *TemplateRenderer) RenderGoTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
+	if tr.TemplatesPath == "" || tr.Templates == nil {
+		return fmt.Errorf("templateCache needs to be initiated with NewTemplateCache function")
+	}
+
+	var err error
+
+	// Load Templates from disk in developement mode in order to allow template updates on runtime.
+	if !tr.UseTemplateCache {
+		err = tr.LoadGoTemplates()
+		if err != nil {
+			return err
+		}
+	}
+
+	// checks if gohtml template exist in cache
+	t, ok := tr.Templates[gohtml]
+	if !ok {
+		return fmt.Errorf("couldn't find %s in template cache", gohtml)
+	}
+
+	// adds default templates data relevant to all templates
+	addDefaultData(td, r)
+
+	// check for error in template execution before passing it to w (http.ResponseWriter)
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, td)
+	if err != nil {
+		return err
+	}
+
+	// render the template to w (http.ResponseWriter)
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // AddDefaultData is used to add default data relevant to all gohtml templates
-func AddDefaultData(td *TemplateData, r *http.Request) {
+func addDefaultData(td *TemplateData, r *http.Request) {
 	// add green success messages
 	if app.Session.Exists(r.Context(), "flash") {
 		td.Flash = app.Session.PopString(r.Context(), "flash")
@@ -37,126 +167,24 @@ func AddDefaultData(td *TemplateData, r *http.Request) {
 	td.CSRFToken = nosurf.Token(r)
 }
 
-// GetTemplatesCache returns a map of all *.gohtml templates from the directory
-// set in AppConfig.TemplatePath
-func GetGoTemplatesCache() (map[string]*template.Template, error) {
-	tc := map[string]*template.Template{}
-
-	pagePattern := fmt.Sprintf("%s/pages/*.page.gohtml", app.TemplatePath)
-	mailPattern := fmt.Sprintf("%s/mails/*.mail.gohtml", app.TemplatePath)
-	basePageFilename := fmt.Sprintf("%s/pages/base.layout.gohtml", app.TemplatePath)
-	baseMailFilename := fmt.Sprintf("%s/mails/base.layout.gohtml", app.TemplatePath)
-
-	// get the names of all the files matching *.page.gohtml from ./templates
-	pages, err := filepath.Glob(pagePattern)
-	if err != nil {
-		return tc, err
-	}
-
-	// range thruogh all the *.page.html files
-	for _, page := range pages {
-		// extracting the filename itself from the full path
-		name := filepath.Base(page)
-
-		// creating a new template set with the page name, and parsing the gohtml page.
-		ts, err := template.New(name).ParseFiles(page)
-		if err != nil {
-			return tc, err
-		}
-
-		ts, err = ts.ParseFiles(basePageFilename)
-		if err != nil {
-			return tc, err
-		}
-
-		tc[name] = ts
-	}
-
-	// get the names of all the files matching *.page.gohtml from ./templates
-	mailPages, err := filepath.Glob(mailPattern)
-	if err != nil {
-		return tc, err
-	}
-
-	// range thruogh all the *.mail.html files
-	for _, page := range mailPages {
-		// extracting the filename itself from the full path
-		name := filepath.Base(page)
-
-		// creating a new template set with the page name, and parsing the gohtml page.
-		ts, err := template.New(name).ParseFiles(page)
-		if err != nil {
-			return tc, err
-		}
-
-		ts, err = ts.ParseFiles(baseMailFilename)
-		if err != nil {
-			return tc, err
-		}
-
-		tc[name] = ts
-	}
-
-	return tc, nil
-}
-
-// RenderGoTemplate execute a gohtml template
-func RenderGoTemplate(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData) error {
-	var tc map[string]*template.Template
-	var err error
-
-	// UseCache is false in developement mode in order to allow changes of gohtml templates on runtime.
-	if app.UseTemplateCache {
-		tc = app.TemplateCache
-	} else {
-		tc, err = GetGoTemplatesCache()
-		if err != nil {
-			return err
-		}
-	}
-
-	// checks if gohtml template exist in cache
-	t, ok := tc[gohtml]
-	if !ok {
-		return fmt.Errorf("couldn't find %s in template cache", gohtml)
-	}
-
-	// adds default templates data relevant to all templates
-	AddDefaultData(td, r)
-
-	// check for error in template execution before passing it to w (http.ResponseWriter)
-	buf := new(bytes.Buffer)
-	err = t.Execute(buf, td)
-	if err != nil {
-		return err
-	}
-
-	// render the template to w (http.ResponseWriter)
-	_, err = buf.WriteTo(w)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // RenderMailTemplate execute an email gohtml template
-func RenderMailTemplate(gohtml string, td *TemplateData) (string, error) {
-	var tc map[string]*template.Template
+func (tr *TemplateRenderer) RenderMailTemplate(gohtml string, td *TemplateData) (string, error) {
+	if tr.TemplatesPath == "" || tr.Templates == nil {
+		return "", fmt.Errorf("templateCache needs to be initiated with NewTemplateCache function")
+	}
+
 	var err error
 
-	// UseCache is false in developement mode in order to allow changes of gohtml templates on runtime.
-	if app.UseTemplateCache {
-		tc = app.TemplateCache
-	} else {
-		tc, err = GetGoTemplatesCache()
+	// Load Templates from disk in developement mode in order to allow template updates on runtime.
+	if !tr.UseTemplateCache {
+		err = tr.LoadGoTemplates()
 		if err != nil {
 			return "", err
 		}
 	}
 
 	// checks if gohtml template exist in cache
-	t, ok := tc[gohtml]
+	t, ok := tr.Templates[gohtml]
 	if !ok {
 		return "", fmt.Errorf("couldn't find %s in template cache", gohtml)
 	}
@@ -169,4 +197,26 @@ func RenderMailTemplate(gohtml string, td *TemplateData) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// CreateReservationNotificationMail creates reservation confirmation mail
+func (tr *TemplateRenderer) CreateReservationConfirmationMail(r Reservation) (mailers.MailData, error) {
+	var err error
+
+	// create reservation confirmation email
+	data := mailers.MailData{
+		To:      r.Email,
+		From:    app.Listing.Email,
+		Subject: fmt.Sprintf("Confirmation Notice for Reservation %s", r.Code),
+	}
+
+	data.Content, err = tr.RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{
+		Data: map[string]any{
+			"start_date":  r.StartDate.Format(config.DateLayout),
+			"end_date":    r.EndDate.Format(config.DateLayout),
+			"reservation": r,
+		},
+	})
+
+	return data, err
 }

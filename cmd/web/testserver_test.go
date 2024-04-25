@@ -38,6 +38,11 @@ func NewTestServer(t *testing.T) *TestServer {
 		MockMailer:      mockMailer,
 	}
 
+	// load templates
+	ts.Renderer.UseTemplateCache = true
+	err := ts.Renderer.LoadGoTemplates()
+	require.NoError(t, err)
+
 	return &ts
 }
 

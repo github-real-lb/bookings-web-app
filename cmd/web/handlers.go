@@ -18,7 +18,7 @@ const LimitRoomsPerPage = 10
 
 // HomeHandler is the GET "/" home page handler
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	err := RenderGoTemplate(w, r, "home.page.gohtml", &TemplateData{})
+	err := s.Renderer.RenderGoTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogError(sErr)
@@ -397,7 +397,7 @@ func (s *Server) PostMakeReservationHandler(w http.ResponseWriter, r *http.Reque
 	// load reservation data into session
 	app.Session.Put(r.Context(), "reservation", rsv)
 
-	data, err := CreateReservationConfirmationMail(rsv)
+	data, err := s.Renderer.CreateReservationConfirmationMail(rsv)
 	if err != nil {
 		sErr := ServerError{
 			Prompt: "Unable to render confirmation email.",

@@ -13,28 +13,24 @@ func TestLoadAppConfig(t *testing.T) {
 	assert.Equal(t, ProductionMode, config.Mode)
 	assert.Equal(t, config.StartingPathProduction+config.TemplateDirectoryName, config.TemplatePath)
 	assert.Equal(t, config.StartingPathProduction+config.StaticDirectoryName, config.StaticPath)
-	assert.True(t, config.UseTemplateCache)
 
 	config, err = LoadAppConfig(testAppConfigFilename, DevelopmentMode)
 	require.NoError(t, err)
 	assert.Equal(t, DevelopmentMode, config.Mode)
 	assert.Equal(t, config.StartingPathProduction+config.TemplateDirectoryName, config.TemplatePath)
 	assert.Equal(t, config.StartingPathProduction+config.StaticDirectoryName, config.StaticPath)
-	assert.False(t, config.UseTemplateCache)
 
 	config, err = LoadAppConfig(testAppConfigFilename, TestingMode)
 	require.NoError(t, err)
 	assert.Equal(t, TestingMode, config.Mode)
 	assert.Equal(t, config.StartingPathTesting+config.TemplateDirectoryName, config.TemplatePath)
 	assert.Equal(t, config.StartingPathTesting+config.StaticDirectoryName, config.StaticPath)
-	assert.False(t, config.UseTemplateCache)
 
 	config, err = LoadAppConfig(testAppConfigFilename, DebuggingMode)
 	require.NoError(t, err)
 	assert.Equal(t, DebuggingMode, config.Mode)
 	assert.Equal(t, config.StartingPathTesting+config.TemplateDirectoryName, config.TemplatePath)
 	assert.Equal(t, config.StartingPathTesting+config.StaticDirectoryName, config.StaticPath)
-	assert.False(t, config.UseTemplateCache)
 
 	_, err = LoadAppConfig("", ProductionMode)
 	require.Error(t, err)
@@ -48,7 +44,6 @@ func TestAppConfig_SetProductionMode(t *testing.T) {
 	assert.Equal(t, ProductionMode, app.Mode)
 	assert.Equal(t, app.StartingPathProduction+app.TemplateDirectoryName, app.TemplatePath)
 	assert.Equal(t, app.StartingPathProduction+app.StaticDirectoryName, app.StaticPath)
-	assert.True(t, app.UseTemplateCache)
 }
 
 func TestAppConfig_SetDevelopementMode(t *testing.T) {
@@ -56,7 +51,6 @@ func TestAppConfig_SetDevelopementMode(t *testing.T) {
 	assert.Equal(t, DevelopmentMode, app.Mode)
 	assert.Equal(t, app.StartingPathProduction+app.TemplateDirectoryName, app.TemplatePath)
 	assert.Equal(t, app.StartingPathProduction+app.StaticDirectoryName, app.StaticPath)
-	assert.False(t, app.UseTemplateCache)
 }
 
 func TestAppConfig_SetTestingMode(t *testing.T) {
@@ -64,7 +58,6 @@ func TestAppConfig_SetTestingMode(t *testing.T) {
 	assert.Equal(t, TestingMode, app.Mode)
 	assert.Equal(t, app.StartingPathTesting+app.TemplateDirectoryName, app.TemplatePath)
 	assert.Equal(t, app.StartingPathTesting+app.StaticDirectoryName, app.StaticPath)
-	assert.False(t, app.UseTemplateCache)
 }
 
 func TestAppConfig_SetDebuggingMode(t *testing.T) {
@@ -72,7 +65,6 @@ func TestAppConfig_SetDebuggingMode(t *testing.T) {
 	assert.Equal(t, DebuggingMode, app.Mode)
 	assert.Equal(t, app.StartingPathTesting+app.TemplateDirectoryName, app.TemplatePath)
 	assert.Equal(t, app.StartingPathTesting+app.StaticDirectoryName, app.StaticPath)
-	assert.False(t, app.UseTemplateCache)
 }
 
 func TestAppConfig_InProductionMode(t *testing.T) {
