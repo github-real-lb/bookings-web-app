@@ -22,7 +22,7 @@ const (
 // Server handles all routing and provides all database functions
 type Server struct {
 	Router        *http.Server
-	Renderer      *TemplateRenderer
+	Renderer      *GoHtmlRenderer
 	DatabaseStore db.DatabaseStore
 	ErrorLogger   loggers.Loggerer
 	InfoLogger    loggers.Loggerer
@@ -40,7 +40,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 			Addr:    app.ServerAddress,
 			Handler: mux,
 		},
-		Renderer:      NewTemplateRenderer(app.TemplatePath),
+		Renderer:      NewRenderer(),
 		DatabaseStore: store,
 		ErrorLogger:   errLogger,
 		InfoLogger:    infoLogger,
@@ -198,7 +198,7 @@ func (s *Server) LogErrorAndRedirect(w http.ResponseWriter, r *http.Request, err
 
 // Render executes gohtml template and redirect in case of rendering error
 func (s *Server) Render(w http.ResponseWriter, r *http.Request, gohtml string, td *TemplateData, redirectURL string) {
-	err := s.Renderer.RenderGoTemplate(w, r, gohtml, td)
+	err := s.Renderer.RenderGoHtmlPageTemplate(w, r, gohtml, td)
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, redirectURL)

@@ -18,7 +18,7 @@ const LimitRoomsPerPage = 10
 
 // HomeHandler is the GET "/" home page handler
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	err := s.Renderer.RenderGoTemplate(w, r, "home.page.gohtml", &TemplateData{})
+	err := s.Renderer.RenderGoHtmlPageTemplate(w, r, "home.page.gohtml", &TemplateData{})
 	if err != nil {
 		sErr := CreateServerError(ErrorRenderTemplate, r.URL.Path, err)
 		s.LogError(sErr)

@@ -38,9 +38,12 @@ func NewTestServer(t *testing.T) *TestServer {
 		MockMailer:      mockMailer,
 	}
 
-	// load templates
-	ts.Renderer.UseTemplateCache = true
-	err := ts.Renderer.LoadGoTemplates()
+	// load web page templates cache
+	err := ts.Renderer.LoadGoHtmlPageTemplates()
+	require.NoError(t, err)
+
+	// load mail templates cache
+	err = ts.Renderer.LoadGoHtmlMailTemplates()
 	require.NoError(t, err)
 
 	return &ts

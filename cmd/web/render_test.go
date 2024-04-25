@@ -4,78 +4,48 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewTemplateRenderer(t *testing.T) {
-	tr := NewTemplateRenderer(app.TemplatePath)
-	assert.NotNil(t, tr.Templates)
-	assert.Equal(t, strings.TrimSuffix(app.TemplatePath, "/"), tr.TemplatesPath)
-	assert.False(t, tr.UseTemplateCache)
+func TestNewRenderer(t *testing.T) {
+	hr := NewRenderer()
+	assert.IsType(t, &GoHtmlRenderer{}, hr)
 }
 
-func TestTemplateRenderer_LoadGoTemplates(t *testing.T) {
-	tr := NewTemplateRenderer(app.TemplatePath)
-	err := tr.LoadGoTemplates()
+func TestGoHtmlRenderer_LoadGoHtmlPageTemplates(t *testing.T) {
+	hr := NewRenderer()
+	err := hr.LoadGoHtmlPageTemplates()
 	assert.NoError(t, err)
-	assert.NotEmpty(t, tr.Templates)
+	assert.NotEmpty(t, hr.Templates)
 }
 
-func TestTemplateRenderer_loadGoTemplatesFromDirectory(t *testing.T) {
-	tests := []struct {
-		Name    string
-		Dir     string
-		Pattern string
-		OK      bool
-	}{
-		{"OK Pages Dir", "pages", "*.page.gohtml", true},
-		{"OK Admin Dir", "admin", "*.panel.gohtml", true},
-		{"OK Mails Dir", "mails", "*.mail.gohtml", true},
-		{"Error", "", "", false},
-	}
-
-	for _, test := range tests {
-		tr := NewTemplateRenderer(app.TemplatePath)
-
-		err := tr.loadGoTemplatesFromDirectory(test.Dir, test.Pattern)
-		if test.OK {
-			assert.NoError(t, err)
-			assert.NotEmpty(t, tr.Templates)
-		} else {
-			assert.Error(t, err)
-			assert.Empty(t, tr.Templates)
-		}
-	}
-}
-
-func TestTemplateRenderer_RenderGoTemplate(t *testing.T) {
+func TestGoHtmlRenderer_RenderGoHtmlPageTemplate(t *testing.T) {
 	// create new renderer and load templates
-	tr := NewTemplateRenderer(app.TemplatePath)
-	err := tr.LoadGoTemplates()
-	require.NoError(t, err)
-	require.NotEmpty(t, tr.Templates)
+	hr := NewRenderer()
+	err := hr.LoadGoHtmlPageTemplates()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, hr.Templates)
 
 	// create a new test server, and a new request and recorder
 	ts := NewTestServer(t)
 	request := ts.NewRequestWithSession(t, http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
-	// test ok on reloading templates cache (developement and testing modes)
-	tr.UseTemplateCache = false
-	err = tr.RenderGoTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
+	// test ok on reloading templates cache (developement mode)
+	app.SetDevelopementMode()
+	err = hr.RenderGoHtmlPageTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 
 	// test ok on using template cache (production modes)
-	tr.UseTemplateCache = true
-	err = tr.RenderGoTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
+	app.SetTestingMode()
+	err = hr.RenderGoHtmlPageTemplate(recorder, request, "home.page.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 
 	// test not ok on missing template
-	err = tr.RenderGoTemplate(recorder, request, "non-existing.page.gohtml", &TemplateData{})
+	err = hr.RenderGoHtmlPageTemplate(recorder, request, "non-existing.page.gohtml", &TemplateData{})
 	assert.Error(t, err)
 }
 
@@ -97,42 +67,49 @@ func TestAddDefaultData(t *testing.T) {
 	assert.Equal(t, "error", td.Error)
 }
 
-func TestTemplateRenderer_RenderMailTemplate(t *testing.T) {
+func TestGoHtmlRenderer_LoadGoHtmlMailTemplates(t *testing.T) {
+	hr := NewRenderer()
+	err := hr.LoadGoHtmlMailTemplates()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, hr.Templates)
+}
+
+func TestGoHtmlRenderer_RenderGoHtmlMailTemplate(t *testing.T) {
 	// create new renderer and load templates
-	tr := NewTemplateRenderer(app.TemplatePath)
-	err := tr.LoadGoTemplates()
-	require.NoError(t, err)
-	require.NotEmpty(t, tr.Templates)
+	hr := NewRenderer()
+	err := hr.LoadGoHtmlMailTemplates()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, hr.Templates)
 
 	// test ok on reloading templates cache (developement and testing modes)
-	tr.UseTemplateCache = false
-	s, err := tr.RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{})
+	app.SetDevelopementMode()
+	s, err := hr.RenderGoHtmlMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, s)
 
 	// test ok on using template cache (production modes)
-	tr.UseTemplateCache = true
-	s, err = tr.RenderMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{})
+	app.SetTestingMode()
+	s, err = hr.RenderGoHtmlMailTemplate("reservation-confirmation.mail.gohtml", &TemplateData{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, s)
 
 	// test not ok on missing template
-	s, err = tr.RenderMailTemplate("non-existing.page.gohtml", &TemplateData{})
+	s, err = hr.RenderGoHtmlMailTemplate("non-existing.page.gohtml", &TemplateData{})
 	assert.Error(t, err)
 	assert.Empty(t, s)
 }
 
-func TestTemplateRenderer_CreateReservationConfirmationMail(t *testing.T) {
+func TestGoHtmlRenderer_CreateReservationConfirmationMail(t *testing.T) {
 	// create new renderer and load templates
-	tr := NewTemplateRenderer(app.TemplatePath)
-	err := tr.LoadGoTemplates()
-	require.NoError(t, err)
-	require.NotEmpty(t, tr.Templates)
+	hr := NewRenderer()
+	err := hr.LoadGoHtmlMailTemplates()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, hr.Templates)
 
 	// create random reservation
 	r := randomReservation()
 
-	mailData, err := tr.CreateReservationConfirmationMail(r)
+	mailData, err := hr.CreateReservationConfirmationMail(r)
 	require.NoError(t, err)
 	assert.Equal(t, r.Email, mailData.To)
 	assert.Equal(t, app.Listing.Email, mailData.From)

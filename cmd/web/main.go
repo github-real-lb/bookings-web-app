@@ -39,11 +39,16 @@ func main() {
 	// create a new server
 	server := NewServer(dbStore, errLogger, infoLogger, mailer)
 
-	// load templates cache
-	server.Renderer.UseTemplateCache = !app.InDevelopmentMode()
-	err = server.Renderer.LoadGoTemplates()
+	// load web page templates cache
+	err = server.Renderer.LoadGoHtmlPageTemplates()
 	if err != nil {
-		log.Fatal(fmt.Sprint("error creating gohtml templates cache: ", err.Error()))
+		log.Fatal(fmt.Sprint("error creating gohtml web page templates cache: ", err.Error()))
+	}
+
+	// load mail templates cache
+	err = server.Renderer.LoadGoHtmlMailTemplates()
+	if err != nil {
+		log.Fatal(fmt.Sprint("error creating gohtml mail templates cache: ", err.Error()))
 	}
 
 	// start server in a separate goroutine
