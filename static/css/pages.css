@@ -6,11 +6,3 @@
     margin-top: 2em;
     padding: 1em;
 }
-
-.notie-container {
-    box-shadow: none;
-}    
-
-.swal2-actions {
-    z-index: auto;
-}  

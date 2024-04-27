@@ -65,8 +65,8 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 	// get room id from URL
 	index, err := strconv.Atoi(chi.URLParam(r, "index"))
 	if err != nil {
-		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
-
+		sErr := CreateServerError(ErrorInvalidParameter, r.URL.Path, err)
+		s.LogErrorAndRedirect(w, r, sErr, "/rooms/list")
 		return
 	}
 
@@ -288,11 +288,7 @@ func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Reques
 	// get room id from URL
 	index, err := strconv.Atoi(chi.URLParam(r, "index"))
 	if err != nil {
-		sErr := ServerError{
-			Prompt: "Unable to convert index parameter to integer.",
-			URL:    r.URL.Path,
-			Err:    err,
-		}
+		sErr := CreateServerError(ErrorInvalidParameter, r.URL.Path, err)
 		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms/available")
 		return
 	}
@@ -509,7 +505,34 @@ func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
-// AdminDashboardHandler is the GET "/user/admin" page handler
+// AdminDashboardHandler is the GET "/admin/dashboard" page handler
 func (s *Server) AdminDashboardHandler(w http.ResponseWriter, r *http.Request) {
-	s.Render(w, r, "admin-dashboard.page.gohtml", &TemplateData{}, "/")
+	s.Render(w, r, "dashbaord.panel.gohtml", &TemplateData{
+		Data: map[string]any{
+			"path": r.URL.Path,
+		},
+	}, "/")
+}
+
+// AdminReservationsHandler is the GET "/admin/reservations/{show}" page handler
+func (s *Server) AdminReservationsHandler(w http.ResponseWriter, r *http.Request) {
+	param := chi.URLParam(r, "show")
+	if param == "new" {
+		// load only new reservations
+	} else if param == "all" {
+		// load all reservations
+	} else {
+		sErr := CreateServerError(ErrorInvalidParameter, r.URL.Path, nil)
+		s.LogErrorAndRedirect(w, r, sErr, "/admin/dashboard")
+		return
+	}
+
+	s.Render(w, r, "reservations.panel.gohtml",
+		&TemplateData{
+			Data: map[string]any{
+				"path":    r.URL.Path,
+				"showall": param == "all",
+				//"reservations": reservations,
+			},
+		}, "/")
 }

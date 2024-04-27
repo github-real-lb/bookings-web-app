@@ -50,7 +50,7 @@ func (hr *GoHtmlRenderer) RenderGoHtmlPageTemplate(w http.ResponseWriter, r *htt
 	var err error
 
 	// load Templates from disk in developement mode in order to allow template updates on runtime.
-	if app.InDebuggingMode() {
+	if app.InDevelopmentMode() {
 		err = hr.LoadGoHtmlPageTemplates()
 		if err != nil {
 			return err
@@ -122,7 +122,7 @@ func (hr *GoHtmlRenderer) RenderGoHtmlMailTemplate(gohtml string, td *TemplateDa
 	var err error
 
 	// load Templates from disk in developement mode in order to allow template updates on runtime.
-	if app.InDebuggingMode() {
+	if app.InDevelopmentMode() {
 		err = hr.LoadGoHtmlMailTemplates()
 		if err != nil {
 			return "", err

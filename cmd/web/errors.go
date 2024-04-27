@@ -36,6 +36,7 @@ const (
 	ErrorMissingReservation ErrorType = "MissingReservation"
 	ErrorParseForm          ErrorType = "ParseForm"
 	ErrorRenderTemplate     ErrorType = "RenderTemplate"
+	ErrorInvalidParameter   ErrorType = "Invalid Parameter"
 )
 
 func CreateServerError(errType ErrorType, url string, err error) ServerError {
@@ -57,6 +58,12 @@ func CreateServerError(errType ErrorType, url string, err error) ServerError {
 			Prompt: "Unable to render template.",
 			URL:    url,
 			Err:    err,
+		}
+	case ErrorInvalidParameter:
+		return ServerError{
+			Prompt: "Invalid parameter in URL.",
+			URL:    url,
+			Err:    errors.New("wrong routing"),
 		}
 	default:
 		return ServerError{}

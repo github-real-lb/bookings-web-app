@@ -93,6 +93,7 @@ func NewServer(store db.DatabaseStore, errLogger loggers.Loggerer, infoLogger lo
 		mux.Use(Auth)
 
 		mux.Get("/dashboard", s.AdminDashboardHandler)
+		mux.Get("/reservations/{show}", s.AdminReservationsHandler)
 	})
 
 	return &s
