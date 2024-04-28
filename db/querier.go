@@ -23,7 +23,6 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int64) error
 	GetLastRoomRestriction(ctx context.Context, roomID int64) (RoomRestriction, error)
 	GetReservation(ctx context.Context, id int64) (Reservation, error)
-	GetReservationByCode(ctx context.Context, code string) (Reservation, error)
 	GetReservationByLastName(ctx context.Context, arg GetReservationByLastNameParams) (Reservation, error)
 	GetRoom(ctx context.Context, id int64) (Room, error)
 	GetRoomRestriction(ctx context.Context, id int64) (RoomRestriction, error)
@@ -31,7 +30,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListAvailableRooms(ctx context.Context, arg ListAvailableRoomsParams) ([]Room, error)
 	ListReservations(ctx context.Context, arg ListReservationsParams) ([]Reservation, error)
-	ListReservationsByRoom(ctx context.Context, arg ListReservationsByRoomParams) ([]Reservation, error)
+	ListReservationsAndRooms(ctx context.Context, arg ListReservationsAndRoomsParams) ([]ListReservationsAndRoomsRow, error)
 	ListRoomRestrictions(ctx context.Context, arg ListRoomRestrictionsParams) ([]RoomRestriction, error)
 	ListRooms(ctx context.Context, arg ListRoomsParams) ([]Room, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)

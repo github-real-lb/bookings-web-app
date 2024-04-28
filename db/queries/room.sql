@@ -44,5 +44,6 @@ OFFSET $2;
 UPDATE rooms
   set   name = $2,
         description = $3,
-        updated_at = $4
+        image_filename = $4,
+        updated_at = $5
 WHERE id = $1;

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const ReservationCodeLenght = 14
+const ReservationCodeLenght = 7
 
 func createRandomReservation(t *testing.T, room Room) Reservation {
 	rDate := util.RandomDate()
@@ -77,4 +77,29 @@ func createRandomWeekReservation(t *testing.T, room Room, startDate time.Time) R
 func TestQueries_CreateReservation(t *testing.T) {
 	room := createRandomRoom(t)
 	createRandomReservation(t, room)
+}
+
+func TestQueries_ListReservationsAndRooms(t *testing.T) {
+	const N = 10
+	rooms := make([]Room, N)
+	rsvs := make([]Reservation, N)
+
+	for i := 0; i < N; i++ {
+		rooms[i] = createRandomRoom(t)
+		rsvs[i] = createRandomReservation(t, rooms[i])
+	}
+
+	result, err := testStore.ListReservationsAndRooms(context.Background(),
+		ListReservationsAndRoomsParams{
+			Limit:  N,
+			Offset: 0,
+		})
+	require.NoError(t, err)
+	assert.Len(t, result, N)
+
+	for i := 0; i < N; i++ {
+		assert.NotEmpty(t, result[i].ID)
+		assert.NotEmpty(t, result[i].Room.ID)
+	}
+
 }

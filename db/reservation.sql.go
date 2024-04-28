@@ -106,31 +106,6 @@ func (q *Queries) GetReservation(ctx context.Context, id int64) (Reservation, er
 	return i, err
 }
 
-const getReservationByCode = `-- name: GetReservationByCode :one
-SELECT id, code, first_name, last_name, email, phone, start_date, end_date, room_id, notes, created_at, updated_at FROM reservations
-WHERE code = $1 LIMIT 1
-`
-
-func (q *Queries) GetReservationByCode(ctx context.Context, code string) (Reservation, error) {
-	row := q.db.QueryRow(ctx, getReservationByCode, code)
-	var i Reservation
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.FirstName,
-		&i.LastName,
-		&i.Email,
-		&i.Phone,
-		&i.StartDate,
-		&i.EndDate,
-		&i.RoomID,
-		&i.Notes,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getReservationByLastName = `-- name: GetReservationByLastName :one
 SELECT id, code, first_name, last_name, email, phone, start_date, end_date, room_id, notes, created_at, updated_at FROM reservations
 WHERE code = $1 AND last_name = $2 LIMIT 1
@@ -162,8 +137,8 @@ func (q *Queries) GetReservationByLastName(ctx context.Context, arg GetReservati
 }
 
 const listReservations = `-- name: ListReservations :many
-SELECT id, code, first_name, last_name, email, phone, start_date, end_date, room_id, notes, created_at, updated_at FROM reservations
-ORDER BY created_at DESC
+SELECT id, code, first_name, last_name, email, phone, start_date, end_date, room_id, notes, created_at, updated_at FROM reservations 
+ORDER BY start_date, end_date ASC
 LIMIT $1
 OFFSET $2
 `
@@ -206,29 +181,45 @@ func (q *Queries) ListReservations(ctx context.Context, arg ListReservationsPara
 	return items, nil
 }
 
-const listReservationsByRoom = `-- name: ListReservationsByRoom :many
-SELECT id, code, first_name, last_name, email, phone, start_date, end_date, room_id, notes, created_at, updated_at FROM reservations
-WHERE room_id = $1
-ORDER BY start_date, end_date DESC
-LIMIT $2
-OFFSET $3
+const listReservationsAndRooms = `-- name: ListReservationsAndRooms :many
+SELECT reservations.id, reservations.code, reservations.first_name, reservations.last_name, reservations.email, reservations.phone, reservations.start_date, reservations.end_date, reservations.room_id, reservations.notes, reservations.created_at, reservations.updated_at, rooms.id, rooms.name, rooms.description, rooms.image_filename, rooms.created_at, rooms.updated_at 
+FROM reservations
+LEFT JOIN rooms ON (reservations.room_id = rooms.id)
+ORDER BY reservations.start_date, rooms.name ASC
+LIMIT $1
+OFFSET $2
 `
 
-type ListReservationsByRoomParams struct {
-	RoomID int64 `json:"room_id"`
+type ListReservationsAndRoomsParams struct {
 	Limit  int32 `json:"limit"`
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListReservationsByRoom(ctx context.Context, arg ListReservationsByRoomParams) ([]Reservation, error) {
-	rows, err := q.db.Query(ctx, listReservationsByRoom, arg.RoomID, arg.Limit, arg.Offset)
+type ListReservationsAndRoomsRow struct {
+	ID        int64              `json:"id"`
+	Code      string             `json:"code"`
+	FirstName string             `json:"first_name"`
+	LastName  string             `json:"last_name"`
+	Email     string             `json:"email"`
+	Phone     pgtype.Text        `json:"phone"`
+	StartDate pgtype.Date        `json:"start_date"`
+	EndDate   pgtype.Date        `json:"end_date"`
+	RoomID    int64              `json:"room_id"`
+	Notes     pgtype.Text        `json:"notes"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Room      Room               `json:"room"`
+}
+
+func (q *Queries) ListReservationsAndRooms(ctx context.Context, arg ListReservationsAndRoomsParams) ([]ListReservationsAndRoomsRow, error) {
+	rows, err := q.db.Query(ctx, listReservationsAndRooms, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Reservation{}
+	items := []ListReservationsAndRoomsRow{}
 	for rows.Next() {
-		var i Reservation
+		var i ListReservationsAndRoomsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
@@ -242,6 +233,12 @@ func (q *Queries) ListReservationsByRoom(ctx context.Context, arg ListReservatio
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Room.ID,
+			&i.Room.Name,
+			&i.Room.Description,
+			&i.Room.ImageFilename,
+			&i.Room.CreatedAt,
+			&i.Room.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

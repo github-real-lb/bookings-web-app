@@ -188,6 +188,9 @@ func TestServer_RoomsHandler(t *testing.T) {
 		// create slice of Rooms to put in session
 		rooms := randomRooms(LimitRoomsPerPage)
 
+		// build stub
+		ts.BuildLogAnyErrorStub()
+
 		// put rooms in session
 		app.Session.Put(req.Context(), "rooms", rooms)
 
@@ -296,9 +299,11 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 			Room:      room,
 		}
 
-		arg := db.CheckRoomAvailabilityParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
+		arg := db.CheckRoomAvailabilityParams{
+			RoomID: rsv.RoomID,
+		}
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
 
 		//build stub
 		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
@@ -360,9 +365,11 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 			Room:      room,
 		}
 
-		arg := db.CheckRoomAvailabilityParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
+		arg := db.CheckRoomAvailabilityParams{
+			RoomID: rsv.RoomID,
+		}
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
 
 		//build stub
 		ts.MockDBStore.On("CheckRoomAvailability", mock.Anything, arg).
@@ -564,11 +571,13 @@ func TestServer_PostSearchRoomAvailabilityHandler(t *testing.T) {
 			Room:      room,
 		}
 
-		arg := db.CheckRoomAvailabilityParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
+		arg := db.CheckRoomAvailabilityParams{
+			RoomID: rsv.RoomID,
+		}
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
 
-		err = errors.New("any error")
+		err := errors.New("any error")
 
 		sErr := ServerError{
 			Prompt: "Unable to check room availability.",
@@ -695,8 +704,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			rooms[i] = randomRoom()
-			err = CopyStructDataToDBStruct(rooms[i], &dbRooms[i])
-			require.NoError(t, err)
+			rooms[i].Unload(&dbRooms[i])
 		}
 
 		//build stub
@@ -1103,8 +1111,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		//create stub return arguments for CreateReservationTx
 		dbRsv := db.Reservation{}
-		err := CopyStructDataToDBStruct(finalRsv, &dbRsv)
-		require.NoError(t, err)
+		finalRsv.Unload(&dbRsv)
 
 		// build stub for CreateReservationTx
 		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).

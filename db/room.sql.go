@@ -192,15 +192,17 @@ const updateRoom = `-- name: UpdateRoom :exec
 UPDATE rooms
   set   name = $2,
         description = $3,
-        updated_at = $4
+        image_filename = $4,
+        updated_at = $5
 WHERE id = $1
 `
 
 type UpdateRoomParams struct {
-	ID          int64              `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	ImageFilename string             `json:"image_filename"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpdateRoom(ctx context.Context, arg UpdateRoomParams) error {
@@ -208,6 +210,7 @@ func (q *Queries) UpdateRoom(ctx context.Context, arg UpdateRoomParams) error {
 		arg.ID,
 		arg.Name,
 		arg.Description,
+		arg.ImageFilename,
 		arg.UpdatedAt,
 	)
 	return err

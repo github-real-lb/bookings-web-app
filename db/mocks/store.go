@@ -420,34 +420,6 @@ func (_m *MockDBStore) GetReservation(ctx context.Context, id int64) (db.Reserva
 	return r0, r1
 }
 
-// GetReservationByCode provides a mock function with given fields: ctx, code
-func (_m *MockDBStore) GetReservationByCode(ctx context.Context, code string) (db.Reservation, error) {
-	ret := _m.Called(ctx, code)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetReservationByCode")
-	}
-
-	var r0 db.Reservation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (db.Reservation, error)); ok {
-		return rf(ctx, code)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) db.Reservation); ok {
-		r0 = rf(ctx, code)
-	} else {
-		r0 = ret.Get(0).(db.Reservation)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, code)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetReservationByLastName provides a mock function with given fields: ctx, arg
 func (_m *MockDBStore) GetReservationByLastName(ctx context.Context, arg db.GetReservationByLastNameParams) (db.Reservation, error) {
 	ret := _m.Called(ctx, arg)
@@ -648,28 +620,28 @@ func (_m *MockDBStore) ListReservations(ctx context.Context, arg db.ListReservat
 	return r0, r1
 }
 
-// ListReservationsByRoom provides a mock function with given fields: ctx, arg
-func (_m *MockDBStore) ListReservationsByRoom(ctx context.Context, arg db.ListReservationsByRoomParams) ([]db.Reservation, error) {
+// ListReservationsAndRooms provides a mock function with given fields: ctx, arg
+func (_m *MockDBStore) ListReservationsAndRooms(ctx context.Context, arg db.ListReservationsAndRoomsParams) ([]db.ListReservationsAndRoomsRow, error) {
 	ret := _m.Called(ctx, arg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListReservationsByRoom")
+		panic("no return value specified for ListReservationsAndRooms")
 	}
 
-	var r0 []db.Reservation
+	var r0 []db.ListReservationsAndRoomsRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, db.ListReservationsByRoomParams) ([]db.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListReservationsAndRoomsParams) ([]db.ListReservationsAndRoomsRow, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, db.ListReservationsByRoomParams) []db.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, db.ListReservationsAndRoomsParams) []db.ListReservationsAndRoomsRow); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Reservation)
+			r0 = ret.Get(0).([]db.ListReservationsAndRoomsRow)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, db.ListReservationsByRoomParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, db.ListReservationsAndRoomsParams) error); ok {
 		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)

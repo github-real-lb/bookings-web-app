@@ -17,26 +17,24 @@ WHERE id = $1;
 SELECT * FROM reservations
 WHERE id = $1 LIMIT 1;
 
--- name: GetReservationByCode :one
-SELECT * FROM reservations
-WHERE code = $1 LIMIT 1;
-
 -- name: GetReservationByLastName :one
 SELECT * FROM reservations
 WHERE code = $1 AND last_name = $2 LIMIT 1;
 
 -- name: ListReservations :many
-SELECT * FROM reservations
-ORDER BY created_at DESC
+SELECT * FROM reservations 
+ORDER BY start_date, end_date ASC
 LIMIT $1
 OFFSET $2;
 
--- name: ListReservationsByRoom :many
-SELECT * FROM reservations
-WHERE room_id = $1
-ORDER BY start_date, end_date DESC
-LIMIT $2
-OFFSET $3;
+-- name: ListReservationsAndRooms :many
+SELECT reservations.*, sqlc.embed(rooms) 
+FROM reservations
+LEFT JOIN rooms ON (reservations.room_id = rooms.id)
+ORDER BY reservations.start_date, rooms.name ASC
+LIMIT $1
+OFFSET $2;
+
 
 -- name: UpdateReservation :exec
 UPDATE reservations

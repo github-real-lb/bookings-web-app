@@ -19,7 +19,10 @@
   <body>
     <nav class="navbar sticky-top navbar-expand-lg bg-dark border-bottom border-body flex-column flex-sm-row" data-bs-theme="dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">{{.Listing.Name}}</a>
+        <a class="navbar-brand" href="/">
+          <i class="bi bi-house-heart-fill"></i>
+          {{.Listing.Name}}
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -70,18 +73,34 @@
 
     {{block "content" .}}
 
-    {{end}}        
+    {{end}}    
+    
+    
+    <div class="container">
+      <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+        <div class="col-md-4 d-flex align-items-center">
+          <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary"><i class="bi bi-house-heart"></i></a>
+          <span class="mb-3 mb-md-0 text-body-secondary">&copy; 2024 {{.Listing.Name}}</span>
+        </div>
 
-    <div class="row my-footer">
-        <div class="col text-center">  
-            Address: {{.Listing.Address}}                  
+        <div class="col-md-4 d-flex justify-content-center align-items-center">
+
         </div>
-        <div class="col text-center">                    
-            Phone: {{.Listing.Phone}} 
+
+
+
+        <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+          <li class="ms-3"><a class="text-body-secondary" href="#"><i class="bi bi-twitter-x"></i></li>
+          <li class="ms-3"><a class="text-body-secondary" href="#"><i class="bi bi-instagram"></i></li>
+          <li class="ms-3"><a class="text-body-secondary" href="#"><i class="bi bi-facebook"></i></li>
+        </ul>
+
+        <div>
+          <span class="mb-3 mb-md-0 text-body-secondary">{{.Listing.Address}}</span>
+          <span class="mb-3 mb-md-0 text-body-secondary">{{.Listing.Phone}}</span>
+          <span class="mb-3 mb-md-0 text-body-secondary">{{.Listing.Email}}</span>
         </div>
-        <div class="col text-center">                    
-            Email: {{.Listing.Email}} 
-        </div>
+      </footer>
     </div>
 
     <!-- Bootstrap js CDN reference -->

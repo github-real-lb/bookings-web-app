@@ -16,6 +16,9 @@ import (
 // LimitRoomsPerPage sets the maximum number of rooms to display on a page
 const LimitRoomsPerPage = 10
 
+// LimitReservationsPerPage sets the maximum number of reservations to display on a page
+const LimitReservationsPerPage = 10
+
 // HomeHandler is the GET "/" home page handler
 func (s *Server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	err := s.Renderer.RenderGoHtmlPageTemplate(w, r, "home.page.gohtml", &TemplateData{})
@@ -516,23 +519,50 @@ func (s *Server) AdminDashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminReservationsHandler is the GET "/admin/reservations/{show}" page handler
 func (s *Server) AdminReservationsHandler(w http.ResponseWriter, r *http.Request) {
+	var rsvs []Reservation
+	var err error
+
 	param := chi.URLParam(r, "show")
 	if param == "new" {
 		// load only new reservations
+		//TODO: change the offset to request input
+		rsvs, err = s.ListReservations(LimitReservationsPerPage, 0)
+		if err != nil {
+			sErr := ServerError{
+				Prompt: "Unable to load reservations from database.",
+				URL:    r.URL.Path,
+				Err:    err,
+			}
+			s.LogErrorAndRedirect(w, r, sErr, "/admin/dashboard")
+			return
+		}
 	} else if param == "all" {
 		// load all reservations
+		//TODO: change the offset to request input
+		rsvs, err = s.ListReservations(LimitReservationsPerPage, 0)
+		if err != nil {
+			sErr := ServerError{
+				Prompt: "Unable to load reservations from database.",
+				URL:    r.URL.Path,
+				Err:    err,
+			}
+			s.LogErrorAndRedirect(w, r, sErr, "/admin/dashboard")
+			return
+		}
 	} else {
 		sErr := CreateServerError(ErrorInvalidParameter, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/admin/dashboard")
 		return
 	}
 
+	//app.Session.Put(r.Context(), "reservations", rsvs)
+
 	s.Render(w, r, "reservations.panel.gohtml",
 		&TemplateData{
 			Data: map[string]any{
-				"path":    r.URL.Path,
-				"showall": param == "all",
-				//"reservations": reservations,
+				"path":         r.URL.Path,
+				"showall":      param == "all",
+				"reservations": rsvs,
 			},
 		}, "/")
 }

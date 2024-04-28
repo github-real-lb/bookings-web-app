@@ -115,7 +115,6 @@ func TestServer_AuthenticateUser(t *testing.T) {
 		require.Equal(t, int64(0), result)
 
 	})
-
 }
 
 func TestServer_CheckRoomAvailability(t *testing.T) {
@@ -145,9 +144,11 @@ func TestServer_CheckRoomAvailability(t *testing.T) {
 	rsv := randomReservation()
 
 	// create ts.MockDBStore mehod arguments
-	arg := db.CheckRoomAvailabilityParams{}
-	err := CopyStructDataToDBStruct(rsv, &arg)
-	require.NoError(t, err)
+	arg := db.CheckRoomAvailabilityParams{
+		RoomID: rsv.RoomID,
+	}
+	arg.StartDate.Scan(rsv.StartDate)
+	arg.EndDate.Scan(rsv.EndDate)
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -175,14 +176,21 @@ func TestServer_CreateReservation(t *testing.T) {
 		rsv := randomReservation()
 
 		// create stub call arguments
-		arg := db.CreateReservationParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
+		arg := db.CreateReservationParams{
+			Code:      rsv.Code,
+			FirstName: rsv.FirstName,
+			LastName:  rsv.LastName,
+			Email:     rsv.Email,
+			RoomID:    rsv.RoomID,
+		}
+		arg.Phone.Scan(rsv.Phone)
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
+		arg.Notes.Scan(rsv.Notes)
 
 		// create stub return arguments
 		dbRsv := db.Reservation{}
-		err = CopyStructDataToDBStruct(rsv, &dbRsv)
-		require.NoError(t, err)
+		rsv.Unload(&dbRsv)
 
 		// create a new server with mock database store
 		ts := NewTestServer(t)
@@ -193,7 +201,7 @@ func TestServer_CreateReservation(t *testing.T) {
 			Once()
 
 		// execute method
-		err = ts.CreateReservation(rsv)
+		err := ts.CreateReservation(rsv)
 
 		// tesify
 		assert.NoError(t, err)
@@ -204,9 +212,17 @@ func TestServer_CreateReservation(t *testing.T) {
 		rsv := randomReservation()
 
 		// create stub call arguments
-		arg := db.CreateReservationParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
+		arg := db.CreateReservationParams{
+			Code:      rsv.Code,
+			FirstName: rsv.FirstName,
+			LastName:  rsv.LastName,
+			Email:     rsv.Email,
+			RoomID:    rsv.RoomID,
+		}
+		arg.Phone.Scan(rsv.Phone)
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
+		arg.Notes.Scan(rsv.Notes)
 
 		// create a new server with mock database store
 		ts := NewTestServer(t)
@@ -217,7 +233,7 @@ func TestServer_CreateReservation(t *testing.T) {
 			Once()
 
 		// execute method
-		err = ts.CreateReservation(rsv)
+		err := ts.CreateReservation(rsv)
 
 		// tesify
 		assert.Error(t, err)
@@ -229,12 +245,12 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 	rsv := randomReservation()
 
 	//create db stub call arguments
-	arg := db.ListAvailableRoomsParams{}
-	err := CopyStructDataToDBStruct(rsv, &arg)
-	require.NoError(t, err)
-
-	arg.Limit = LimitRoomsPerPage
-	arg.Offset = 0
+	arg := db.ListAvailableRoomsParams{
+		Limit:  LimitRoomsPerPage,
+		Offset: 0,
+	}
+	arg.StartDate.Scan(rsv.StartDate)
+	arg.EndDate.Scan(rsv.EndDate)
 
 	t.Run("Test Available Rooms", func(t *testing.T) {
 		// create stub return arguments
@@ -243,7 +259,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			rooms[i] = randomRoom()
-			err = util.CopyDataUsingJSON(rooms[i], &dbRooms[i])
+			err := util.CopyDataUsingJSON(rooms[i], &dbRooms[i])
 			require.NoError(t, err)
 		}
 
@@ -296,12 +312,12 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		rsv := randomReservation()
 
 		//create db stub call arguments
-		arg := db.ListAvailableRoomsParams{}
-		err := CopyStructDataToDBStruct(rsv, &arg)
-		require.NoError(t, err)
-
-		arg.Limit = LimitRoomsPerPage
-		arg.Offset = 0
+		arg := db.ListAvailableRoomsParams{
+			Limit:  LimitRoomsPerPage,
+			Offset: 0,
+		}
+		arg.StartDate.Scan(rsv.StartDate)
+		arg.EndDate.Scan(rsv.EndDate)
 
 		// create a new server with mock database store
 		ts := NewTestServer(t)
@@ -317,6 +333,80 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		// tesify
 		assert.Error(t, err)
 		require.Len(t, rooms, 0)
+	})
+}
+
+func TestServer_ListReservations(t *testing.T) {
+	//create stub db call arguments
+	arg := db.ListReservationsAndRoomsParams{
+		Limit:  LimitReservationsPerPage,
+		Offset: 0,
+	}
+
+	t.Run("Test All Reservations", func(t *testing.T) {
+		// create stub return arguments
+		rsvs := make([]Reservation, LimitReservationsPerPage)
+		dbRsvs := make([]db.ListReservationsAndRoomsRow, LimitReservationsPerPage)
+		var err error
+
+		for i := 0; i < LimitReservationsPerPage; i++ {
+			rsvs[i] = randomReservation()
+			rsvs[i].UnloadWithRoom(&dbRsvs[i])
+		}
+
+		// create a new server with mock database store
+		ts := NewTestServer(t)
+
+		// build stub
+		ts.MockDBStore.On("ListReservationsAndRooms", mock.Anything, arg).
+			Return(dbRsvs, nil).
+			Once()
+
+		// execute method
+		result, err := ts.ListReservations(int(arg.Limit), int(arg.Offset))
+
+		// tesify
+		assert.NoError(t, err)
+		require.Len(t, result, LimitReservationsPerPage)
+
+		for i := 0; i < LimitReservationsPerPage; i++ {
+			require.Equal(t, rsvs[i].ID, result[i].ID)
+			require.Equal(t, rsvs[i].Room.ID, result[i].Room.ID)
+		}
+	})
+
+	t.Run("Test No Reservations", func(t *testing.T) {
+		// create a new server with mock database store
+		ts := NewTestServer(t)
+
+		// build stub
+		ts.MockDBStore.On("ListReservationsAndRooms", mock.Anything, arg).
+			Return([]db.ListReservationsAndRoomsRow{}, nil).
+			Once()
+
+		// execute method
+		result, err := ts.ListReservations(int(arg.Limit), int(arg.Offset))
+
+		// tesify
+		assert.NoError(t, err)
+		require.Len(t, result, 0)
+	})
+
+	t.Run("Test Error", func(t *testing.T) {
+		// create a new server with mock database store
+		ts := NewTestServer(t)
+
+		// build stub
+		ts.MockDBStore.On("ListReservationsAndRooms", mock.Anything, arg).
+			Return(nil, errors.New("any error")).
+			Once()
+
+		// execute method
+		result, err := ts.ListReservations(int(arg.Limit), int(arg.Offset))
+
+		// tesify
+		assert.Error(t, err)
+		require.Nil(t, result)
 	})
 }
 
