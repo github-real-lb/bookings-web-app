@@ -16,7 +16,7 @@
   <!-- Local CSS reference -->
   <link rel="stylesheet" type="text/css" href="/static/css/admin.css">
 </head>
-<body class="bg-color">
+<body>
   <header class="navbar sticky-top bg-dark flex-md-nowrap p-0" data-bs-theme="dark">
     <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="#">{{.Listing.Name}}</a>
   
@@ -42,7 +42,7 @@
 
   <div class="container-fluid">
     <div class="row">
-      <div class="sidebar border border-top-0 border-bottom-0 border-black col-md-3 col-lg-2 p-0">
+      <div class="sidebar bg-secondary-subtle border border-top-0 border-bottom-0 border-black col-md-3 col-lg-2 p-0">
         <div class="offcanvas-md offcanvas-start" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
           <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="sidebarMenuLabel">{{.Listing.Name}}</h5>
