@@ -78,7 +78,7 @@ func (s *Server) CreateReservation(r Reservation) error {
 }
 
 // ListAvailableRooms returns limit amount of avaiable rooms in a date range, with the offset specified
-func (s *Server) ListAvailableRooms(limit, offset int, startDate, endData time.Time) (Rooms, error) {
+func (s *Server) ListAvailableRooms(limit, offset int, startDate, endData time.Time) ([]Room, error) {
 	// parse form's data to query arguments
 	arg := db.ListAvailableRoomsParams{
 		Limit:  int32(limit),
@@ -86,12 +86,12 @@ func (s *Server) ListAvailableRooms(limit, offset int, startDate, endData time.T
 	}
 	err := arg.StartDate.Scan(startDate)
 	if err != nil {
-		return Rooms{}, err
+		return []Room{}, err
 	}
 
 	err = arg.EndDate.Scan(endData)
 	if err != nil {
-		return Rooms{}, err
+		return []Room{}, err
 	}
 
 	// create context with timeout
@@ -101,17 +101,17 @@ func (s *Server) ListAvailableRooms(limit, offset int, startDate, endData time.T
 	// get list of availabe rooms
 	dbRooms, err := s.DatabaseStore.ListAvailableRooms(ctx, arg)
 	if err != nil {
-		return Rooms{}, err
+		return []Room{}, err
 	}
 
 	l := len(dbRooms)
 	if l == 0 {
-		return Rooms{}, nil
+		return []Room{}, nil
 	}
 
-	rooms := make(Rooms, l)
+	rooms := make([]Room, l)
 	for i := 0; i < l; i++ {
-		rooms[i].Load(dbRooms[i])
+		rooms[i].Import(dbRooms[i])
 	}
 
 	return rooms, nil
@@ -141,14 +141,14 @@ func (s *Server) ListReservations(limit, offset int) ([]Reservation, error) {
 
 	rsvs := make([]Reservation, l)
 	for i := 0; i < l; i++ {
-		rsvs[i].LoadWithRoom(dbRsvs[i])
+		rsvs[i].ImportWithRoom(dbRsvs[i])
 	}
 
 	return rsvs, nil
 }
 
 // ListRooms returns limit amount of rooms, with the offset specified
-func (s *Server) ListRooms(limit, offset int) (Rooms, error) {
+func (s *Server) ListRooms(limit, offset int) ([]Room, error) {
 	arg := db.ListRoomsParams{
 		Limit:  int32(limit),
 		Offset: int32(offset),
@@ -166,18 +166,19 @@ func (s *Server) ListRooms(limit, offset int) (Rooms, error) {
 
 	l := len(dbRooms)
 	if l == 0 {
-		return Rooms{}, nil
+		return []Room{}, nil
 	}
 
-	rooms := make(Rooms, l)
+	rooms := make([]Room, l)
 	for i := 0; i < l; i++ {
-		rooms[i].Load(dbRooms[i])
+		rooms[i].Import(dbRooms[i])
 	}
 
 	return rooms, nil
 }
 
-func (r *Reservation) Load(dbr db.Reservation) {
+// Import update r with the data from dbr
+func (r *Reservation) Import(dbr db.Reservation) {
 	r.ID = dbr.ID
 	r.Code = dbr.Code
 	r.FirstName = dbr.FirstName
@@ -192,7 +193,8 @@ func (r *Reservation) Load(dbr db.Reservation) {
 	r.UpdatedAt = dbr.UpdatedAt.Time
 }
 
-func (r *Reservation) Unload(dbr *db.Reservation) {
+// Export update dbr with the data from r
+func (r *Reservation) Export(dbr *db.Reservation) {
 	dbr.ID = r.ID
 	dbr.Code = r.Code
 	dbr.FirstName = r.FirstName
@@ -207,51 +209,20 @@ func (r *Reservation) Unload(dbr *db.Reservation) {
 	dbr.UpdatedAt.Scan(r.UpdatedAt)
 }
 
-func (r *Reservation) LoadWithRoom(dbr db.ListReservationsAndRoomsRow) {
-	r.ID = dbr.ID
-	r.Code = dbr.Code
-	r.FirstName = dbr.FirstName
-	r.LastName = dbr.LastName
-	r.Email = dbr.Email
-	r.Phone = dbr.Phone.String
-	r.StartDate = dbr.StartDate.Time
-	r.EndDate = dbr.EndDate.Time
-	r.RoomID = dbr.RoomID
-	r.Notes = dbr.Notes.String
-	r.CreatedAt = dbr.CreatedAt.Time
-	r.UpdatedAt = dbr.UpdatedAt.Time
-
-	r.Room.ID = dbr.Room.ID
-	r.Room.Name = dbr.Room.Name
-	r.Room.Description = dbr.Room.Description
-	r.Room.ImageFilename = dbr.Room.ImageFilename
-	r.Room.CreatedAt = dbr.Room.CreatedAt.Time
-	r.Room.UpdatedAt = dbr.Room.UpdatedAt.Time
+// ImportWithRoom update r with the data from dbr, imcluding the room data
+func (r *Reservation) ImportWithRoom(dbr db.ListReservationsAndRoomsRow) {
+	r.Import(dbr.Reservation)
+	r.Room.Import(dbr.Room)
 }
 
-func (r *Reservation) UnloadWithRoom(dbr *db.ListReservationsAndRoomsRow) {
-	dbr.ID = r.ID
-	dbr.Code = r.Code
-	dbr.FirstName = r.FirstName
-	dbr.LastName = r.LastName
-	dbr.Email = r.Email
-	dbr.Phone.Scan(r.Phone)
-	dbr.StartDate.Scan(r.StartDate)
-	dbr.EndDate.Scan(r.EndDate)
-	dbr.RoomID = r.RoomID
-	dbr.Notes.Scan(r.Notes)
-	dbr.CreatedAt.Scan(r.CreatedAt)
-	dbr.UpdatedAt.Scan(r.UpdatedAt)
-
-	dbr.Room.ID = r.Room.ID
-	dbr.Room.Name = r.Room.Name
-	dbr.Room.Description = r.Room.Description
-	dbr.Room.ImageFilename = r.Room.ImageFilename
-	dbr.Room.CreatedAt.Scan(r.Room.CreatedAt)
-	dbr.Room.UpdatedAt.Scan(r.Room.UpdatedAt)
+// ExportWithRoom update dbr with the data from r, imcluding the room data
+func (r *Reservation) ExportWithRoom(dbr *db.ListReservationsAndRoomsRow) {
+	r.Export(&dbr.Reservation)
+	r.Room.Export(&dbr.Room)
 }
 
-func (r *Room) Load(dbr db.Room) {
+// Import update r with the data from dbr
+func (r *Room) Import(dbr db.Room) {
 	r.ID = dbr.ID
 	r.Name = dbr.Name
 	r.Description = dbr.Description
@@ -260,7 +231,8 @@ func (r *Room) Load(dbr db.Room) {
 	r.UpdatedAt = dbr.UpdatedAt.Time
 }
 
-func (r *Room) Unload(dbr *db.Room) {
+// Export update dbr with the data from r
+func (r *Room) Export(dbr *db.Room) {
 	dbr.ID = r.ID
 	dbr.Name = r.Name
 	dbr.Description = r.Description

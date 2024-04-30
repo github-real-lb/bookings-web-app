@@ -76,7 +76,7 @@ func InitializeApp(appMode config.AppMode) error {
 	// defining session stored types
 	gob.Register(User{})
 	gob.Register(Room{})
-	gob.Register(Rooms{})
+	gob.Register([]Room{})
 	gob.Register(Reservation{})
 	gob.Register(RoomRestriction{})
 

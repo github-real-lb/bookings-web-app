@@ -196,19 +196,8 @@ type ListReservationsAndRoomsParams struct {
 }
 
 type ListReservationsAndRoomsRow struct {
-	ID        int64              `json:"id"`
-	Code      string             `json:"code"`
-	FirstName string             `json:"first_name"`
-	LastName  string             `json:"last_name"`
-	Email     string             `json:"email"`
-	Phone     pgtype.Text        `json:"phone"`
-	StartDate pgtype.Date        `json:"start_date"`
-	EndDate   pgtype.Date        `json:"end_date"`
-	RoomID    int64              `json:"room_id"`
-	Notes     pgtype.Text        `json:"notes"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	Room      Room               `json:"room"`
+	Reservation Reservation `json:"reservation"`
+	Room        Room        `json:"room"`
 }
 
 func (q *Queries) ListReservationsAndRooms(ctx context.Context, arg ListReservationsAndRoomsParams) ([]ListReservationsAndRoomsRow, error) {
@@ -221,18 +210,18 @@ func (q *Queries) ListReservationsAndRooms(ctx context.Context, arg ListReservat
 	for rows.Next() {
 		var i ListReservationsAndRoomsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.FirstName,
-			&i.LastName,
-			&i.Email,
-			&i.Phone,
-			&i.StartDate,
-			&i.EndDate,
-			&i.RoomID,
-			&i.Notes,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.Reservation.ID,
+			&i.Reservation.Code,
+			&i.Reservation.FirstName,
+			&i.Reservation.LastName,
+			&i.Reservation.Email,
+			&i.Reservation.Phone,
+			&i.Reservation.StartDate,
+			&i.Reservation.EndDate,
+			&i.Reservation.RoomID,
+			&i.Reservation.Notes,
+			&i.Reservation.CreatedAt,
+			&i.Reservation.UpdatedAt,
 			&i.Room.ID,
 			&i.Room.Name,
 			&i.Room.Description,

@@ -1,13 +1,10 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/github-real-lb/bookings-web-app/db"
-	"github.com/github-real-lb/bookings-web-app/util"
 	"github.com/github-real-lb/bookings-web-app/util/forms"
 )
 
@@ -53,45 +50,6 @@ type Reservation struct {
 	Room      Room      `json:"room"`
 }
 
-const ReservationCodeLenght = 7
-
-// GenerateReservationCode generate the reservation code.
-func (r *Reservation) GenerateReservationCode() {
-	// concatenating the current time with the reservation last name
-	s := fmt.Sprintf("%v %s %v %v", util.RandomDatetime().Format(time.RFC3339Nano), r.LastName, r.StartDate, r.EndDate)
-
-	// Generate SHA-256 hash of the concatenated string
-	hash := sha256.New()
-	hash.Write([]byte(s))
-
-	// Generate the SHA256 checksum of the data written so far and convert to hexadecimal string
-	hashString := hex.EncodeToString(hash.Sum(nil))
-
-	// build code string
-	code := make([]byte, ReservationCodeLenght)
-	digitsFound := 0
-	digitsMax := ReservationCodeLenght / 2
-	lettersFound := 0
-	lettersMax := ReservationCodeLenght - digitsMax
-
-	for _, v := range []byte(hashString) {
-		if (digitsFound < digitsMax) && (v >= 49 && v <= 57) {
-			// adds digits to code if not enought digits were found and if v is a digit between 1-9
-			code[digitsFound*2+1] = v
-			digitsFound++
-		} else if (lettersFound < lettersMax) && ((v >= 97 && v <= 104) || (v >= 106 && v <= 110) || (v >= 112 && v <= 122)) {
-			// adds letters to code if not enought letters were found check if v is a letter except for 'i' or 'o'
-			code[lettersFound*2] = v - 32
-			lettersFound++
-		}
-
-		if digitsFound+lettersFound == ReservationCodeLenght {
-			r.Code = string(code)
-			return
-		}
-	}
-}
-
 // Room holds hotel room data
 type Room struct {
 	ID            int64     `json:"id"`
@@ -101,9 +59,6 @@ type Room struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
-
-// Rooms holds a slice of Room
-type Rooms []Room
 
 // Restriction is the database restriction enum
 type Restriction db.Restriction

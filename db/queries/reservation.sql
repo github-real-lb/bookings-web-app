@@ -28,7 +28,7 @@ LIMIT $1
 OFFSET $2;
 
 -- name: ListReservationsAndRooms :many
-SELECT reservations.*, sqlc.embed(rooms) 
+SELECT sqlc.embed(reservations), sqlc.embed(rooms) 
 FROM reservations
 LEFT JOIN rooms ON (reservations.room_id = rooms.id)
 ORDER BY reservations.start_date, rooms.name ASC

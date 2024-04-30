@@ -98,7 +98,7 @@ func TestQueries_ListReservationsAndRooms(t *testing.T) {
 	assert.Len(t, result, N)
 
 	for i := 0; i < N; i++ {
-		assert.NotEmpty(t, result[i].ID)
+		assert.NotEmpty(t, result[i].Reservation.ID)
 		assert.NotEmpty(t, result[i].Room.ID)
 	}
 

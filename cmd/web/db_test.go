@@ -48,8 +48,8 @@ func randomRoom() Room {
 	}
 }
 
-// randomRooms returns a Rooms slice with n random rooms data
-func randomRooms(n int) Rooms {
+// randomRooms returns a []Room slice with n random rooms data
+func randomRooms(n int) []Room {
 	rooms := make([]Room, n)
 
 	for i := 0; i < n; i++ {
@@ -190,7 +190,7 @@ func TestServer_CreateReservation(t *testing.T) {
 
 		// create stub return arguments
 		dbRsv := db.Reservation{}
-		rsv.Unload(&dbRsv)
+		rsv.Export(&dbRsv)
 
 		// create a new server with mock database store
 		ts := NewTestServer(t)
@@ -252,9 +252,9 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 	arg.StartDate.Scan(rsv.StartDate)
 	arg.EndDate.Scan(rsv.EndDate)
 
-	t.Run("Test Available Rooms", func(t *testing.T) {
+	t.Run("Test Available []Room", func(t *testing.T) {
 		// create stub return arguments
-		rooms := make(Rooms, LimitRoomsPerPage)
+		rooms := make([]Room, LimitRoomsPerPage)
 		dbRooms := make([]db.Room, LimitRoomsPerPage)
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
@@ -290,7 +290,7 @@ func TestServer_ListAvailableRooms(t *testing.T) {
 		}
 	})
 
-	t.Run("Test No Available Rooms", func(t *testing.T) {
+	t.Run("Test No Available []Room", func(t *testing.T) {
 		// create a new server with mock database store
 		ts := NewTestServer(t)
 
@@ -351,7 +351,7 @@ func TestServer_ListReservations(t *testing.T) {
 
 		for i := 0; i < LimitReservationsPerPage; i++ {
 			rsvs[i] = randomReservation()
-			rsvs[i].UnloadWithRoom(&dbRsvs[i])
+			rsvs[i].ExportWithRoom(&dbRsvs[i])
 		}
 
 		// create a new server with mock database store
@@ -417,9 +417,9 @@ func TestServer_ListRooms(t *testing.T) {
 		Offset: 0,
 	}
 
-	t.Run("Test All Rooms", func(t *testing.T) {
+	t.Run("Test All []Room", func(t *testing.T) {
 		// create stub return arguments
-		rooms := make(Rooms, LimitRoomsPerPage)
+		rooms := make([]Room, LimitRoomsPerPage)
 		dbRooms := make([]db.Room, LimitRoomsPerPage)
 		var err error
 
@@ -456,7 +456,7 @@ func TestServer_ListRooms(t *testing.T) {
 		}
 	})
 
-	t.Run("Test No Rooms", func(t *testing.T) {
+	t.Run("Test No []Room", func(t *testing.T) {
 
 		// create a new server with mock database store
 		ts := NewTestServer(t)
@@ -490,4 +490,97 @@ func TestServer_ListRooms(t *testing.T) {
 		assert.Error(t, err)
 		require.Nil(t, rooms)
 	})
+}
+
+func TestReservation_ImportAndExport(t *testing.T) {
+	rr := randomReservation()
+	dbr := db.Reservation{}
+
+	rr.Export(&dbr)
+	testDBReservation(t, rr, dbr)
+
+	r := Reservation{}
+	r.Import(dbr)
+
+	testReservation(t, dbr, r)
+	assert.Empty(t, r.Room)
+}
+
+func TestReservation_ImportAndExportWithRoom(t *testing.T) {
+	rr := randomReservation()
+	dbr := db.ListReservationsAndRoomsRow{}
+
+	rr.ExportWithRoom(&dbr)
+	testDBReservation(t, rr, dbr.Reservation)
+	testDBRoom(t, rr.Room, dbr.Room)
+
+	r := Reservation{}
+	r.ImportWithRoom(dbr)
+	testReservation(t, dbr.Reservation, r)
+	testRoom(t, dbr.Room, r.Room)
+}
+
+func TestRoom_ImportAndExport(t *testing.T) {
+	rr := randomRoom()
+	dbr := db.Room{}
+
+	rr.Export(&dbr)
+	testDBRoom(t, rr, dbr)
+
+	r := Room{}
+	r.Import(dbr)
+	testRoom(t, dbr, r)
+
+}
+
+// testReservation asserts that expected equals to actual
+func testReservation(t *testing.T, expected db.Reservation, actual Reservation) {
+	assert.Equal(t, expected.ID, actual.ID)
+	assert.Equal(t, expected.Code, actual.Code)
+	assert.Equal(t, expected.FirstName, actual.FirstName)
+	assert.Equal(t, expected.LastName, actual.LastName)
+	assert.Equal(t, expected.Email, actual.Email)
+	assert.Equal(t, expected.Phone.String, actual.Phone)
+	assert.WithinDuration(t, expected.StartDate.Time, actual.StartDate, time.Second)
+	assert.WithinDuration(t, expected.EndDate.Time, actual.EndDate, time.Second)
+	assert.Equal(t, expected.RoomID, actual.RoomID)
+	assert.Equal(t, expected.Notes.String, actual.Notes)
+	assert.WithinDuration(t, expected.CreatedAt.Time, actual.CreatedAt, time.Second)
+	assert.WithinDuration(t, expected.UpdatedAt.Time, actual.UpdatedAt, time.Second)
+}
+
+// testDBReservation asserts that expected equals to actual
+func testDBReservation(t *testing.T, expected Reservation, actual db.Reservation) {
+	assert.Equal(t, expected.ID, actual.ID)
+	assert.Equal(t, expected.Code, actual.Code)
+	assert.Equal(t, expected.FirstName, actual.FirstName)
+	assert.Equal(t, expected.LastName, actual.LastName)
+	assert.Equal(t, expected.Email, actual.Email)
+	assert.Equal(t, expected.Phone, actual.Phone.String)
+	assert.WithinDuration(t, expected.StartDate, actual.StartDate.Time, time.Second)
+	assert.WithinDuration(t, expected.EndDate, actual.EndDate.Time, time.Second)
+	assert.Equal(t, expected.RoomID, actual.RoomID)
+	assert.Equal(t, expected.Notes, actual.Notes.String)
+	assert.WithinDuration(t, expected.CreatedAt, actual.CreatedAt.Time, time.Second)
+	assert.WithinDuration(t, expected.UpdatedAt, actual.UpdatedAt.Time, time.Second)
+}
+
+// testRoom asserts that expected equals to actual
+func testRoom(t *testing.T, expected db.Room, actual Room) {
+	assert.Equal(t, expected.ID, actual.ID)
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, expected.Description, actual.Description)
+	assert.Equal(t, expected.ImageFilename, actual.ImageFilename)
+	assert.WithinDuration(t, expected.CreatedAt.Time, actual.CreatedAt, time.Second)
+	assert.WithinDuration(t, expected.UpdatedAt.Time, actual.UpdatedAt, time.Second)
+}
+
+// testDBRoom asserts that expected equals to actual
+func testDBRoom(t *testing.T, expected Room, actual db.Room) {
+	assert.Equal(t, expected.ID, actual.ID)
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, expected.Description, actual.Description)
+	assert.Equal(t, expected.ImageFilename, actual.ImageFilename)
+	assert.WithinDuration(t, expected.CreatedAt, actual.CreatedAt.Time, time.Second)
+	assert.WithinDuration(t, expected.UpdatedAt, actual.UpdatedAt.Time, time.Second)
 }

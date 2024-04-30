@@ -52,7 +52,7 @@ func TestStaticPageHandlers(t *testing.T) {
 
 func TestServer_RoomsHandler(t *testing.T) {
 	// test displaying the GET /rooms/list
-	t.Run("OK List Rooms", func(t *testing.T) {
+	t.Run("OK List []Room", func(t *testing.T) {
 		// create a new test server, a mock database store and a request
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/list", nil)
@@ -91,7 +91,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// checks rooms is in session and remove it
-		rooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
+		rooms := app.Session.Pop(req.Context(), "rooms").([]Room)
 		require.Len(t, rooms, LimitRoomsPerPage)
 
 		// testify
@@ -104,7 +104,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/1", nil)
 
-		// create slice of Rooms to put in session
+		// create slice of []Room to put in session
 		rooms := randomRooms(LimitRoomsPerPage)
 
 		// put rooms in session
@@ -166,7 +166,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 	})
 
 	// test handling the GET /rooms/{room index} with rooms missing from session
-	t.Run("Error Missing Rooms", func(t *testing.T) {
+	t.Run("Error Missing []Room", func(t *testing.T) {
 		// create a new test server, and a new request
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/1", nil)
@@ -185,7 +185,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/rooms/abc", nil)
 
-		// create slice of Rooms to put in session
+		// create slice of []Room to put in session
 		rooms := randomRooms(LimitRoomsPerPage)
 
 		// build stub
@@ -198,7 +198,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// checks rooms is in session and remove it
-		sessionRooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
+		sessionRooms := app.Session.Pop(req.Context(), "rooms").([]Room)
 		require.Len(t, sessionRooms, LimitRoomsPerPage)
 
 		// testify
@@ -213,7 +213,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		url := fmt.Sprint("/rooms/", LimitRoomsPerPage+10)
 		req := ts.NewRequestWithSession(t, http.MethodGet, url, nil)
 
-		// create slice of Rooms to put in session
+		// create slice of []Room to put in session
 		rooms := randomRooms(LimitRoomsPerPage)
 
 		// put rooms in session
@@ -223,7 +223,7 @@ func TestServer_RoomsHandler(t *testing.T) {
 		rr := ts.ServeRequest(req)
 
 		// checks rooms is in session and remove it
-		sessionRooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
+		sessionRooms := app.Session.Pop(req.Context(), "rooms").([]Room)
 		require.Len(t, sessionRooms, LimitRoomsPerPage)
 
 		// testify
@@ -622,7 +622,7 @@ func jsonResponseUnmarshal(t *testing.T, rr *httptest.ResponseRecorder, v any) {
 
 func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 	// Test OK: no rooms available for form request dates
-	t.Run("No Available Rooms", func(t *testing.T) {
+	t.Run("No Available []Room", func(t *testing.T) {
 		// creating dates for the request
 		startDate := util.RandomDate()
 		endDate := startDate.Add(time.Hour * 24 * 7)
@@ -667,7 +667,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 	})
 
 	// Test OK: rooms are available
-	t.Run("Available Rooms", func(t *testing.T) {
+	t.Run("Available []Room", func(t *testing.T) {
 		// creating dates for the request
 		startDate := util.RandomDate()
 		endDate := startDate.Add(time.Hour * 24 * 7)
@@ -699,12 +699,12 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		// create stub return arguments
-		rooms := make(Rooms, LimitRoomsPerPage)
+		rooms := make([]Room, LimitRoomsPerPage)
 		dbRooms := make([]db.Room, LimitRoomsPerPage)
 
 		for i := 0; i < LimitRoomsPerPage; i++ {
 			rooms[i] = randomRoom()
-			rooms[i].Unload(&dbRooms[i])
+			rooms[i].Export(&dbRooms[i])
 		}
 
 		//build stub
@@ -721,7 +721,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 		assert.WithinDuration(t, rsv.EndDate, sessionRsv.EndDate, time.Second)
 
 		// get rooms from session and remove it
-		sessionRooms := app.Session.Pop(req.Context(), "rooms").(Rooms)
+		sessionRooms := app.Session.Pop(req.Context(), "rooms").([]Room)
 		assert.Len(t, sessionRooms, LimitRoomsPerPage)
 
 		// testify
@@ -884,7 +884,7 @@ func TestServer_PostAvailableRoomsSearchHandler(t *testing.T) {
 func TestServer_AvailableRoomsListHandler(t *testing.T) {
 
 	// Test Error: available rooms are missing from session
-	t.Run("Error Missing Available Rooms", func(t *testing.T) {
+	t.Run("Error Missing Available []Room", func(t *testing.T) {
 		// create a new test server, and a new request
 		ts := NewTestServer(t)
 		req := ts.NewRequestWithSession(t, http.MethodGet, "/available-rooms/available", nil)
@@ -906,7 +906,7 @@ func TestServer_AvailableRoomsListHandler(t *testing.T) {
 	})
 
 	// Test OK: available rooms are missing from session
-	t.Run("OK Available Rooms", func(t *testing.T) {
+	t.Run("OK Available []Room", func(t *testing.T) {
 		//create rooms slice with random data of n rooms
 		const N = 5
 		rooms := randomRooms(N)
@@ -1111,7 +1111,7 @@ func TestServer_PostMakeReservationHandler(t *testing.T) {
 
 		//create stub return arguments for CreateReservationTx
 		dbRsv := db.Reservation{}
-		finalRsv.Unload(&dbRsv)
+		finalRsv.Export(&dbRsv)
 
 		// build stub for CreateReservationTx
 		ts.MockDBStore.On("CreateReservationTx", mock.Anything, mock.Anything).

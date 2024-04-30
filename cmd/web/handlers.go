@@ -59,7 +59,7 @@ func (s *Server) RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
+	rooms, ok := app.Session.Get(r.Context(), "rooms").([]Room)
 	if !ok {
 		http.Redirect(w, r, "/rooms/list", http.StatusTemporaryRedirect)
 		return
@@ -272,7 +272,7 @@ func (s *Server) PostAvailableRoomsSearchHandler(w http.ResponseWriter, r *http.
 // ChooseRoomHandler is the GET "/available-rooms/{index}" page handler
 func (s *Server) AvailableRoomsListHandler(w http.ResponseWriter, r *http.Request) {
 	// get available rooms data from session
-	rooms, ok := app.Session.Get(r.Context(), "rooms").(Rooms)
+	rooms, ok := app.Session.Get(r.Context(), "rooms").([]Room)
 	if !ok {
 		sErr := CreateServerError(ErrorMissingReservation, r.URL.Path, nil)
 		s.LogErrorAndRedirect(w, r, sErr, "/available-rooms-search")
